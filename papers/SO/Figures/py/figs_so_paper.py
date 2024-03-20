@@ -26,17 +26,11 @@ import seaborn as sns
 
 import pandas
 
-from siosandbox.cugn import grid_utils
-from siosandbox.cugn import utils as cugn_utils
-from siosandbox.cugn import figures
-from siosandbox.cugn import clusters
-from siosandbox.cugn import defs as cugn_defs
-from siosandbox.cugn import io as cugn_io
+from cugn import grid_utils
+from cugn import defs as cugn_defs
+from cugn import io as cugn_io
 from siosandbox import plot_utils
-from siosandbox import cat_utils
 
-from gsw import conversions, density
-import gsw
 
 from IPython import embed
 
@@ -44,6 +38,12 @@ lines = cugn_defs.lines
 line_colors = cugn_defs.line_colors
 line_cmaps = cugn_defs.line_cmaps
 
+labels = dict(
+    SA='Absolute Salinity (g/kg)',
+    sigma0='Potential Density (kg/m$^3$)',
+    CT='Conservative Temperature (C)',
+    DO='Dissolved Oxygen (umol/kg)',
+)
 
 def gen_cb(img, lbl, csz = 17.):
     cbaxes = plt.colorbar(img, pad=0., fraction=0.030)
@@ -112,6 +112,81 @@ def fig_joint_pdfs(use_density:bool=False):
                 fontsize=fsz, ha='left', color='k')
         # Grid lines
         ax.grid()
+    
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+# ##########################################################
+def fig_mean_DO_SO(line, outfile:str=None):
+
+    def gen_cb(img, lbl, csz = 17.):
+        cbaxes = plt.colorbar(img, pad=0., fraction=0.030)
+        cbaxes.set_label(lbl, fontsize=csz)
+        cbaxes.ax.tick_params(labelsize=csz)
+
+    outfile = f'fig_mean_DO_SO_{line}.png'
+    # Load
+    items = cugn_io.load_line(line)
+    ds = items['ds']
+
+    # PDF
+    axes=('SA', 'sigma0')
+    mean_oxy, xedges, yedges, counts, grid_indices, _, _ = grid_utils.gen_grid(
+        ds, axes=axes, stat='mean', variable='doxy')
+    mean_SO, xedges, yedges, counts, grid_indices, _, _ = grid_utils.gen_grid(
+        ds, axes=axes, stat='mean', variable='SO')
+
+    # Figure
+    fig = plt.figure(figsize=(12,10))
+    plt.clf()
+    gs = gridspec.GridSpec(2,2)
+
+    # ##########################################################
+    # DO
+    axes = []
+    for kk, mean, lbl, cmap in zip(np.arange(2), [mean_oxy, mean_SO], ['DO', 'SO'],
+                                   ['Purples', 'jet']):
+        for ss in range(2):
+            ax= plt.subplot(gs[ss+kk*2])
+
+            if ss == 0:
+                vmin,vmax = None, None
+                xmin,xmax = 32.5, 35.0
+                ymin,ymax = None, None
+            else:
+                if lbl == 'DO':
+                    vmin,vmax = 200., None
+                else:
+                    vmin,vmax = 0.5, None
+                xmin,xmax = 32.5, 34.2
+                ymin,ymax = 22.8, 25.5
+
+            axes.append(ax)
+
+            img = ax.pcolormesh(xedges, yedges, mean.T, cmap=cmap,
+                                vmin=vmin, vmax=vmax)
+            gen_cb(img, labels['DO'])
+
+            # ##########################################################
+            tsz = 19.
+            ax.text(0.05, 0.9, f'Line={line}',
+                        transform=ax.transAxes,
+                        fontsize=tsz, ha='left', color='k')
+
+            ax.set_xlabel(labels['SA'])
+            ax.set_ylabel(labels['sigma0'])
+
+            ax.set_xlim(xmin, xmax)
+            if ymin is not None:
+                ax.set_ylim(ymin, ymax)
+
+    # Set x-axis interval to 0.5
+    #ax.xaxis.set_major_locator(MultipleLocator(0.5))
+    # 
+    fsz = 17.
+    for ax in axes:
+        plot_utils.set_fontsize(ax, fsz)
     
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
@@ -237,6 +312,78 @@ def fig_dist_doy(outfile:str, line:str, color:str,
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
+# ######################################################
+def fig_SO_vs_N_zoom():
+    #def fig_joint_pdf(line:str, xvar:str, yvar:str):
+
+    default_bins = dict(SA=np.linspace(32.1, 34.8, 50),
+                sigma0=np.linspace(22.8, 27.2, 50),
+                SO=np.linspace(1.05, 1.5, 50),
+                z=np.linspace(0., 500, 50),
+                N=np.linspace(1., 25, 50),
+                CT=np.linspace(4, 22.5, 50))
+
+    line = '90'
+    xvar = 'SO'
+    yvar = 'N'
+
+
+    outfile = f'fig_jointPDF_{line}_{xvar}_{yvar}_zoom.png'
+
+    # Load
+    items = cugn_io.load_line(line)
+    ds = items['ds']
+
+    # PDF
+    _, xedges, yedges, counts, grid_indices, _, _ = grid_utils.gen_grid(
+        ds, axes=(xvar, yvar), stat='mean', variable='doxy', bins=default_bins
+        )
+
+    # PDF
+    dx = xedges[1] - xedges[0]
+    dy = yedges[1] - yedges[0]
+
+    p_norm = np.sum(counts) * (dx * dy)
+    consv_pdf = counts / p_norm
+    #embed(header='764 of figs_so')
+
+    fig = plt.figure(figsize=(12,10))
+    plt.clf()
+    ax = plt.gca()
+
+    # #####################################################
+    # PDF
+    show_log = False
+
+    if show_log:
+    #    img = ax.pcolormesh(xedges, yedges, np.log10(consv_pdf.T), 
+        img = ax.pcolormesh(xedges, yedges, np.log10(counts.T), 
+                            cmap='autumn')
+        gen_cb(img, r'$\log_{10} \, counts('+f'{xvar},{yvar})$')
+    else:
+    #    img = ax.pcolormesh(xedges, yedges, consv_pdf.T, 
+        img = ax.pcolormesh(xedges, yedges, counts.T, 
+                            cmap='jet')#, vmin=0.01)    
+        gen_cb(img, r'$counts('+f'{xvar},{yvar})$')
+
+
+    # ##########################################################
+    tsz = 19.
+    ax.text(0.05, 0.9, f'Line={line}',
+                transform=ax.transAxes,
+                fontsize=tsz, ha='left', color='k')
+
+    fsz = 17.
+    ax.set_xlabel(xvar)
+    ax.set_ylabel(yvar)
+    # Set x-axis interval to 0.5
+    #ax.xaxis.set_major_locator(MultipleLocator(0.5))
+    # 
+    plot_utils.set_fontsize(ax, fsz)
+
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
 
 def main(flg):
     if flg== 'all':
@@ -250,17 +397,22 @@ def main(flg):
         fig_joint_pdfs()
         fig_joint_pdfs(use_density=True)
 
-    # Figure 2 -- SO CDFs
+    # Figure 2 -- average DO, SO 
     if flg & (2**1):
+        line = '90'
+        fig_mean_DO_SO(line)
+
+    # Figure 3 -- SO CDFs
+    if flg & (2**2):
         fig_SO_cdf('fig_SO_cdf.png')
 
     # Figure 3 -- DOY vs Offshore distance
-    if flg & (2**2):
+    if flg & (2**3):
         for line, clr in zip(lines, line_colors):
             # Skip for now
+            #if line == '56':
+            #    continue
             if line == '56':
-                continue
-            if line == '66':
                 show_legend = True
             else:
                 show_legend = False
@@ -268,6 +420,8 @@ def main(flg):
                          show_legend=show_legend)
 
     # Figure 4 -- SO vs. N
+    if flg & (2**4):
+        fig_SO_vs_N_zoom()
 
 # Command line execution
 if __name__ == '__main__':
@@ -276,8 +430,10 @@ if __name__ == '__main__':
     if len(sys.argv) == 1:
         flg = 0
         #flg += 2 ** 0  # 1 -- Joint PDFs of all 4 lines
-        #flg += 2 ** 1  # 2 -- SO CDF
-        #flg += 2 ** 2  # 3 -- DOY vs Offshore, 1 by 1
+        #flg += 2 ** 1  # 2 -- 
+        #flg += 2 ** 2  # 4 -- 
+        #flg += 2 ** 3  # 8 -- SO vs N zoom
+        #flg += 2 ** 4  # 16 -- SO vs N zoom
     else:
         flg = sys.argv[1]
 
