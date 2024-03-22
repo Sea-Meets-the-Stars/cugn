@@ -20,13 +20,13 @@ import seaborn as sns
 
 import pandas
 
-from siosandbox.cugn import grid_utils
-from siosandbox.cugn import utils as cugn_utils
-from siosandbox.cugn import figures
 from siosandbox.cugn import clusters
-from siosandbox.cugn import io as cugn_io
 from siosandbox import plot_utils
 from siosandbox import cat_utils
+
+from cugn import grid_utils
+from cugn import utils as cugn_utils
+from cugn import io as cugn_io
 
 from gsw import conversions, density
 import gsw
@@ -860,8 +860,117 @@ def fig_avgSO_zd(line:str):
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
+def fig_absolute(outfile:str, line:str, metric='N',
+                 max_depth:int=20):
+
+    # Figure
+    #sns.set()
+    fig = plt.figure(figsize=(12,12))
+    plt.clf()
+
+    if metric == 'N':
+        cmap = 'Blues'
+    elif metric == 'chla':
+        cmap = 'Greens'
+    elif metric == 'T':
+        cmap = 'Oranges'
+    
+
+    # Load
+    items = load_up(line)
+    grid_extrem = items[0]
+    ds = items[1]
+    times = items[2]
+    grid_tbl = items[3]
+
+    # Cut on depth
+    grid_tbl = grid_tbl[grid_tbl.depth <= (max_depth//10 - 1)]
+
+        #sns.histplot(data=grid_extrem, x='doxy_p', y='N_p', ax=ax)
+
+    jg = sns.jointplot(data=grid_tbl, x='doxy', 
+                    y=f'{metric}',
+                    kind='hex', bins='log', # gridsize=250, #xscale='log',
+                    # mincnt=1,
+                    cmap=cmap,
+                    marginal_kws=dict(fill=False, color='black', 
+                                        bins=100)) 
+
+    # Axes                                 
+    jg.ax_joint.set_ylabel(f'{metric}')
+    jg.ax_joint.set_xlabel('DO')
+    plot_utils.set_fontsize(jg.ax_joint, 14)
+
+    # Extrema
+    jg.ax_joint.plot(grid_extrem.doxy, grid_extrem[metric], 
+                     'ro', ms=1)
+    jg.ax_joint.text(0.95, 0.05, f'depth <= {max_depth}m',
+                transform=jg.ax_joint.transAxes,
+                fontsize=14., ha='right', color='k')
+    jg.ax_joint.text(0.05, 0.95, f'Line: {line}',
+                transform=jg.ax_joint.transAxes,
+                fontsize=14., ha='left', color='k')
+
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
 
 
+def fig_relative(outfile:str, line:str, metric='N',
+                 max_depth:int=20):
+
+    # Figure
+    #sns.set()
+    fig = plt.figure(figsize=(12,12))
+    plt.clf()
+
+    if metric == 'N':
+        cmap = 'Blues'
+    elif metric == 'chla':
+        cmap = 'Greens'
+    elif metric == 'T':
+        cmap = 'Oranges'
+    
+
+    # Load
+    items = load_up(line)
+    grid_extrem = items[0]
+    ds = items[1]
+    times = items[2]
+    grid_tbl = items[3]
+
+    # Cut on depth
+    grid_tbl = grid_tbl[grid_tbl.depth <= (max_depth//10 - 1)]
+
+        #sns.histplot(data=grid_extrem, x='doxy_p', y='N_p', ax=ax)
+
+    jg = sns.jointplot(data=grid_tbl, x='doxy', 
+                    y=f'{metric}',
+                    kind='hex', bins='log', # gridsize=250, #xscale='log',
+                    # mincnt=1,
+                    cmap=cmap,
+                    marginal_kws=dict(fill=False, color='black', 
+                                        bins=100)) 
+
+    # Axes                                 
+    jg.ax_joint.set_ylabel(f'{metric}')
+    jg.ax_joint.set_xlabel('DO')
+    plot_utils.set_fontsize(jg.ax_joint, 14)
+
+    # Extrema
+    jg.ax_joint.plot(grid_extrem.doxy, grid_extrem[metric], 
+                     'ro', ms=1)
+    jg.ax_joint.text(0.95, 0.05, f'depth <= {max_depth}m',
+                transform=jg.ax_joint.transAxes,
+                fontsize=14., ha='right', color='k')
+    jg.ax_joint.text(0.05, 0.95, f'Line: {line}',
+                transform=jg.ax_joint.transAxes,
+                fontsize=14., ha='left', color='k')
+
+    # Label
+    
+    #gs.tight_layout(fig)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
 
 def main(flg):
     if flg== 'all':
@@ -968,6 +1077,25 @@ def main(flg):
         line = '90'
         fig_avgSO_zd(line)
         
+    # Absolute N, DO, Chl
+    if flg & (2**13):
+        line = '90.0'
+        line = '80.0'
+        #metric = 'chla'
+        #metric = 'N'
+        metric = 'T'
+        fig_absolute(f'fig_absolute_{line}_{metric}.png', 
+                        line, metric=metric)
+
+    # Relative N, DO, Chl
+    if flg & (2**13):
+        line = '90.0'
+        line = '80.0'
+        #metric = 'chla'
+        #metric = 'N'
+        metric = 'T'
+        fig_relative(f'fig_relative_{line}_{metric}.png', 
+                        line, metric=metric)
 
 # Command line execution
 if __name__ == '__main__':
@@ -988,6 +1116,7 @@ if __name__ == '__main__':
         #flg += 2 ** 10  # 1024 -- joint PDFs
         #flg += 2 ** 11  # 2048 -- joint PDF of X,Y
         #flg += 2 ** 12  # 4096 -- SO(z,d)
+        #flg += 2 ** 13  # 8192 -- Absolute N, DO, Chl
     else:
         flg = sys.argv[1]
 
