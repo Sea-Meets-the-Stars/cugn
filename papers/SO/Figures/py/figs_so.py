@@ -27,6 +27,7 @@ from siosandbox import cat_utils
 from cugn import grid_utils
 from cugn import utils as cugn_utils
 from cugn import io as cugn_io
+from cugn import annualcycle
 
 from gsw import conversions, density
 import gsw
@@ -874,6 +875,8 @@ def fig_absolute(outfile:str, line:str, metric='N',
         cmap = 'Greens'
     elif metric == 'T':
         cmap = 'Oranges'
+    elif metric == 'SA':
+        cmap = 'Greys'
     
 
     # Load
@@ -929,6 +932,9 @@ def fig_relative(outfile:str, line:str, metric='N',
         cmap = 'Greens'
     elif metric == 'T':
         cmap = 'Oranges'
+        ann_var = 't'
+    elif metric == 'SA':
+        cmap = 'Greys'
     
 
     # Load
@@ -941,10 +947,12 @@ def fig_relative(outfile:str, line:str, metric='N',
     # Cut on depth
     grid_tbl = grid_tbl[grid_tbl.depth <= (max_depth//10 - 1)]
 
-        #sns.histplot(data=grid_extrem, x='doxy_p', y='N_p', ax=ax)
+    # Annual T
+    annual = annualcycle.calc_for_grid(grid_tbl, line, ann_var)
+    grid_tbl[f'D{metric}'] = grid_tbl[metric] - annual
 
     jg = sns.jointplot(data=grid_tbl, x='doxy', 
-                    y=f'{metric}',
+                    y=f'D{metric}',
                     kind='hex', bins='log', # gridsize=250, #xscale='log',
                     # mincnt=1,
                     cmap=cmap,
@@ -952,12 +960,17 @@ def fig_relative(outfile:str, line:str, metric='N',
                                         bins=100)) 
 
     # Axes                                 
-    jg.ax_joint.set_ylabel(f'{metric}')
+    jg.ax_joint.set_ylabel(r'$\Delta$'+f'{metric}')
     jg.ax_joint.set_xlabel('DO')
     plot_utils.set_fontsize(jg.ax_joint, 14)
 
     # Extrema
-    jg.ax_joint.plot(grid_extrem.doxy, grid_extrem[metric], 
+    annual = annualcycle.calc_for_grid(grid_extrem, line,
+                                       ann_var)
+    grid_extrem[f'D{metric}'] = grid_extrem[metric] - annual
+
+    jg.ax_joint.plot(grid_extrem.doxy, 
+                     grid_extrem[f'D{metric}'], 
                      'ro', ms=1)
     jg.ax_joint.text(0.95, 0.05, f'depth <= {max_depth}m',
                 transform=jg.ax_joint.transAxes,
@@ -1080,17 +1093,17 @@ def main(flg):
     # Absolute N, DO, Chl
     if flg & (2**13):
         line = '90.0'
-        line = '80.0'
+        #line = '80.0'
         #metric = 'chla'
-        #metric = 'N'
-        metric = 'T'
+        metric = 'SA'
+        metric = 'N'
         fig_absolute(f'fig_absolute_{line}_{metric}.png', 
                         line, metric=metric)
 
     # Relative N, DO, Chl
-    if flg & (2**13):
-        line = '90.0'
+    if flg & (2**14):
         line = '80.0'
+        line = '90.0'
         #metric = 'chla'
         #metric = 'N'
         metric = 'T'
@@ -1117,6 +1130,7 @@ if __name__ == '__main__':
         #flg += 2 ** 11  # 2048 -- joint PDF of X,Y
         #flg += 2 ** 12  # 4096 -- SO(z,d)
         #flg += 2 ** 13  # 8192 -- Absolute N, DO, Chl
+        flg += 2 ** 14  # -- Relative to interannual
     else:
         flg = sys.argv[1]
 
