@@ -1032,13 +1032,14 @@ def fig_lowSO_jointDO(outfile:str, line:str='56.0',
 
     # Extrema
     jg.ax_joint.plot(grid_extrem.doxy, grid_extrem[metric], 
-                     'ro', ms=1)
+                     'ro', ms=1, label=f'SO < {lowSO_cut}')
     jg.ax_joint.text(0.95, 0.05, f'depth <= {max_depth}m',
                 transform=jg.ax_joint.transAxes,
                 fontsize=14., ha='right', color='k')
     jg.ax_joint.text(0.05, 0.95, f'Line: {line}',
                 transform=jg.ax_joint.transAxes,
                 fontsize=14., ha='left', color='k')
+    jg.ax_joint.legend(loc='upper right', fontsize=14.)
 
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
@@ -1172,10 +1173,10 @@ def main(flg):
     # Line 56
     if flg & (2**15):
         line = '56.0'
-        line = '90.0'
+        #line = '90.0'
         #metric = 'chla'
-        metric = 'N'
-        #metric = 'T'
+        #metric = 'N'
+        metric = 'T'
         fig_lowSO_jointDO(f'fig_lowSO_{line}_{metric}.png', 
                         line, metric=metric)
 
