@@ -1044,6 +1044,75 @@ def fig_lowSO_jointDO(outfile:str, line:str='56.0',
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
+def fig_joint_TDO_line90(outfile:str='fig_joint_TDO_line90.png', 
+                         line:str='90.0', metric='T',
+                 max_depth:int=30):
+
+    # Figure
+    #sns.set()
+    fig = plt.figure(figsize=(12,12))
+    plt.clf()
+
+    if metric == 'N':
+        cmap = 'Blues'
+    elif metric == 'chla':
+        cmap = 'Greens'
+    elif metric == 'T':
+        cmap = 'Oranges'
+    elif metric == 'SA':
+        cmap = 'Greys'
+    
+    # Load
+    items = load_up(line)
+    grid_extrem = items[0]
+    ds = items[1]
+    times = items[2]
+    grid_tbl = items[3]
+
+    # Cut on depth
+    grid_tbl = grid_tbl[grid_tbl.depth <= (max_depth//10 - 1)]
+
+    # SO calculation
+
+    # Canonical values
+    z=20. # m
+    SA = 33.7  
+    DO = 260.
+
+    lat = np.nanmedian(ds.lat.data)
+    lon = np.nanmedian(ds.lon.data)
+    p = conversions.p_from_z(-z, lat)
+
+    # Interpolators
+    CTs = np.linspace(12., 22., 100)
+    OCs = gsw.O2sol(SA, CTs, p, lon, lat)
+
+    jg = sns.jointplot(data=grid_tbl, x='doxy', 
+                    y=f'{metric}',
+                    kind='hex', bins='log', # gridsize=250, #xscale='log',
+                    # mincnt=1,
+                    cmap=cmap,
+                    marginal_kws=dict(fill=False, color='black', 
+                                        bins=100)) 
+
+    # Axes                                 
+    jg.ax_joint.set_ylabel(f'{metric}')
+    jg.ax_joint.set_xlabel('DO')
+    plot_utils.set_fontsize(jg.ax_joint, 14)
+
+    # SO
+    jg.ax_joint.plot(OCs, CTs, 'k:', lw=1)
+
+    # Labels
+    jg.ax_joint.text(0.95, 0.05, f'depth <= {max_depth}m',
+                transform=jg.ax_joint.transAxes,
+                fontsize=14., ha='right', color='k')
+    jg.ax_joint.text(0.05, 0.95, f'Line: {line}',
+                transform=jg.ax_joint.transAxes,
+                fontsize=14., ha='left', color='k')
+
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
 
 def main(flg):
     if flg== 'all':
@@ -1157,6 +1226,7 @@ def main(flg):
         #metric = 'chla'
         metric = 'SA'
         metric = 'N'
+        metric = 'T'
         fig_absolute(f'fig_absolute_{line}_{metric}.png', 
                         line, metric=metric)
 
@@ -1180,6 +1250,10 @@ def main(flg):
         fig_lowSO_jointDO(f'fig_lowSO_{line}_{metric}.png', 
                         line, metric=metric)
 
+    # Joint PDF: T, DO on Line 90
+    if flg & (2**16):
+        fig_joint_TDO_line90()
+
 # Command line execution
 if __name__ == '__main__':
     import sys
@@ -1199,9 +1273,10 @@ if __name__ == '__main__':
         #flg += 2 ** 10  # 1024 -- joint PDFs
         #flg += 2 ** 11  # 2048 -- joint PDF of X,Y
         #flg += 2 ** 12  # 4096 -- SO(z,d)
-        #flg += 2 ** 13  # 8192 -- Absolute N, DO, Chl
+        #flg += 2 ** 13  # 8192 -- Absolute N, DO, Chl, T
         #flg += 2 ** 14  # -- Relative to interannual
-        flg += 2 ** 15  # Low SO, joint DO
+        #flg += 2 ** 15  # Low SO, joint DO
+        flg += 2 ** 16  # Joint PDF: T, DO on Line 90
     else:
         flg = sys.argv[1]
 
