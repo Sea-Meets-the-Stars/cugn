@@ -478,7 +478,8 @@ def fig_percentiles(outfile:str, line:str, metric='N'):
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
-def fig_scatter_event(outfile:str, line:str, event:str, t_off):
+def fig_scatter_event(outfile:str, line:str, 
+                      event:str, t_off):
 
     # Load
     items = load_up(line)
@@ -535,6 +536,99 @@ def fig_scatter_event(outfile:str, line:str, event:str, t_off):
         plot_utils.set_fontsize(ax, 13.)
 
     #gs.tight_layout(fig)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+def fig_multi_z_event(outfile:str, line:str, 
+                      event:str, t_off):
+
+    # Load
+    items = load_up(line)
+    grid_extrem = items[0]
+    ds = items[1]
+    times = items[2]
+    grid_tbl = items[3]
+
+    # Grab event
+    tevent = pandas.Timestamp(event)
+    tmin = tevent - pandas.Timedelta(t_off)
+    tmax = tevent + pandas.Timedelta(t_off)
+
+    # In event
+    in_event = (grid_extrem.time >= tmin) & (grid_extrem.time <= tmax)
+    ds_in_event = (ds.time >= tmin) & (ds.time <= tmax)
+
+    # Mission
+    missions = np.unique(ds.mission[ds_in_event].data)
+    mission_profiles = np.unique(ds.mission_profile[ds_in_event].data)
+    print(f'Missions: {missions}')
+    #print(f'Mission Profiles: {mission_profiles}')
+
+
+    fig = plt.figure(figsize=(17,10))
+    plt.clf()
+
+    gs = gridspec.GridSpec(3,5)
+
+    ylbl_dict = {'doxy': 'DO (umol/kg)', 
+                 'T': 'Temperature (deg C)',
+                 'N': 'Buoyancy (cycles/hour)',
+                 'dist': 'Distance from shore (km)',
+                 'chla': 'Chlorophyll-a (mg/m^3)'}
+
+    cnt = 0
+    for clr, z in zip(['b', 'g', 'r'], [10, 20, 30]):
+        depth = z//10 - 1
+
+        for ss, metric in enumerate(['doxy', 'T', 'N', 'chla', 
+                                     'dist']):
+            ax = plt.subplot(gs[cnt])
+
+            if metric == 'T':
+                ds_metric = 'temperature'
+            elif metric == 'chla':
+                ds_metric = 'chlorophyll_a'
+            else:
+                ds_metric = metric
+
+            # Plot all
+            srt = np.argsort(ds.time[ds_in_event].values)
+            plt_depth = depth
+            if metric in ['dist']:
+                # Convert to distance
+                dist, _ = cugn_utils.calc_dist_offset(
+                    line, ds.lon[ds_in_event].values, 
+                    ds.lat[ds_in_event].values)
+                ax.plot(ds.time[ds_in_event][srt], 
+                        #ds[ds_metric][ds_in_event][srt], 
+                        dist[srt],
+                        '-', color='gray', zorder=1)
+            else:
+                ax.plot(ds.time[ds_in_event][srt], 
+                        ds[ds_metric][plt_depth,ds_in_event][srt], 
+                        '-', color='gray', zorder=1)
+
+            #for depth, clr in zip(np.arange(3), ['b', 'g', 'r']):
+            at_d = grid_extrem.depth[in_event] == depth
+            ax.scatter(grid_extrem.time[in_event][at_d], 
+                       grid_extrem[metric][in_event][at_d], 
+                       color=clr, zorder=10)
+
+
+            # Axes
+            ax.set_ylabel(ylbl_dict[metric])
+            plot_utils.set_fontsize(ax, 13.)
+            if z < 30:
+                ax.set_xticklabels([])
+            else:
+                #plt.locator_params(axis='x', nbins=5)  # Show at most 5 ticks
+                ax.tick_params(axis='x', rotation=45)
+
+
+            cnt += 1
+
+    #gs.tight_layout(fig)
+    plt.tight_layout(pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
@@ -1176,22 +1270,26 @@ def main(flg):
 
     # Scatter event
     if flg & (2**7):
-        line = '90'
-        eventA = ('2020-09-01', '2W') # Sub-surface
+        line = '90.0'
+        eventA = ('2020-09-01', '10D') # Sub-surface
         eventB = ('2019-08-15', '3W') # Surface but abrupt start
         eventC = ('2019-03-02', '1W') # Spring
-        eventD = ('2021-08-10', '3W') # Surface but abrupt start
+        eventD = ('2021-08-13', '15D') # Surface but abrupt start
 
         # Bad
         eventN = ('2020-05-10', '2W') # Surface but abrupt start
         eventO = ('2022-03-01', '2W') # Surface but abrupt start
 
-        line = '80'
-        eventA = ('2020-08-11', '1W') # 
-        eventB = ('2022-02-15', '2W') # 
+        #line = '80.0'
+        #eventA = ('2020-08-11', '1W') # 
+        #eventB = ('2022-02-15', '2W') # 
 
-        event, t_off = eventB
-        fig_scatter_event(f'fig_scatter_event_{line}_{event}.png', 
+        event, t_off = eventA
+        # Original
+        #fig_scatter_event(f'fig_scatter_event_{line}_{event}.png', 
+        #             line, event, t_off)
+        # Original
+        fig_multi_z_event(f'fig_multi_z_event_{line}_{event}.png', 
                      line, event, t_off)
 
     # Scatter event
@@ -1267,7 +1365,7 @@ if __name__ == '__main__':
         #flg += 2 ** 4  # 16 -- Percentiles
         #flg += 2 ** 5  # 32 -- 
         #flg += 2 ** 6  # 64 -- dist vs DOY
-        #flg += 2 ** 7  # 128 -- scatter event
+        flg += 2 ** 7  # 128 -- scatter event
         #flg += 2 ** 8  # 256 -- dSO/dT
         #flg += 2 ** 9  # 512 -- T fluctuations
         #flg += 2 ** 10  # 1024 -- joint PDFs
@@ -1276,7 +1374,7 @@ if __name__ == '__main__':
         #flg += 2 ** 13  # 8192 -- Absolute N, DO, Chl, T
         #flg += 2 ** 14  # -- Relative to interannual
         #flg += 2 ** 15  # Low SO, joint DO
-        flg += 2 ** 16  # Joint PDF: T, DO on Line 90
+        #flg += 2 ** 16  # Joint PDF: T, DO on Line 90
     else:
         flg = sys.argv[1]
 
