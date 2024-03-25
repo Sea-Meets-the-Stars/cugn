@@ -1138,10 +1138,11 @@ def fig_lowSO_jointDO(outfile:str, line:str='56.0',
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
-def fig_joint_TDO_line90(outfile:str='fig_joint_TDO_line90.png', 
-                         line:str='90.0', metric='T',
-                 max_depth:int=30):
 
+def fig_joint_line90(outfile:str='fig_joint_TDO_line90.png', 
+                     line:str='90.0', metric='T',
+                     xmetric:str='doxy',
+                     max_depth:int=30):
     # Figure
     #sns.set()
     fig = plt.figure(figsize=(12,12))
@@ -1181,8 +1182,8 @@ def fig_joint_TDO_line90(outfile:str='fig_joint_TDO_line90.png',
     CTs = np.linspace(12., 22., 100)
     OCs = gsw.O2sol(SA, CTs, p, lon, lat)
 
-    jg = sns.jointplot(data=grid_tbl, x='doxy', 
-                    y=f'{metric}',
+    jg = sns.jointplot(data=grid_tbl, x=xmetric,
+                    y=metric,
                     kind='hex', bins='log', # gridsize=250, #xscale='log',
                     # mincnt=1,
                     cmap=cmap,
@@ -1191,11 +1192,13 @@ def fig_joint_TDO_line90(outfile:str='fig_joint_TDO_line90.png',
 
     # Axes                                 
     jg.ax_joint.set_ylabel(f'{metric}')
-    jg.ax_joint.set_xlabel('DO')
+    xlbl = 'DO' if xmetric == 'doxy' else xmetric
+    jg.ax_joint.set_xlabel(xlbl)
     plot_utils.set_fontsize(jg.ax_joint, 14)
 
     # SO
-    jg.ax_joint.plot(OCs, CTs, 'k:', lw=1)
+    if metric == 'T':
+        jg.ax_joint.plot(OCs, CTs, 'k:', lw=1)
 
     # Labels
     jg.ax_joint.text(0.95, 0.05, f'depth <= {max_depth}m',
@@ -1350,7 +1353,13 @@ def main(flg):
 
     # Joint PDF: T, DO on Line 90
     if flg & (2**16):
-        fig_joint_TDO_line90()
+        fig_joint_line90()
+
+    # Joint PDF: T, DO on Line 90
+    if flg & (2**17):
+        fig_joint_line90(outfile='fig_joint_NSO_line90.png',
+                         metric='N', xmetric='SO')
+
 
 # Command line execution
 if __name__ == '__main__':
@@ -1365,7 +1374,7 @@ if __name__ == '__main__':
         #flg += 2 ** 4  # 16 -- Percentiles
         #flg += 2 ** 5  # 32 -- 
         #flg += 2 ** 6  # 64 -- dist vs DOY
-        flg += 2 ** 7  # 128 -- scatter event
+        #flg += 2 ** 7  # 128 -- scatter event
         #flg += 2 ** 8  # 256 -- dSO/dT
         #flg += 2 ** 9  # 512 -- T fluctuations
         #flg += 2 ** 10  # 1024 -- joint PDFs
@@ -1375,6 +1384,7 @@ if __name__ == '__main__':
         #flg += 2 ** 14  # -- Relative to interannual
         #flg += 2 ** 15  # Low SO, joint DO
         #flg += 2 ** 16  # Joint PDF: T, DO on Line 90
+        flg += 2 ** 17  # Joint PDF: N, SO on Line 90, z<=30m
     else:
         flg = sys.argv[1]
 
