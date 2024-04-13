@@ -202,7 +202,7 @@ def fig_SO_cdf(outfile:str):
 
     for clr, line in zip(line_colors, lines):
         # Load
-        items = cugn_io.load_up(line, skip_dist=True)
+        items = cugn_io.load_up(line)#, skip_dist=True)
         grid_extrem = items[0]
         ds = items[1]
         times = items[2]
@@ -225,7 +225,7 @@ def fig_SO_cdf(outfile:str):
             srt = np.argsort(grid_plt.SO.values)
             cdf = np.arange(len(grid_plt.SO))/len(grid_plt.SO)
             idx = np.argmin(np.abs(cdf-0.95))
-            print(f'95% for {line} {depth}m: {grid_plt.SO.values[srt][idx]}')
+            print(f'95% for {line} {(depth+1)*10}m: {grid_plt.SO.values[srt][idx]}')
 
     # Finish
     for ss, depth in enumerate([0,1]):
@@ -234,7 +234,7 @@ def fig_SO_cdf(outfile:str):
         ax.axvline(1.1, color='black', linestyle=':')
 
         ax.set_xlim(0.5, 1.4)
-        ax.set_xlabel('Saturated Oxygen')
+        ax.set_xlabel('Oxygen Saturation')
         ax.set_ylabel('CDF')
                  #label=f'SO > {SO_cut}', log_scale=log_scale)
         ax.text(0.95, 0.05, f'depth={(depth+1)*10}m',
@@ -431,7 +431,7 @@ if __name__ == '__main__':
         flg = 0
         #flg += 2 ** 0  # 1 -- Joint PDFs of all 4 lines
         #flg += 2 ** 1  # 2 -- 
-        #flg += 2 ** 2  # 4 -- 
+        #flg += 2 ** 2  # 4 -- SO CDF
         #flg += 2 ** 3  # 8 -- SO vs N zoom
         #flg += 2 ** 4  # 16 -- SO vs N zoom
     else:
