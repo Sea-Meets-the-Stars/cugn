@@ -587,11 +587,12 @@ def fig_pivot_event(outfile:str, line:str, event:str, t_off,
     print(f"Saved: {outfile}")
 
 
-def fig_percentiles(outfile:str, line:str, metric='N'):
+def fig_percentiles(outfile:str, line:str, metric='N',
+                    xlabel:str=None, ylabel:str=None):
 
     # Figure
     #sns.set()
-    fig = plt.figure(figsize=(12,12))
+    fig = plt.figure(figsize=(13,12))
     plt.clf()
 
     if metric == 'N':
@@ -618,8 +619,14 @@ def fig_percentiles(outfile:str, line:str, metric='N'):
                                         bins=100)) 
 
     # Axes                                 
-    jg.ax_joint.set_ylabel(f'{metric} Percentile')
-    jg.ax_joint.set_xlabel('DO Percentile')
+    if ylabel is not None:
+        jg.ax_joint.set_ylabel(ylabel)
+    else:
+        jg.ax_joint.set_ylabel(f'{metric} Percentile')
+    if xlabel is None:
+        jg.ax_joint.set_xlabel('DO Percentile')
+    else:
+        jg.ax_joint.set_xlabel(xlabel)
     plot_utils.set_fontsize(jg.ax_joint, 14)
 
         # Submplit
@@ -628,7 +635,7 @@ def fig_percentiles(outfile:str, line:str, metric='N'):
         #fig.add_subfigure(jg)
 
     
-    #gs.tight_layout(fig)
+    plt.tight_layout()
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
@@ -1416,6 +1423,7 @@ def main(flg):
         fig_percentiles(f'fig_percentiles_{line}_{metric}.png', 
                         line, metric=metric)
 
+
     # SO CDF
     if flg & (2**5):
         pass
@@ -1523,6 +1531,14 @@ def main(flg):
         fig_pivot_event('fig_pivot_event.png', 
                         line, event, t_off)
 
+    if flg & (2**32):
+        # For Pivot
+        line = '90.0'
+        metric = 'N'
+        fig_percentiles(f'fig_pivot_percentiles_{line}_{metric}.png', 
+                        line, metric=metric,
+                        xlabel=r'percentile(DO$_i$ | $T_i,S_i$)',
+                        ylabel=r'percentile(Buoyancy$_i$ | $T_i,S_i$)')
 
 # Command line execution
 if __name__ == '__main__':
@@ -1549,7 +1565,8 @@ if __name__ == '__main__':
         #flg += 2 ** 16  # Joint PDF: T, DO on Line 90
         #flg += 2 ** 17  # Joint PDF: N, SO on Line 90, z<=30m
 
-        flg += 2 ** 31  # Pivot event figure
+        #flg += 2 ** 31  # Pivot event figure
+        flg += 2 ** 32  # Pivot percentile
     else:
         flg = sys.argv[1]
 
