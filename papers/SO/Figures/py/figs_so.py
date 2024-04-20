@@ -433,11 +433,166 @@ def fig_event(outfile:str, line:str, event:str, t_off,
     print(f"Saved: {outfile}")
 
 
-def fig_percentiles(outfile:str, line:str, metric='N'):
+def fig_pivot_event(outfile:str, line:str, event:str, t_off,
+    max_depth=8):
+
+    # Load
+    items = load_up(line)
+    grid_extrem = items[0]
+    ds = items[1]
+    times = items[2]
+    grid_tbl = items[3]
+
+
+    # Grab event
+    tevent = pandas.Timestamp(event)
+    tmin = tevent - pandas.Timedelta(t_off)
+    tmax = tevent + pandas.Timedelta(t_off)
+
+    # DOY
+    otimes = pandas.to_datetime(ds.time.data)
+    in_event = (ds.time >= tmin) & (ds.time <= tmax)
+    p_min = ds.profile[in_event].values.min() 
+    p_max = ds.profile[in_event].values.max() 
+
+    x_lims = mdates.date2num([otimes[p_min], otimes[p_max]])
+
+
+    csz = 13.
+    # Figure
+    fig = plt.figure(figsize=(12,4))
+    #gs = gridspec.GridSpec(1,9)
+
+    all_ax = []
+    ypos = 0.15
+    axw = 0.27
+    axh = 0.8
+
+    # #########################################################3
+    # DO
+    #ax_DO = plt.subplot(gs[0:2])
+    ax_DO = fig.add_axes([0.05, ypos, axw, axh])
+    all_ax.append(ax_DO)
+    # Contours from SO
+    im = ax_DO.imshow(ds.doxy.data[0:max_depth, p_min:p_max],
+        extent=[x_lims[0], x_lims[1], max_depth*10, 0.],
+                   cmap='Purples', vmin=200., aspect='auto')
+    #im = ax.imshow(ds.SO.data[0:max_depth, p_min:p_max],
+    #    extent=[x_lims[0], x_lims[1], max_depth*10, 0.],
+    #               cmap='jet', vmin=0.9, aspect='auto')
+    #cax,kw = mpl.colorbar.make_axes([ax_DO])
+    cbaxes = plt.colorbar(im, orientation='horizontal', location='top')
+    #cbaxes = plt.colorbar(im, pad=0., fraction=0.030)
+    cbaxes.set_label('Dissolved Oxygen', fontsize=csz)
+
+    # #########################################################3
+    # SO contour
+    SOs = ds.SO.data[0:max_depth, p_min:p_max]
+    Np = p_max-p_min
+    X = np.outer(np.ones(max_depth), 
+        np.linspace(x_lims[0], x_lims[1], Np))
+    Y = np.outer(np.linspace(0., max_depth*10., max_depth), 
+                 np.ones(Np))
+
+    #ax_DO.contour(X, Y, SOs, levels=[1., 1.1],
+    #           colors=['white', 'black'], linewidths=1.5)
+    ax_DO.contour(X, Y, SOs, levels=[1.],
+               colors=['black'], linewidths=1.5)
+
+    '''
+    # #########################################################3
+    # DO percentile contour
+    in_view = (grid_tbl.profile >= p_min) & (grid_tbl.profile <= p_max) & (
+        grid_tbl.depth < max_depth)
+    doxy_p_grid = np.zeros_like(ds.N.data)
+    for _, row in grid_tbl[in_view].iterrows():
+        doxy_p_grid[row.depth, row.profile] = row.doxy_p
+    ax_DO.contour(X, Y, doxy_p_grid[0:max_depth, p_min:p_max], 
+                  levels=[90., 95.],
+               colors=['white', 'black'], linewidths=1.5)
+    '''
+
+    # #########################################################3
+    # N
+    #ax_N = plt.subplot(gs[3:5])
+    ax_N = fig.add_axes([0.37, ypos, axw, axh])
+    all_ax.append(ax_N)
+    im_N = ax_N.imshow(ds.N.data[0:max_depth, p_min:p_max],
+        extent=[x_lims[0], x_lims[1], max_depth*10, 0.],
+                   cmap='Blues', aspect='auto')
+
+    # N percentile
+    grid_utils.find_perc(grid_tbl, 'N')
+    Np_grid = np.zeros_like(ds.N.data)
+
+    in_view = (grid_tbl.profile >= p_min) & (grid_tbl.profile <= p_max) & (
+        grid_tbl.depth < max_depth)
+    # Painful loop, but do it
+    #embed(header='214 of figs_so')
+    for _, row in grid_tbl[in_view].iterrows():
+        Np_grid[row.depth, row.profile] = row.N_p
+
+    #ax_N.contour(X, Y, Np_grid[0:max_depth, p_min:p_max], 
+    #              levels=[90., 95.],
+    #           colors=['gray', 'black'], linewidths=1.5)
+    
+
+    #cax,kw = mpl.colorbar.make_axes([ax_N])
+    #cbaxes = plt.colorbar(im_N, cax=cax, **kw)
+    cbaxes = plt.colorbar(im_N, orientation='horizontal', location='top')
+    cbaxes.set_label('Buoyancy (cycles/hour)', fontsize=csz)
+
+    # T
+    #ax_T = plt.subplot(gs[6:])
+    ax_T = fig.add_axes([0.70, ypos, axw, axh])
+    all_ax.append(ax_T)
+    im_T = ax_T.imshow(ds.temperature.data[0:max_depth, p_min:p_max],
+        extent=[x_lims[0], x_lims[1], max_depth*10, 0.],
+                   cmap='jet', aspect='auto')
+    #cax,kw = mpl.colorbar.make_axes([ax_T])
+    cbaxes = plt.colorbar(im_T, orientation='horizontal', location='top')
+    #cbaxes = plt.colorbar(im_T, cax=cax, **kw)
+    cbaxes.set_label('Temperature (deg C)', fontsize=csz)
+
+    '''
+    # Chl
+    ax_C = plt.subplot(gs[3])
+    im_C = ax_C.imshow(ds.chlorophyll_a.data[0:max_depth, p_min:p_max],
+        extent=[x_lims[0], x_lims[1], max_depth*10, 0.],
+                   cmap='Greens', aspect='auto')
+    cax,kw = mpl.colorbar.make_axes([ax_C])
+    cbaxes = plt.colorbar(im_C, cax=cax, **kw)
+    cbaxes.set_label('Chla', fontsize=csz)
+    '''
+
+
+    # Finish
+    for ss, ax in enumerate(all_ax):
+        #
+        if ss == 0:
+            ax.set_ylabel('Depth (m)')
+        #ax.set_xlabel('Date')
+        # Axes
+        ax.xaxis_date()
+        #major_format = mdates.DateFormatter('%b')
+        #ax.xaxis.set_major_formatter(major_format)
+        ax.xaxis.set_major_locator(mdates.DayLocator(interval=7))
+
+        ax.tick_params(axis='x', rotation=20)
+        #ax.autofmt_xdate()
+        plot_utils.set_fontsize(ax, 14)
+
+    #plt.tight_layout(h_pad=0.3, w_pad=10.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+
+def fig_percentiles(outfile:str, line:str, metric='N',
+                    xlabel:str=None, ylabel:str=None):
 
     # Figure
     #sns.set()
-    fig = plt.figure(figsize=(12,12))
+    fig = plt.figure(figsize=(13,12))
     plt.clf()
 
     if metric == 'N':
@@ -464,8 +619,14 @@ def fig_percentiles(outfile:str, line:str, metric='N'):
                                         bins=100)) 
 
     # Axes                                 
-    jg.ax_joint.set_ylabel(f'{metric} Percentile')
-    jg.ax_joint.set_xlabel('DO Percentile')
+    if ylabel is not None:
+        jg.ax_joint.set_ylabel(ylabel)
+    else:
+        jg.ax_joint.set_ylabel(f'{metric} Percentile')
+    if xlabel is None:
+        jg.ax_joint.set_xlabel('DO Percentile')
+    else:
+        jg.ax_joint.set_xlabel(xlabel)
     plot_utils.set_fontsize(jg.ax_joint, 14)
 
         # Submplit
@@ -474,7 +635,7 @@ def fig_percentiles(outfile:str, line:str, metric='N'):
         #fig.add_subfigure(jg)
 
     
-    #gs.tight_layout(fig)
+    plt.tight_layout()
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
@@ -1357,28 +1518,30 @@ def main(flg):
 
     # Events
     if flg & (2**3):
-        line = '90'
+        line = '90.0'
         eventA = ('2020-09-01', '2W') # Sub-surface
         eventB = ('2019-08-15', '3W')
         eventC = ('2019-03-02', '1W') # Spring
         eventD = ('2021-08-10', '3W') # Surface but abrupt start
 
-        line = '80'
-        eventA = ('2020-08-11', '1W') # 
-        eventB = ('2022-02-15', '2W') # 
+        #line = '80'
+        #eventA = ('2020-08-11', '1W') # 
+        #eventB = ('2022-02-15', '2W') # 
 
 
         #for event in [eventA, eventB, eventC]:
-        for event, t_off in [eventB]:
+        for event, t_off in [eventA]:
             fig_event(f'fig_event_{line}_{event}.png', line, event, t_off)
 
     # Percentiles of DO and N
     if flg & (2**4):
-        line = '80'
+        #line = '80'
+        line = '90.0'
         metric = 'N'
-        metric = 'chla'
+        #metric = 'chla'
         fig_percentiles(f'fig_percentiles_{line}_{metric}.png', 
                         line, metric=metric)
+
 
     # SO CDF
     if flg & (2**5):
@@ -1483,6 +1646,22 @@ def main(flg):
         fig_joint_line90(outfile='fig_joint_NSO_line90.png',
                          metric='N', xmetric='SO')
 
+    # Joint PDF: T, DO on Line 90
+    if flg & (2**31):
+        line = '90.0'
+        eventA = ('2020-09-01', '2W') # Sub-surface
+        event, t_off = eventA
+        fig_pivot_event('fig_pivot_event.png', 
+                        line, event, t_off)
+
+    if flg & (2**32):
+        # For Pivot
+        line = '90.0'
+        metric = 'N'
+        fig_percentiles(f'fig_pivot_percentiles_{line}_{metric}.png', 
+                        line, metric=metric,
+                        xlabel=r'percentile(DO$_i$ | $T_i,S_i$)',
+                        ylabel=r'percentile(Buoyancy$_i$ | $T_i,S_i$)')
 
 # Command line execution
 if __name__ == '__main__':
@@ -1509,6 +1688,8 @@ if __name__ == '__main__':
         #flg += 2 ** 15  # Low SO, joint DO
         #flg += 2 ** 16  # Joint PDF: T, DO on Line 90
         #flg += 2 ** 17  # Joint PDF: N, SO on Line 90, z<=30m
+        #flg += 2 ** 31  # Pivot event figure
+        flg += 2 ** 32  # Pivot percentile
     else:
         flg = sys.argv[1]
 

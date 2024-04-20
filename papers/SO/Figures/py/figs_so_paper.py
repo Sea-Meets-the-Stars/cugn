@@ -226,7 +226,7 @@ def fig_SO_cdf(outfile:str):
             SOvals = grid_plt.SO.values[srt]
             cdf = np.arange(len(grid_plt.SO))/len(grid_plt.SO)
             idx = np.argmin(np.abs(cdf-0.95))
-            print(f'95% for {line} {depth}m: {grid_plt.SO.values[srt][idx]}')
+            print(f'95% for {line} {(depth+1)*10}m: {grid_plt.SO.values[srt][idx]}')
 
             # Percent satisfying the criterion
             high = grid_plt.SO > 1.1
@@ -240,7 +240,7 @@ def fig_SO_cdf(outfile:str):
         ax.axvline(1.1, color='black', linestyle=':')
 
         ax.set_xlim(0.5, 1.4)
-        ax.set_xlabel('Saturated Oxygen')
+        ax.set_xlabel('Oxygen Saturation')
         ax.set_ylabel('CDF')
                  #label=f'SO > {SO_cut}', log_scale=log_scale)
         ax.text(0.95, 0.05, f'depth={(depth+1)*10}m',
