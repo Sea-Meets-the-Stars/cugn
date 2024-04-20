@@ -202,7 +202,7 @@ def fig_SO_cdf(outfile:str):
 
     for clr, line in zip(line_colors, lines):
         # Load
-        items = cugn_io.load_up(line, skip_dist=True)
+        items = cugn_io.load_up(line)#, skip_dist=True)
         grid_extrem = items[0]
         ds = items[1]
         times = items[2]
@@ -223,9 +223,15 @@ def fig_SO_cdf(outfile:str):
 
             # Stats
             srt = np.argsort(grid_plt.SO.values)
+            SOvals = grid_plt.SO.values[srt]
             cdf = np.arange(len(grid_plt.SO))/len(grid_plt.SO)
             idx = np.argmin(np.abs(cdf-0.95))
             print(f'95% for {line} {depth}m: {grid_plt.SO.values[srt][idx]}')
+
+            # Percent satisfying the criterion
+            high = grid_plt.SO > 1.1
+            print(f'Percent SO > 1.1 for Line={line} {10*(depth+1)}m: {100.*np.sum(high)/len(SOvals):.1f}%')
+            
 
     # Finish
     for ss, depth in enumerate([0,1]):
@@ -250,7 +256,8 @@ def fig_SO_cdf(outfile:str):
 
 
 def fig_dist_doy(outfile:str, line:str, color:str,
-                 show_legend:bool=False):
+                 show_legend:bool=False, 
+                 clr_by_depth:bool=False):
 
     # Figure
     #sns.set()
@@ -273,9 +280,14 @@ def fig_dist_doy(outfile:str, line:str, color:str,
 
     # Scatter plot time
     markers = ['o','x','v','s','*']
+    clrs = ['k', 'r','b','g','purple']
     jg.ax_joint.cla()
 
     for depth in range(5):
+        if clr_by_depth:
+            clr = clrs[depth]
+        else:
+            clr = color
         at_depth = grid_extrem.depth == depth
         # Scatter plot
         if show_legend:
@@ -285,10 +297,12 @@ def fig_dist_doy(outfile:str, line:str, color:str,
         if depth != 1:
             fc = 'none'
         else:
-            fc = color
-        jg.ax_joint.scatter(grid_extrem[at_depth].dist, grid_extrem[at_depth].doy, 
+            fc = clr
+        jg.ax_joint.scatter(
+            grid_extrem[at_depth].dist, 
+            grid_extrem[at_depth].doy, 
             marker=markers[depth], label=label, facecolors=fc,
-            edgecolors=color)#, s=50.)
+            edgecolors=clr)#, s=50.)
     
     # Axes                                 
     jg.ax_joint.set_ylabel('DOY')
@@ -412,12 +426,13 @@ def main(flg):
             # Skip for now
             #if line == '56':
             #    continue
-            if line == '56':
+            if line == '56.0':
                 show_legend = True
             else:
                 show_legend = False
-            fig_dist_doy(f'fig_dist_doy_{line}.png', line, clr,
-                         show_legend=show_legend)
+            fig_dist_doy(f'fig_dist_doy_{line}.png', 
+                         line, clr, show_legend=show_legend,
+                         clr_by_depth=True)
 
     # Figure 4 -- SO vs. N
     if flg & (2**4):
@@ -431,8 +446,8 @@ if __name__ == '__main__':
         flg = 0
         #flg += 2 ** 0  # 1 -- Joint PDFs of all 4 lines
         #flg += 2 ** 1  # 2 -- 
-        #flg += 2 ** 2  # 4 -- 
-        #flg += 2 ** 3  # 8 -- SO vs N zoom
+        #flg += 2 ** 2  # 4 -- SO CDF
+        #flg += 2 ** 3  # 8 -- DOY vs. offshore distance
         #flg += 2 ** 4  # 16 -- SO vs N zoom
     else:
         flg = sys.argv[1]

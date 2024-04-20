@@ -4,16 +4,17 @@ import numpy as np
 
 import pandas
 
-from siosandbox.cugn import io as cugn_io
+from cugn import io as cugn_io
+from cugn import defs
 
 from IPython import embed
 
-lines =  ['56', '66', '80', '90']
+#lines =  ['56', '66', '80', '90']
 
 def frac_within_x_days(line:str, dt_days:int=5):
 
     # Load
-    items = cugn_io.load_up(line, skip_dist=True)
+    items = cugn_io.load_up(line)#, skip_dist=True)
     grid_extrem = items[0]
     times = items[2]
 
@@ -38,11 +39,11 @@ def frac_within_x_days(line:str, dt_days:int=5):
         if 'dist' not in grid_extrem.keys():
             continue
         imin_time = np.argmin(np.abs(itime - other_times))
-        ddist = np.abs(grid_extrem.dist[grid_extrem.profile != prof][imin_time] 
-                       - grid_extrem.dist[grid_extrem.profile == prof][0])
+        #embed(header='45 of so_analysis.py')
+        ddist = np.abs(grid_extrem.dist[grid_extrem.profile != prof].values[imin_time] 
+                       - grid_extrem.dist[grid_extrem.profile == prof].values[0])
         if ddist > max_ddist:
             max_ddist = ddist
-        embed(header='45 of so_analysis.py')
 
     # Stats
     print("=====================================")
@@ -55,5 +56,5 @@ def frac_within_x_days(line:str, dt_days:int=5):
 if __name__ == '__main__':
 
     # Clustering
-    for line in lines:
+    for line in defs.lines:
         frac_within_x_days(line, dt_days=1)
