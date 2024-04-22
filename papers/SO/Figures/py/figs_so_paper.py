@@ -338,6 +338,7 @@ def fig_SO_vs_N_zoom():
                 N=np.linspace(1., 25, 50),
                 CT=np.linspace(4, 22.5, 50))
 
+    cmap = 'Blues'
     line = '90'
     xvar = 'SO'
     yvar = 'N'
@@ -378,7 +379,7 @@ def fig_SO_vs_N_zoom():
     else:
     #    img = ax.pcolormesh(xedges, yedges, consv_pdf.T, 
         img = ax.pcolormesh(xedges, yedges, counts.T, 
-                            cmap='jet')#, vmin=0.01)    
+                            cmap=cmap)#, vmin=0.01)    
         gen_cb(img, r'$counts('+f'{xvar},{yvar})$')
 
 

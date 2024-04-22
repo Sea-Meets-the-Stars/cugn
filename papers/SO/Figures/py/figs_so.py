@@ -42,6 +42,8 @@ def gen_cb(img, lbl, csz = 17.):
 
 ylbl_dict = {'doxy': 'DO (umol/kg)', 
                  'T': 'Temperature (deg C)',
+                 'CT': 'Temperature (deg C)',
+                 'SA': 'Salinity (psu)',
                  'N': 'Buoyancy (cycles/hour)',
                  'dist': 'Distance from shore (km)',
                  'chla': 'Chlorophyll-a (mg/m^3)'}
@@ -824,26 +826,20 @@ def fig_multi_scatter_event(outfile:str, line:str,
     fig = plt.figure(figsize=(10,8))
     plt.clf()
 
-    gs = gridspec.GridSpec(3,2)
-
-    ylbl_dict = {'doxy': 'DO (umol/kg)', 
-                 'T': 'Temperature (deg C)',
-                 'CT': 'Temperature (deg C)',
-                 'SA': 'Salinity (psu)',
-                 'N': 'Buoyancy (cycles/hour)',
-                 'dist': 'Distance from shore (km)',
-                 'chla': 'Chlorophyll-a (mg/m^3)'}
+    gs = gridspec.GridSpec(4,2)
 
     cnt = 0
+    metrics = ['doxy', 'CT', 'N', 'chla']
+    nsub = len(metrics)
     #for clr, z in zip(['b', 'g', 'r'], [10, 20, 30]):
     for col, z in enumerate([10, 20]):
         depth = z//10 - 1
 
         # Axis
         for ii, clr, metric in zip(
-            np.arange(3),
-            ['purple', 'red', 'blue'],
-            ['doxy', 'CT', 'N']):#, 'chla', 
+            np.arange(nsub),
+            ['purple', 'red', 'blue', 'green'],
+            metrics):
 
             #row = col*3 + ii
             row = ii
@@ -859,6 +855,9 @@ def fig_multi_scatter_event(outfile:str, line:str,
 
             # yvals
             srt = np.argsort(ds.time[ds_in_event].values)
+            # Save the date
+            if ii == 0:
+                sv_dates = ds.time[ds_in_event][srt]
             plt_depth = depth
             if metric in ['dist']:
                 dist, _ = cugn_utils.calc_dist_offset(
@@ -901,12 +900,14 @@ def fig_multi_scatter_event(outfile:str, line:str,
             ax.set_ylabel(ylbl_dict[metric])
             plot_utils.set_fontsize(ax, 16.)
             #if z < 20 or ii < 3:
-            if ii < 3:
+            if ii < (nsub-1):
                 ax.set_xticklabels([])
+                ax.tick_params(bottom=False)
             else:
                 #plt.locator_params(axis='x', nbins=5)  # Show at most 5 ticks
                 ax.tick_params(axis='x', rotation=45)
 
+            ax.set_xlim(sv_dates[0], sv_dates[-1])
 
             cnt += 1
 
@@ -1569,7 +1570,7 @@ def main(flg):
         eventA = ('2020-09-01', '10D') # Sub-surface
         eventB = ('2019-08-15', '3W') # Surface but abrupt start
         eventC = ('2019-03-02', '1W') # Spring
-        eventD = ('2021-08-13', '15D') # 
+        eventD = ('2021-08-13', '15D') # Intense, near shore episode
 
         # Bad
         eventN = ('2020-05-10', '2W') # 
@@ -1579,7 +1580,7 @@ def main(flg):
         #eventA = ('2020-08-11', '1W') # 
         #eventB = ('2022-02-15', '2W') # 
 
-        event, t_off = eventA
+        event, t_off = eventD
         # Original
         #fig_scatter_event(f'fig_scatter_event_{line}_{event}.png', 
         #             line, event, t_off)
@@ -1694,7 +1695,7 @@ if __name__ == '__main__':
         #flg += 2 ** 11  # 2048 -- joint PDF of X,Y
         #flg += 2 ** 12  # 4096 -- SO(z,d)
         #flg += 2 ** 13  # 8192 -- Absolute N, DO, Chl, T
-        flg += 2 ** 14  # -- Relative to interannual
+        #flg += 2 ** 14  # -- Relative to interannual
         #flg += 2 ** 15  # Low SO, joint DO
         #flg += 2 ** 16  # Joint PDF: T, DO on Line 90
         #flg += 2 ** 17  # Joint PDF: N, SO on Line 90, z<=30m
