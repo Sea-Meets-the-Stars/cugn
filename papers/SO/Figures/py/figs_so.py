@@ -40,6 +40,13 @@ def gen_cb(img, lbl, csz = 17.):
     cbaxes.set_label(lbl, fontsize=csz)
     cbaxes.ax.tick_params(labelsize=csz)
 
+ylbl_dict = {'doxy': 'DO (umol/kg)', 
+                 'T': 'Temperature (deg C)',
+                 'N': 'Buoyancy (cycles/hour)',
+                 'dist': 'Distance from shore (km)',
+                 'chla': 'Chlorophyll-a (mg/m^3)'}
+
+
 
 class SeabornFig2Grid():
 
@@ -731,12 +738,6 @@ def fig_multi_z_event(outfile:str, line:str,
 
     gs = gridspec.GridSpec(3,5)
 
-    ylbl_dict = {'doxy': 'DO (umol/kg)', 
-                 'T': 'Temperature (deg C)',
-                 'N': 'Buoyancy (cycles/hour)',
-                 'dist': 'Distance from shore (km)',
-                 'chla': 'Chlorophyll-a (mg/m^3)'}
-
     cnt = 0
     for clr, z in zip(['b', 'g', 'r'], [10, 20, 30]):
         depth = z//10 - 1
@@ -1309,6 +1310,7 @@ def fig_relative(outfile:str, line:str, metric='N',
     elif metric == 'T':
         cmap = 'Oranges'
         ann_var = 't'
+        ylbl = 'Temperature Anomaly (deg C)'
     elif metric == 'SA':
         cmap = 'Greys'
     
@@ -1332,28 +1334,34 @@ def fig_relative(outfile:str, line:str, metric='N',
                     kind='hex', bins='log', # gridsize=250, #xscale='log',
                     # mincnt=1,
                     cmap=cmap,
-                    marginal_kws=dict(fill=False, color='black', 
+                    marginal_kws=dict(fill=False, color='orange', 
                                         bins=100)) 
 
     # Axes                                 
-    jg.ax_joint.set_ylabel(r'$\Delta$'+f'{metric}')
-    jg.ax_joint.set_xlabel('DO')
+    jg.ax_joint.set_ylabel(ylbl)
+    jg.ax_joint.set_xlabel(ylbl_dict['doxy'])
     plot_utils.set_fontsize(jg.ax_joint, 14)
 
     # Extrema
-    annual = annualcycle.calc_for_grid(grid_extrem, line,
-                                       ann_var)
+    ex_clr = 'r'
+    annual = annualcycle.calc_for_grid(grid_extrem, line, ann_var)
     grid_extrem[f'D{metric}'] = grid_extrem[metric] - annual
 
     jg.ax_joint.plot(grid_extrem.doxy, 
                      grid_extrem[f'D{metric}'], 
-                     'ro', ms=1)
-    jg.ax_joint.text(0.95, 0.05, f'depth <= {max_depth}m',
-                transform=jg.ax_joint.transAxes,
-                fontsize=14., ha='right', color='k')
+                     ex_clr+'o', ms=0.5)
+    #jg.ax_joint.text(0.95, 0.05, r'$z \le $'+f'{max_depth}m',
+    #            transform=jg.ax_joint.transAxes,
+    #            fontsize=14., ha='right', color='k')
     jg.ax_joint.text(0.05, 0.95, f'Line: {line}',
                 transform=jg.ax_joint.transAxes,
                 fontsize=14., ha='left', color='k')
+
+    # Add another histogram?
+    #jg.ax_marg_y.cla()
+    jg.ax_marg_y.hist(grid_extrem[f'D{metric}'], color=ex_clr, #alpha=0.5, 
+                      bins=20, fill=False, edgecolor=ex_clr,
+                      range=(-5., 5.), orientation='horizontal')
 
     # Label
     
@@ -1686,12 +1694,12 @@ if __name__ == '__main__':
         #flg += 2 ** 11  # 2048 -- joint PDF of X,Y
         #flg += 2 ** 12  # 4096 -- SO(z,d)
         #flg += 2 ** 13  # 8192 -- Absolute N, DO, Chl, T
-        #flg += 2 ** 14  # -- Relative to interannual
+        flg += 2 ** 14  # -- Relative to interannual
         #flg += 2 ** 15  # Low SO, joint DO
         #flg += 2 ** 16  # Joint PDF: T, DO on Line 90
         #flg += 2 ** 17  # Joint PDF: N, SO on Line 90, z<=30m
         #flg += 2 ** 31  # Pivot event figure
-        flg += 2 ** 32  # Pivot percentile
+        #flg += 2 ** 32  # Pivot percentile
     else:
         flg = sys.argv[1]
 
