@@ -648,6 +648,45 @@ def fig_percentiles(outfile:str, line:str, metric='N',
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
+def fig_N_cdf(outfile:str, line:str):
+
+    # Load
+    items = load_up(line)
+    grid_extrem = items[0]
+    ds = items[1]
+    times = items[2]
+    grid_tbl = items[3]
+
+    cut_grid = (grid_tbl.depth <= 5) & np.isfinite(grid_tbl.N)
+
+    ctrl = grid_utils.grab_control_values(grid_extrem, grid_tbl[cut_grid], 'N', boost=5)
+
+    # CDFs
+    fig = plt.figure(figsize=(12,6))
+    plt.clf()
+    ax = plt.gca()
+
+    sns.ecdfplot(x=grid_extrem.N, ax=ax, label='Extrema', color='b')
+    sns.ecdfplot(x=ctrl, ax=ax, label='Control', color='k')
+
+
+    # Finish
+    #ax.axvline(1., color='black', linestyle='--')
+    #ax.axvline(1.1, color='black', linestyle=':')
+    ax.legend(fontsize=15., loc='upper left')
+
+    #ax.set_xlim(0.5, 1.4)
+    ax.set_xlabel('N')
+    ax.set_ylabel('CDF')
+    #ax.text(0.95, 0.05, f'depth={(depth+1)*10}m',
+    #        transform=ax.transAxes,
+    #        fontsize=15, ha='right', color='k')
+    plot_utils.set_fontsize(ax, 15)
+
+
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
 def fig_scatter_event(outfile:str, line:str, 
                       event:str, t_off):
 
@@ -1657,6 +1696,11 @@ def main(flg):
         fig_joint_line90(outfile='fig_joint_NSO_line90.png',
                          metric='N', xmetric='SO')
 
+    # N CDF
+    if flg & (2**18):
+        line = '90.0'
+        fig_N_cdf(f'fig_N_CDF_{line}.png', line)
+
     # Joint PDF: T, DO on Line 90
     if flg & (2**31):
         line = '90.0'
@@ -1699,6 +1743,10 @@ if __name__ == '__main__':
         #flg += 2 ** 15  # Low SO, joint DO
         #flg += 2 ** 16  # Joint PDF: T, DO on Line 90
         #flg += 2 ** 17  # Joint PDF: N, SO on Line 90, z<=30m
+
+        flg += 2 ** 18  # N CDF
+
+
         #flg += 2 ** 31  # Pivot event figure
         #flg += 2 ** 32  # Pivot percentile
     else:
