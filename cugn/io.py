@@ -42,7 +42,7 @@ def load_line(line:str):
 
 
 
-def load_up(line:str):#, skip_dist:bool=False):
+def load_up(line:str, gextrem:str='high'):
     # Load
     items = load_line(line)
     grid_tbl = items['grid_tbl']
@@ -51,11 +51,20 @@ def load_up(line:str):#, skip_dist:bool=False):
     # Fill
     grid_utils.fill_in_grid(grid_tbl, ds)
 
-    # Cluters 
-    perc = 80.  # Low enough to grab them all
+    # Extrema
+    if gextrem == 'high':
+        perc = 80.  # Low enough to grab them all
+    elif gextrem == 'low':
+        perc = 49.  # High enough to grab them all (Line 56.0)
+    else:
+        raise IOError("Bad gextrem input")
     grid_outliers, _, _ = grid_utils.gen_outliers(line, perc)
 
-    extrem = grid_outliers.SO > 1.1
+    if gextrem == 'high':
+        extrem = grid_outliers.SO > 1.1
+    elif gextrem == 'low':
+        extrem = (grid_outliers.SO < 0.9) & (
+            grid_outliers.depth <= 1)
     grid_extrem = grid_outliers[extrem].copy()
     times = pandas.to_datetime(grid_extrem.time.values)
 

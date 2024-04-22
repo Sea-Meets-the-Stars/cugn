@@ -256,6 +256,7 @@ def fig_SO_cdf(outfile:str):
 
 
 def fig_dist_doy(outfile:str, line:str, color:str,
+                 gextrem:str='high',
                  show_legend:bool=False, 
                  clr_by_depth:bool=False):
 
@@ -266,7 +267,7 @@ def fig_dist_doy(outfile:str, line:str, color:str,
     #ax = plt.gca()
 
     # Load
-    items = cugn_io.load_up(line)
+    items = cugn_io.load_up(line, gextrem=gextrem)
     grid_extrem = items[0]
     #ds = items[1]
     #times = items[2]
@@ -430,8 +431,15 @@ def main(flg):
                 show_legend = True
             else:
                 show_legend = False
-            fig_dist_doy(f'fig_dist_doy_{line}.png', 
-                         line, clr, show_legend=show_legend,
+            # High
+            #fig_dist_doy(f'fig_dist_doy_{line}.png', 
+            #             line, clr, show_legend=show_legend,
+            #             clr_by_depth=True)
+            # Low
+            fig_dist_doy(f'fig_dist_doy_low_{line}.png', 
+                         line, clr, 
+                         gextrem='low',
+                         show_legend=show_legend,
                          clr_by_depth=True)
 
     # Figure 4 -- SO vs. N

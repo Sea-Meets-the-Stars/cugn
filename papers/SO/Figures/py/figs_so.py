@@ -827,6 +827,8 @@ def fig_multi_scatter_event(outfile:str, line:str,
 
     ylbl_dict = {'doxy': 'DO (umol/kg)', 
                  'T': 'Temperature (deg C)',
+                 'CT': 'Temperature (deg C)',
+                 'SA': 'Salinity (psu)',
                  'N': 'Buoyancy (cycles/hour)',
                  'dist': 'Distance from shore (km)',
                  'chla': 'Chlorophyll-a (mg/m^3)'}
@@ -840,14 +842,14 @@ def fig_multi_scatter_event(outfile:str, line:str,
         for ii, clr, metric in zip(
             np.arange(3),
             ['purple', 'red', 'blue'],
-            ['doxy', 'T', 'N']):#, 'chla', 
+            ['doxy', 'CT', 'N']):#, 'chla', 
 
             #row = col*3 + ii
             row = ii
             ax = plt.subplot(gs[row:row+1, col:col+1])
                                      #'dist']):
             if metric == 'T':
-                ds_metric = 'temperature'
+                ds_metric = 'CT'
             elif metric == 'chla':
                 ds_metric = 'chlorophyll_a'
             else:
