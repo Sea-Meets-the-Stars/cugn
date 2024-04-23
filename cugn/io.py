@@ -4,9 +4,10 @@ import numpy as np
 import xarray
 import pandas
 
-from siosandbox.cugn import grid_utils
-from siosandbox.cugn import clusters
-from siosandbox.cugn import utils as cugn_utils
+from cugn import grid_utils
+from cugn import clusters
+from cugn import utils as cugn_utils
+
 from siosandbox import cat_utils
 
 from IPython import embed

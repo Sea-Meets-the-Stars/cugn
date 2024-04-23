@@ -26,6 +26,9 @@ import seaborn as sns
 
 import pandas
 
+from gsw import conversions, density
+import gsw
+
 from cugn import grid_utils
 from cugn import defs as cugn_defs
 from cugn import io as cugn_io
@@ -41,8 +44,10 @@ line_cmaps = cugn_defs.line_cmaps
 labels = dict(
     SA='Absolute Salinity (g/kg)',
     sigma0='Potential Density (kg/m$^3$)',
-    CT='Conservative Temperature (C)',
-    DO='Dissolved Oxygen (umol/kg)',
+    CT='Conservative Temperature (deg C)',
+    SO='Oxygen Saturation',
+    N='Buoyancy (cycles/hour)',
+    DO='Dissolved Oxygen '+r'$(\mu$'+'mol/kg)',
 )
 
 def gen_cb(img, lbl, csz = 17.):
@@ -314,18 +319,23 @@ def fig_dist_doy(outfile:str, line:str, color:str,
     xmax = max(500., grid_extrem.dist.max())
     jg.ax_joint.set_xlim(xmin, xmax)
 
-    fsz = 14.
+    fsz = 17.
     jg.ax_joint.text(0.95, 0.95, f'Line {line}',
                 transform=jg.ax_joint.transAxes,
                 fontsize=fsz, ha='right', color='k')
-    plot_utils.set_fontsize(jg.ax_joint, 14)
+    plot_utils.set_fontsize(jg.ax_joint, 19)
     if show_legend:
         jg.ax_joint.legend(fontsize=13., loc='lower right')
 
     
-    #gs.tight_layout(fig)
+    #plt.tight_layout(h_pad=0.3, w_pad=10.3)
+    plt.tight_layout(pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
+
+    # Stats
+    not_winter = (grid_extrem.doy > 50) & (grid_extrem.doy < 300)
+    print(f'Percent of profiles not in winter [50-300]: {100.*np.sum(not_winter)/len(grid_extrem):.1f}%')
 
 # ######################################################
 def fig_SO_vs_N_zoom():
@@ -401,6 +411,144 @@ def fig_SO_vs_N_zoom():
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
+
+
+def fig_joint_line90(outfile:str='fig_joint_TDO_line90.png', 
+                     line:str='90.0', metric='CT',
+                     xmetric:str='doxy',
+                     max_depth:int=30):
+    # Figure
+    #sns.set()
+    fig = plt.figure(figsize=(12,12))
+    plt.clf()
+
+    if metric == 'N':
+        cmap = 'Blues'
+    elif metric == 'chla':
+        cmap = 'Greens'
+    elif metric == 'CT':
+        cmap = 'Oranges'
+    elif metric == 'SA':
+        cmap = 'Greys'
+    
+    # Load
+    items = cugn_io.load_up(line)
+    grid_extrem = items[0]
+    ds = items[1]
+    times = items[2]
+    grid_tbl = items[3]
+
+    # Cut on depth
+    grid_tbl = grid_tbl[grid_tbl.depth <= (max_depth//10 - 1)]
+
+    # SO calculation
+
+    # Canonical values
+    z=20. # m
+    SA = 33.7  
+    DO = 260.
+
+    lat = np.nanmedian(ds.lat.data)
+    lon = np.nanmedian(ds.lon.data)
+    p = conversions.p_from_z(-z, lat)
+
+    # Interpolators
+    CTs = np.linspace(12., 22., 100)
+    OCs = gsw.O2sol(SA, CTs, p, lon, lat)
+
+    jg = sns.jointplot(data=grid_tbl, x=xmetric,
+                    y=metric,
+                    kind='hex', bins='log', # gridsize=250, #xscale='log',
+                    # mincnt=1,
+                    cmap=cmap,
+                    marginal_kws=dict(fill=False, color='black', 
+                                        bins=100)) 
+
+    # Axes                                 
+    plot_utils.set_fontsize(jg.ax_joint, 14)
+
+    # SO
+    if metric == 'CT':
+        jg.ax_joint.plot(OCs, CTs, 'k:', lw=1)
+
+
+    # Labels
+    #lbl = r'$z \le $'+f'{max_depth}m'
+    jg.ax_joint.text(0.95, 0.05, f'z <= {max_depth}m',
+                transform=jg.ax_joint.transAxes,
+                fontsize=14., ha='right', color='k')
+    jg.ax_joint.text(0.05, 0.95, f'Line: {line}',
+                transform=jg.ax_joint.transAxes,
+                fontsize=14., ha='left', color='k')
+    jg.ax_joint.set_xlabel(labels['DO'])
+    jg.ax_joint.set_ylabel(labels[metric])
+
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+def fig_joint_pdf_NSO(line:str, max_depth:int=30):
+
+    def gen_cb(img, lbl, csz = 17.):
+        cbaxes = plt.colorbar(img, pad=0., fraction=0.030)
+        cbaxes.set_label(lbl, fontsize=csz)
+        cbaxes.ax.tick_params(labelsize=csz)
+
+    xvar = 'SO'
+    yvar = 'N'
+    outfile = f'fig_jointPDF_{line}_SO_N.png'
+
+    # Load
+    items = cugn_io.load_line(line)
+    ds = items['ds']
+
+    # PDF
+    _, xedges, yedges, counts, grid_indices, _, _ = grid_utils.gen_grid(
+        ds, axes=(xvar, yvar), stat='mean', variable='doxy', 
+        max_depth=max_depth)
+
+    # PDF
+    dx = xedges[1] - xedges[0]
+    dy = yedges[1] - yedges[0]
+
+    p_norm = np.sum(counts) * (dx * dy)
+    consv_pdf = counts / p_norm
+    #embed(header='764 of figs_so')
+
+    fig = plt.figure(figsize=(12,10))
+    plt.clf()
+    ax = plt.gca()
+
+    # #####################################################
+    # PDF
+    img = ax.pcolormesh(xedges, yedges, np.log10(consv_pdf.T), 
+                            cmap='Blues')
+    gen_cb(img, r'$\log_{10} \, p('+f'{xvar},{yvar})$')
+
+    # ##########################################################
+    tsz = 21.
+    ax.text(0.05, 0.9, f'Line: {line}',
+                transform=ax.transAxes,
+                fontsize=tsz, ha='left', color='k')
+    ax.text(0.05, 0.8, f'z <= {max_depth}m',
+                transform=ax.transAxes,
+                fontsize=tsz, ha='left', color='k')
+
+    ax.set_xlabel(labels[xvar])
+    ax.set_ylabel(labels[yvar])
+
+    ax.set_xlim(0.4, 1.6)
+    ax.set_ylim(0., 22.)
+    # Set x-axis interval to 0.5
+    #ax.xaxis.set_major_locator(MultipleLocator(0.5))
+    # 
+    fsz = 23.
+    plot_utils.set_fontsize(ax, fsz)
+    
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+
 def main(flg):
     if flg== 'all':
         flg= np.sum(np.array([2 ** ii for ii in range(25)]))
@@ -413,17 +561,22 @@ def main(flg):
         fig_joint_pdfs()
         fig_joint_pdfs(use_density=True)
 
-    # Figure 2 -- average DO, SO 
+    # Joint PDF: T, DO on Line 90
     if flg & (2**1):
-        line = '90'
-        fig_mean_DO_SO(line)
+        fig_joint_line90()
 
-    # Figure 3 -- SO CDFs
+    # Figure 3  Joint PDF: T, DO on Line 90
     if flg & (2**2):
+        line = '90'
+        fig_joint_pdf_NSO(line)
+
+    # Figure 4 -- SO CDFs
+    if flg & (2**3):
         fig_SO_cdf('fig_SO_cdf.png')
 
-    # Figure 3 -- DOY vs Offshore distance
-    if flg & (2**3):
+
+    # Figure 5 -- DOY vs Offshore distance
+    if flg & (2**4):
         for line, clr in zip(lines, line_colors):
             # Skip for now
             #if line == '56':
@@ -433,19 +586,30 @@ def main(flg):
             else:
                 show_legend = False
             # High
-            #fig_dist_doy(f'fig_dist_doy_{line}.png', 
-            #             line, clr, show_legend=show_legend,
-            #             clr_by_depth=True)
-            # Low
-            fig_dist_doy(f'fig_dist_doy_low_{line}.png', 
-                         line, clr, 
-                         gextrem='low',
-                         show_legend=show_legend,
+            fig_dist_doy(f'fig_dist_doy_{line}.png', 
+                         line, clr, show_legend=show_legend,
                          clr_by_depth=True)
+            # Low
+            #fig_dist_doy(f'fig_dist_doy_low_{line}.png', 
+            #             line, clr, 
+            #             gextrem='low',
+            #             show_legend=show_legend,
+            #             clr_by_depth=True)
 
     # Figure 4 -- SO vs. N
-    if flg & (2**4):
+    if flg & (2**5):
         fig_SO_vs_N_zoom()
+
+    # Figure 2 -- average DO, SO 
+    if flg & (2**10):
+        line = '90'
+        fig_mean_DO_SO(line)
+
+    # Figure 2 -- T vs. DO
+    if flg & (2**11):
+        line = '90'
+        fig_mean_DO_SO(line)
+
 
 # Command line execution
 if __name__ == '__main__':
@@ -454,9 +618,11 @@ if __name__ == '__main__':
     if len(sys.argv) == 1:
         flg = 0
         #flg += 2 ** 0  # 1 -- Joint PDFs of all 4 lines
-        #flg += 2 ** 1  # 2 -- 
-        #flg += 2 ** 2  # 4 -- SO CDF
-        #flg += 2 ** 3  # 8 -- DOY vs. offshore distance
+        #flg += 2 ** 1  # 2 -- Joint PDF, T vs DO
+        #flg += 2 ** 2  # 4 -- Joint PDF, N vs SO
+        #flg += 2 ** 3  # 8 -- SO CDFs
+        #flg += 2 ** 4  # 16 -- Figure 5: DOY vs. offshore distance
+
         #flg += 2 ** 4  # 16 -- SO vs N zoom
     else:
         flg = sys.argv[1]

@@ -9,7 +9,7 @@ from scipy import stats
 import pandas
 
 from siosandbox import cat_utils
-from siosandbox.cugn import io as cugn_io
+from cugn import io as cugn_io
 
 from IPython import embed
 
@@ -22,7 +22,7 @@ default_bins = dict(SA=np.linspace(32.1, 34.8, 50),
 
 def gen_grid(ds:xarray.Dataset, axes:tuple=('SA', 'sigma0'),
             stat:str='median', bins:dict=None,
-            variable:str='doxy'):
+            variable:str='doxy', max_depth:int=None):
 
     # Default bins -- Line 90
     if bins is None:
@@ -32,6 +32,10 @@ def gen_grid(ds:xarray.Dataset, axes:tuple=('SA', 'sigma0'),
     xkey, ykey = axes
     
     gd = np.isfinite(ds[xkey]) & np.isfinite(ds[ykey]) & np.isfinite(ds[variable])
+    if max_depth is not None:
+        depths = np.outer(ds.depth.data, np.ones_like(ds.profile))
+        gd &= depths <= max_depth
+    
     if variable in ['depth']:
         var_data = np.outer(ds.depth.data, np.ones_like(ds.profile))
     else:

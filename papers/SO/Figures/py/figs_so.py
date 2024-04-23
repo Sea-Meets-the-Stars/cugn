@@ -41,14 +41,21 @@ def gen_cb(img, lbl, csz = 17.):
     cbaxes.set_label(lbl, fontsize=csz)
     cbaxes.ax.tick_params(labelsize=csz)
 
-ylbl_dict = {'doxy': 'DO (umol/kg)', 
+ylbl_dict = {'doxy': 'DO ('+r'$\mu$'+'mol/kg)', 
                  'T': 'Temperature (deg C)',
                  'CT': 'Temperature (deg C)',
-                 'SA': 'Salinity (psu)',
-                 'N': 'Buoyancy (cycles/hour)',
+                 'SA': 'Salinity (g/kg)',
+                 'N': 'Buoyancy frequency (cycles/hr)',
                  'dist': 'Distance from shore (km)',
-                 'chla': 'Chlorophyll-a (mg/m^3)'}
+                 'chla': 'Chl-a (mg/m'+r'$^3$'+')'}
 
+short_lbl = {'doxy': 'DO ('+r'$\mu$'+'mol/kg)', 
+                 'T': 'T (deg C)',
+                 'CT': 'T (deg C)',
+                 'SA': 'SA (g/kg)',
+                 'N': 'N (cycles/hr)',
+                 'dist': 'Distance from shore (km)',
+                 'chla': 'Chl-a (mg/m'+r'$^3$'+')'}
 
 
 class SeabornFig2Grid():
@@ -698,7 +705,7 @@ def fig_scatter_event(outfile:str, line:str,
                       event:str, t_off):
 
     # Load
-    items = load_up(line)
+    items = cugn_io.load_up(line)
     grid_extrem = items[0]
     ds = items[1]
     times = items[2]
@@ -759,7 +766,7 @@ def fig_multi_z_event(outfile:str, line:str,
                       event:str, t_off):
 
     # Load
-    items = load_up(line)
+    items = cugn_io.load_up(line)
     grid_extrem = items[0]
     ds = items[1]
     times = items[2]
@@ -875,7 +882,8 @@ def fig_multi_scatter_event(outfile:str, line:str,
     gs = gridspec.GridSpec(4,2)
 
     cnt = 0
-    metrics = ['doxy', 'CT', 'N', 'chla']
+    metrics = ['doxy', 'N', 'CT', 'chla']
+    clrs = ['purple', 'blue', 'red', 'green']
     nsub = len(metrics)
     #for clr, z in zip(['b', 'g', 'r'], [10, 20, 30]):
     for col, z in enumerate([10, 20]):
@@ -883,9 +891,7 @@ def fig_multi_scatter_event(outfile:str, line:str,
 
         # Axis
         for ii, clr, metric in zip(
-            np.arange(nsub),
-            ['purple', 'red', 'blue', 'green'],
-            metrics):
+            np.arange(nsub), clrs, metrics):
 
             #row = col*3 + ii
             row = ii
@@ -943,17 +949,23 @@ def fig_multi_scatter_event(outfile:str, line:str,
                     fontsize=20, ha='right', color='k')
 
             # Axes
-            ax.set_ylabel(ylbl_dict[metric])
-            plot_utils.set_fontsize(ax, 16.)
+            ax.set_ylabel(short_lbl[metric])
+            plot_utils.set_fontsize(ax, 14.)
             #if z < 20 or ii < 3:
             if ii < (nsub-1):
                 ax.set_xticklabels([])
                 ax.tick_params(bottom=False)
             else:
                 #plt.locator_params(axis='x', nbins=5)  # Show at most 5 ticks
+                #locator = mdates.MultipleLocator(2)
+                #ax.xaxis.set_major_locator(locator)
                 ax.tick_params(axis='x', rotation=45)
 
             ax.set_xlim(sv_dates[0], sv_dates[-1])
+            ax.xaxis.set_major_locator(mdates.DayLocator(interval=2))
+
+            # Add grid
+            ax.grid(True)
 
             cnt += 1
 
@@ -1475,79 +1487,6 @@ def fig_lowSO_jointDO(outfile:str, line:str='56.0',
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
-
-def fig_joint_line90(outfile:str='fig_joint_TDO_line90.png', 
-                     line:str='90.0', metric='T',
-                     xmetric:str='doxy',
-                     max_depth:int=30):
-    # Figure
-    #sns.set()
-    fig = plt.figure(figsize=(12,12))
-    plt.clf()
-
-    if metric == 'N':
-        cmap = 'Blues'
-    elif metric == 'chla':
-        cmap = 'Greens'
-    elif metric == 'T':
-        cmap = 'Oranges'
-    elif metric == 'SA':
-        cmap = 'Greys'
-    
-    # Load
-    items = load_up(line)
-    grid_extrem = items[0]
-    ds = items[1]
-    times = items[2]
-    grid_tbl = items[3]
-
-    # Cut on depth
-    grid_tbl = grid_tbl[grid_tbl.depth <= (max_depth//10 - 1)]
-
-    # SO calculation
-
-    # Canonical values
-    z=20. # m
-    SA = 33.7  
-    DO = 260.
-
-    lat = np.nanmedian(ds.lat.data)
-    lon = np.nanmedian(ds.lon.data)
-    p = conversions.p_from_z(-z, lat)
-
-    # Interpolators
-    CTs = np.linspace(12., 22., 100)
-    OCs = gsw.O2sol(SA, CTs, p, lon, lat)
-
-    jg = sns.jointplot(data=grid_tbl, x=xmetric,
-                    y=metric,
-                    kind='hex', bins='log', # gridsize=250, #xscale='log',
-                    # mincnt=1,
-                    cmap=cmap,
-                    marginal_kws=dict(fill=False, color='black', 
-                                        bins=100)) 
-
-    # Axes                                 
-    jg.ax_joint.set_ylabel(f'{metric}')
-    xlbl = 'DO' if xmetric == 'doxy' else xmetric
-    jg.ax_joint.set_xlabel(xlbl)
-    plot_utils.set_fontsize(jg.ax_joint, 14)
-
-    # SO
-    if metric == 'T':
-        jg.ax_joint.plot(OCs, CTs, 'k:', lw=1)
-
-    # Labels
-    jg.ax_joint.text(0.95, 0.05, f'depth <= {max_depth}m',
-                transform=jg.ax_joint.transAxes,
-                fontsize=14., ha='right', color='k')
-    jg.ax_joint.text(0.05, 0.95, f'Line: {line}',
-                transform=jg.ax_joint.transAxes,
-                fontsize=14., ha='left', color='k')
-
-    plt.savefig(outfile, dpi=300)
-    print(f"Saved: {outfile}")
-
 def main(flg):
     if flg== 'all':
         flg= np.sum(np.array([2 ** ii for ii in range(25)]))
@@ -1622,18 +1561,18 @@ def main(flg):
         eventN = ('2020-05-10', '2W') # 
         eventO = ('2022-03-01', '2W') # 
 
-        #line = '80.0'
-        #eventA = ('2020-08-11', '1W') # 
-        #eventB = ('2022-02-15', '2W') # 
+        line = '80.0'
+        #eventA = ('2020-08-11', '1W') # NO GOOD 
+        eventB = ('2022-02-15', '10D') # 
 
-        event, t_off = eventD
+        event, t_off = eventB
         # Original
         #fig_scatter_event(f'fig_scatter_event_{line}_{event}.png', 
         #             line, event, t_off)
         # Variation #2
         #fig_multi_z_event(f'fig_multi_z_event_{line}_{event}.png', 
         #             line, event, t_off)
-        # Variation #2
+        # Variation #3
         fig_multi_scatter_event(
             f'fig_multi_scatter_event_{line}_{event}.png', 
             line, event, t_off)
@@ -1694,11 +1633,8 @@ def main(flg):
         fig_lowSO_jointDO(f'fig_lowSO_{line}_{metric}.png', 
                         line, metric=metric)
 
-    # Joint PDF: T, DO on Line 90
-    if flg & (2**16):
-        fig_joint_line90()
 
-    # Joint PDF: T, DO on Line 90
+    # Joint PDF: N, SO on Line 90
     if flg & (2**17):
         fig_joint_line90(outfile='fig_joint_NSO_line90.png',
                          metric='N', xmetric='SO')
@@ -1772,7 +1708,7 @@ if __name__ == '__main__':
         #flg += 2 ** 17  # Joint PDF: N, SO on Line 90, z<=30m
 
         #flg += 2 ** 18  # N CDF
-        flg += 2 ** 19  # Sub-SO events
+        #flg += 2 ** 19  # Sub-SO events
 
 
         #flg += 2 ** 31  # Pivot event figure
