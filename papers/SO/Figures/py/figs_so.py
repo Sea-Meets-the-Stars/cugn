@@ -105,9 +105,10 @@ class SeabornFig2Grid():
     def _resize(self, evt=None):
         self.sg.fig.set_size_inches(self.fig.get_size_inches())
 
-def load_up(line):
+'''
+def load_up(line, get_extrem:str='high'):
     # Load
-    items = cugn_io.load_line(line)
+    items = cugn_io.load_line(line, gextrem)
     grid_tbl = items['grid_tbl']
     ds = items['ds']
 
@@ -149,6 +150,7 @@ def load_up(line):
     cluster_stats = clusters.cluster_stats(grid_extrem)
 
     return grid_extrem, ds, times, grid_tbl
+'''
 
 def fig_pdf_cdf(outfile:str, line, SO_cut:float=1.1):
 
@@ -837,10 +839,10 @@ def fig_multi_z_event(outfile:str, line:str,
 
 
 def fig_multi_scatter_event(outfile:str, line:str, 
-                      event:str, t_off):
+                      event:str, t_off, gextrem:str='high'):
 
     # Load
-    items = load_up(line)
+    items = cugn_io.load_up(line, gextrem=gextrem)
     grid_extrem = items[0]
     ds = items[1]
     times = items[2]
@@ -1701,6 +1703,25 @@ def main(flg):
         line = '90.0'
         fig_N_cdf(f'fig_N_CDF_{line}.png', line)
 
+    # Scatter events for Sub-SO
+    if flg & (2**19):
+        line = '56.0'
+        eventA = ('2020-09-12', '2W') # Sub-surface
+
+        event, t_off = eventA
+
+        # Original
+        #fig_scatter_event(f'fig_scatter_event_{line}_{event}.png', 
+        #             line, event, t_off)
+        # Variation #2
+        #fig_multi_z_event(f'fig_multi_z_event_{line}_{event}.png', 
+        #             line, event, t_off)
+        # Variation #2
+        fig_multi_scatter_event(
+            f'fig_multi_scatter_event_low_{line}_{event}.png', 
+            line, event, t_off, gextrem='low')
+
+
     # Joint PDF: T, DO on Line 90
     if flg & (2**31):
         line = '90.0'
@@ -1744,7 +1765,8 @@ if __name__ == '__main__':
         #flg += 2 ** 16  # Joint PDF: T, DO on Line 90
         #flg += 2 ** 17  # Joint PDF: N, SO on Line 90, z<=30m
 
-        flg += 2 ** 18  # N CDF
+        #flg += 2 ** 18  # N CDF
+        flg += 2 ** 19  # Sub-SO events
 
 
         #flg += 2 ** 31  # Pivot event figure
