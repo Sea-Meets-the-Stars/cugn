@@ -28,6 +28,7 @@ from cugn import grid_utils
 from cugn import utils as cugn_utils
 from cugn import io as cugn_io
 from cugn import annualcycle
+from cugn import defs
 
 from gsw import conversions, density
 import gsw
@@ -648,40 +649,44 @@ def fig_percentiles(outfile:str, line:str, metric='N',
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
-def fig_N_cdf(outfile:str, line:str):
-
-    # Load
-    items = load_up(line)
-    grid_extrem = items[0]
-    ds = items[1]
-    times = items[2]
-    grid_tbl = items[3]
-
-    cut_grid = (grid_tbl.depth <= 5) & np.isfinite(grid_tbl.N)
-
-    ctrl = grid_utils.grab_control_values(grid_extrem, grid_tbl[cut_grid], 'N', boost=5)
+def fig_extrema_cdfs(outfile:str='fig_N_cdfs.png', metric:str='N'):
 
     # CDFs
-    fig = plt.figure(figsize=(12,6))
+    fig = plt.figure(figsize=(8,6))
     plt.clf()
-    ax = plt.gca()
+    gs = gridspec.GridSpec(2,2)
 
-    sns.ecdfplot(x=grid_extrem.N, ax=ax, label='Extrema', color='b')
-    sns.ecdfplot(x=ctrl, ax=ax, label='Control', color='k')
+    for ss, line in enumerate(defs.lines):
+        # Load
+        items = load_up(line)
+        grid_extrem = items[0]
+        ds = items[1]
+        times = items[2]
+        grid_tbl = items[3]
+
+        cut_grid = (grid_tbl.depth <= 5) & np.isfinite(grid_tbl[metric])
+
+        ctrl = grid_utils.grab_control_values(grid_extrem, grid_tbl[cut_grid], metric, boost=5)
 
 
-    # Finish
-    #ax.axvline(1., color='black', linestyle='--')
-    #ax.axvline(1.1, color='black', linestyle=':')
-    ax.legend(fontsize=15., loc='upper left')
+        ax = plt.subplot(gs[ss])
 
-    #ax.set_xlim(0.5, 1.4)
-    ax.set_xlabel('N')
-    ax.set_ylabel('CDF')
-    #ax.text(0.95, 0.05, f'depth={(depth+1)*10}m',
-    #        transform=ax.transAxes,
-    #        fontsize=15, ha='right', color='k')
-    plot_utils.set_fontsize(ax, 15)
+        sns.ecdfplot(x=grid_extrem[metric], ax=ax, label='Extrema', color=defs.line_colors[ss])
+        sns.ecdfplot(x=ctrl, ax=ax, label='Control', color='k', ls='--')
+
+
+        # Finish
+        #ax.axvline(1., color='black', linestyle='--')
+        #ax.axvline(1.1, color='black', linestyle=':')
+        ax.legend(fontsize=15., loc='upper left')
+
+        #ax.set_xlim(0.5, 1.4)
+        ax.set_xlabel(metric)
+        ax.set_ylabel('CDF')
+        ax.text(0.95, 0.05, f'Line: {line}', 
+                transform=ax.transAxes,
+                fontsize=15, ha='right', color='k')
+        plot_utils.set_fontsize(ax, 15)
 
 
     plt.savefig(outfile, dpi=300)
@@ -1698,11 +1703,12 @@ def main(flg):
 
     # N CDF
     if flg & (2**18):
-        line = '90.0'
-        fig_N_cdf(f'fig_N_CDF_{line}.png', line)
+        #fig_extrema_cdfs()
+        fig_extrema_cdfs('fig_chla_cdfs.png', metric='chla')
 
     # Joint PDF: T, DO on Line 90
     if flg & (2**31):
+        #line = '90.0'
         line = '90.0'
         eventA = ('2020-09-01', '2W') # Sub-surface
         event, t_off = eventA
