@@ -658,16 +658,17 @@ def fig_percentiles(outfile:str, line:str, metric='N',
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
-def fig_extrema_cdfs(outfile:str='fig_N_cdfs.png', metric:str='N'):
+def fig_extrema_cdfs(outfile:str='fig_N_cdfs.png', metric:str='N',
+                     xyLine:tuple=(0.05, 0.90)):
 
     # CDFs
-    fig = plt.figure(figsize=(8,6))
+    fig = plt.figure(figsize=(7,7))
     plt.clf()
     gs = gridspec.GridSpec(2,2)
 
     for ss, line in enumerate(defs.lines):
         # Load
-        items = load_up(line)
+        items = cugn_io.load_up(line)
         grid_extrem = items[0]
         ds = items[1]
         times = items[2]
@@ -687,19 +688,27 @@ def fig_extrema_cdfs(outfile:str='fig_N_cdfs.png', metric:str='N'):
         # Finish
         #ax.axvline(1., color='black', linestyle='--')
         #ax.axvline(1.1, color='black', linestyle=':')
-        ax.legend(fontsize=15., loc='upper left')
+        lsz = 12.
+        ax.legend(fontsize=lsz, loc='lower right') #loc='upper left')
 
         #ax.set_xlim(0.5, 1.4)
-        ax.set_xlabel(metric)
+        ax.set_xlabel(ylbl_dict[metric])
         ax.set_ylabel('CDF')
-        ax.text(0.95, 0.05, f'Line: {line}', 
+        ax.text(xyLine[0], xyLine[1], f'Line: {line}', 
                 transform=ax.transAxes,
-                fontsize=15, ha='right', color='k')
-        plot_utils.set_fontsize(ax, 15)
+                fontsize=lsz, ha='left', color='k')
+        plot_utils.set_fontsize(ax, 13)
 
+        # Stats
+        # Percentile of the extrema
+        val = np.nanpercentile(grid_extrem[metric], (10,90))
+        print(f'Line: {line} -- percentiles={val}')
 
+    plt.tight_layout(pad=0.8)#, w_pad=2.0)#, w_pad=0.8)
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
+
+    
 
 def fig_scatter_event(outfile:str, line:str, 
                       event:str, t_off):
@@ -1375,7 +1384,7 @@ def fig_relative(outfile:str, line:str, metric='N',
     
 
     # Load
-    items = load_up(line)
+    items = cugn_io.load_up(line)
     grid_extrem = items[0]
     ds = items[1]
     times = items[2]
@@ -1402,13 +1411,13 @@ def fig_relative(outfile:str, line:str, metric='N',
     plot_utils.set_fontsize(jg.ax_joint, 14)
 
     # Extrema
-    ex_clr = 'r'
+    ex_clr = 'gray'
     annual = annualcycle.calc_for_grid(grid_extrem, line, ann_var)
     grid_extrem[f'D{metric}'] = grid_extrem[metric] - annual
 
     jg.ax_joint.plot(grid_extrem.doxy, 
-                     grid_extrem[f'D{metric}'], 
-                     ex_clr+'o', ms=0.5)
+                     grid_extrem[f'D{metric}'],  'o',
+                     color=ex_clr, ms=0.5)
     #jg.ax_joint.text(0.95, 0.05, r'$z \le $'+f'{max_depth}m',
     #            transform=jg.ax_joint.transAxes,
     #            fontsize=14., ha='right', color='k')
@@ -1563,9 +1572,10 @@ def main(flg):
 
         line = '80.0'
         #eventA = ('2020-08-11', '1W') # NO GOOD 
-        eventB = ('2022-02-15', '10D') # 
+        #eventB = ('2022-02-15', '10D') # 
+        eventC = ('2022-06-25', '10D') # 
 
-        event, t_off = eventB
+        event, t_off = eventC
         # Original
         #fig_scatter_event(f'fig_scatter_event_{line}_{event}.png', 
         #             line, event, t_off)
@@ -1642,7 +1652,8 @@ def main(flg):
     # N CDF
     if flg & (2**18):
         #fig_extrema_cdfs()
-        fig_extrema_cdfs('fig_chla_cdfs.png', metric='chla')
+        fig_extrema_cdfs('fig_chla_cdfs.png', metric='chla',
+                         xyLine=(0.7, 0.4))
 
     # Scatter events for Sub-SO
     if flg & (2**19):
@@ -1707,7 +1718,7 @@ if __name__ == '__main__':
         #flg += 2 ** 16  # Joint PDF: T, DO on Line 90
         #flg += 2 ** 17  # Joint PDF: N, SO on Line 90, z<=30m
 
-        #flg += 2 ** 18  # N CDF
+        flg += 2 ** 18  # N CDF
         #flg += 2 ** 19  # Sub-SO events
 
 
