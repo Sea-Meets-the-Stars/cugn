@@ -57,15 +57,23 @@ def load_up(line:str, gextrem:str='high'):
         perc = 80.  # Low enough to grab them all
     elif gextrem == 'low':
         perc = 49.  # High enough to grab them all (Line 56.0)
+    elif gextrem == 'low_noperc':
+        perc = 50.
     else:
         raise IOError("Bad gextrem input")
-    grid_outliers, _, _ = grid_utils.gen_outliers(line, perc)
+    grid_outliers, tmp, _ = grid_utils.gen_outliers(line, perc)
 
     if gextrem == 'high':
         extrem = grid_outliers.SO > 1.1
     elif gextrem == 'low':
         extrem = (grid_outliers.SO < 0.9) & (
             grid_outliers.depth <= 1)
+    elif gextrem == 'low_noperc':
+        grid_outliers = grid_tbl.copy()
+        extrem = (grid_outliers.SO < 0.9) & (
+            grid_outliers.depth <= 1)
+    else:
+        raise IOError("Bad gextrem input")
     grid_extrem = grid_outliers[extrem].copy()
     times = pandas.to_datetime(grid_extrem.time.values)
 

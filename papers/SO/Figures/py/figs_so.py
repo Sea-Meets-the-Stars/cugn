@@ -53,6 +53,7 @@ short_lbl = {'doxy': 'DO ('+r'$\mu$'+'mol/kg)',
                  'T': 'T (deg C)',
                  'CT': 'T (deg C)',
                  'SA': 'SA (g/kg)',
+                 'SO': 'SO',
                  'N': 'N (cycles/hr)',
                  'dist': 'Distance from shore (km)',
                  'chla': 'Chl-a (mg/m'+r'$^3$'+')'}
@@ -888,11 +889,11 @@ def fig_multi_scatter_event(outfile:str, line:str,
     fig = plt.figure(figsize=(10,8))
     plt.clf()
 
-    gs = gridspec.GridSpec(4,2)
+    gs = gridspec.GridSpec(5,2)
 
     cnt = 0
-    metrics = ['doxy', 'N', 'CT', 'chla']
-    clrs = ['purple', 'blue', 'red', 'green']
+    metrics = ['SO', 'doxy', 'N', 'CT', 'chla']
+    clrs = ['gray', 'purple', 'blue', 'red', 'green']
     nsub = len(metrics)
     #for clr, z in zip(['b', 'g', 'r'], [10, 20, 30]):
     for col, z in enumerate([10, 20]):
@@ -1570,12 +1571,12 @@ def main(flg):
         eventN = ('2020-05-10', '2W') # 
         eventO = ('2022-03-01', '2W') # 
 
-        line = '80.0'
+        #line = '80.0'
         #eventA = ('2020-08-11', '1W') # NO GOOD 
         #eventB = ('2022-02-15', '10D') # 
         eventC = ('2022-06-25', '10D') # 
 
-        event, t_off = eventC
+        event, t_off = eventD
         # Original
         #fig_scatter_event(f'fig_scatter_event_{line}_{event}.png', 
         #             line, event, t_off)

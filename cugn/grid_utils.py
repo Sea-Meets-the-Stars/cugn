@@ -115,6 +115,7 @@ def gen_outliers(line:str, pcut:float):
     Args:
         line (str): line
         pcut (float): percentile cut
+            Taken as a high extremum if >50 else low
 
     Raises:
         IOError: _description_
@@ -132,7 +133,7 @@ def gen_outliers(line:str, pcut:float):
     if pcut > 50.:
         outliers = grid_tbl.doxy_p > pcut
     else:
-        raise IOError("Need to implement lower percentile")
+        outliers = grid_tbl.doxy_p < pcut
 
     grid_outliers = grid_tbl[outliers].copy()
 
