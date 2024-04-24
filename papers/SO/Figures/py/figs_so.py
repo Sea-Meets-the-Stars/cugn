@@ -20,9 +20,7 @@ import seaborn as sns
 
 import pandas
 
-from siosandbox.cugn import clusters
 from siosandbox import plot_utils
-from siosandbox import cat_utils
 
 from cugn import grid_utils
 from cugn import utils as cugn_utils

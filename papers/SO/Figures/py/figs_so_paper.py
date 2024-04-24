@@ -24,8 +24,6 @@ mpl.rcParams['font.family'] = 'stixgeneral'
 
 import seaborn as sns
 
-import pandas
-
 from gsw import conversions, density
 import gsw
 
@@ -337,6 +335,55 @@ def fig_dist_doy(outfile:str, line:str, color:str,
     not_winter = (grid_extrem.doy > 50) & (grid_extrem.doy < 300)
     print(f'Percent of profiles not in winter [50-300]: {100.*np.sum(not_winter)/len(grid_extrem):.1f}%')
 
+def fig_dist_doy_low(outfile:str='fig_dist_doy_low.png', 
+                 gextrem:str='low_noperc'):
+
+
+
+    fig = plt.figure(figsize=(10,12))
+    plt.clf()
+    gs = gridspec.GridSpec(4,2)
+
+    # DOY
+
+    # Load
+    for ss, line in enumerate(cugn_defs.lines):
+        items = cugn_io.load_up(line, gextrem=gextrem)
+        grid_extrem = items[0]
+
+        # DOY
+        ax_doy = plt.subplot(gs[ss, 0])
+        ax_doy.hist(grid_extrem.doy, bins=20,# histtype='step',
+                    color=cugn_defs.line_colors[ss], label=f'Line {line}', lw=2)
+        #
+        ax_doy.grid(True)
+        ax_doy.set_xlim(0., 366.)
+        if ss < 3:
+            ax_doy.set_xticklabels([])
+        else:
+            ax_doy.set_xlabel('DOY')
+        plot_utils.set_fontsize(ax_doy, 17)
+        ax_doy.set_ylabel('Count')
+
+        # Distance offshore
+        ax_doff = plt.subplot(gs[ss, 1])
+        ax_doff.hist(grid_extrem.dist, bins=20,# histtype='step',
+                    color=cugn_defs.line_colors[ss], label=f'Line {line}', lw=2)
+        #
+        ax_doff.grid(True)
+        ax_doff.set_xlim(0., 366.)
+        if ss < 3:
+            ax_doff.set_xticklabels([])
+        else:
+            ax_doff.set_xlabel('Distance Offshore (km)')
+        plot_utils.set_fontsize(ax_doff, 17)
+        ax_doff.set_ylabel('Count')
+
+    #plt.tight_layout(h_pad=0.3, w_pad=10.3)
+    plt.tight_layout(pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
 # ######################################################
 def fig_SO_vs_N_zoom():
     #def fig_joint_pdf(line:str, xvar:str, yvar:str):
@@ -610,6 +657,9 @@ def main(flg):
         line = '90'
         fig_mean_DO_SO(line)
 
+    # Figure 2 -- T vs. DO
+    if flg & (2**12):
+        fig_dist_doy_low()
 
 # Command line execution
 if __name__ == '__main__':
@@ -623,7 +673,8 @@ if __name__ == '__main__':
         #flg += 2 ** 3  # 8 -- SO CDFs
         #flg += 2 ** 4  # 16 -- Figure 5: DOY vs. offshore distance
 
-        #flg += 2 ** 4  # 16 -- SO vs N zoom
+        #flg += 2 ** 11  
+        flg += 2 ** 12  # Low histograms
     else:
         flg = sys.argv[1]
 
