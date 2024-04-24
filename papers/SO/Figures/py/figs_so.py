@@ -870,6 +870,9 @@ def fig_multi_scatter_event(outfile:str, line:str,
     times = items[2]
     grid_tbl = items[3]
 
+    # Grid extrem
+    #uni, n_uni = np.unique(grid_extrem.cluster, return_counts=True)
+
     # Grab event
     tevent = pandas.Timestamp(event)
     tmin = tevent - pandas.Timedelta(t_off)
@@ -892,7 +895,9 @@ def fig_multi_scatter_event(outfile:str, line:str,
     gs = gridspec.GridSpec(5,2)
 
     cnt = 0
+    #metrics = ['SO', 'doxy', 'N', 'CT', 'dist']
     metrics = ['SO', 'doxy', 'N', 'CT', 'chla']
+    #metrics = ['SO', 'doxy', 'N', 'CT', 'SA']
     clrs = ['gray', 'purple', 'blue', 'red', 'green']
     nsub = len(metrics)
     #for clr, z in zip(['b', 'g', 'r'], [10, 20, 30]):
@@ -1659,9 +1664,10 @@ def main(flg):
     # Scatter events for Sub-SO
     if flg & (2**19):
         line = '56.0'
-        eventA = ('2020-09-12', '2W') # Sub-surface
+        eventA = ('2020-09-12', '2W') 
+        eventB = ('2021-05-20', '2W') 
 
-        event, t_off = eventA
+        event, t_off = eventB
 
         # Original
         #fig_scatter_event(f'fig_scatter_event_{line}_{event}.png', 
@@ -1672,7 +1678,7 @@ def main(flg):
         # Variation #2
         fig_multi_scatter_event(
             f'fig_multi_scatter_event_low_{line}_{event}.png', 
-            line, event, t_off, gextrem='low')
+            line, event, t_off, gextrem='low_noperc')
 
 
     # Joint PDF: T, DO on Line 90
@@ -1719,7 +1725,7 @@ if __name__ == '__main__':
         #flg += 2 ** 16  # Joint PDF: T, DO on Line 90
         #flg += 2 ** 17  # Joint PDF: N, SO on Line 90, z<=30m
 
-        flg += 2 ** 18  # N CDF
+        #flg += 2 ** 18  # N CDF
         #flg += 2 ** 19  # Sub-SO events
 
 
