@@ -1506,6 +1506,87 @@ def fig_lowSO_jointDO(outfile:str, line:str='56.0',
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
+
+def fig_upwell_search(line:str, gextrem:str='high',
+                      minDT:int=20):
+
+    outfile = f'fig_upwell_search_{line}.png'
+    # Load
+    items = cugn_io.load_up(line, gextrem=gextrem)
+    grid_extrem = items[0]
+    ds = items[1]
+    times = items[2]
+    grid_tbl = items[3]
+
+    # Loop on the clusters 
+    uni_clusters = np.unique(grid_extrem.cluster)
+
+    dTs_ex = []  # Delta T for the extrema
+    dTs_sat = [] # Delta T for the saturated parels (not extreme)
+
+    for cluster in uni_clusters:
+        if cluster == -1:
+            continue
+
+        in_cluster = grid_extrem.cluster == cluster
+        g_cluster = grid_extrem[in_cluster].copy()
+
+        tmin = g_cluster.time.min()
+        tmax = g_cluster.time.max()
+        dt = (tmax - tmin).days
+
+        # Extend?
+        if dt < minDT:
+            nadd = (minDT - dt) / 2 + 1
+            tmin = tmin - pandas.Timedelta(f'{nadd}D')
+            tmax = tmax + pandas.Timedelta(f'{nadd}D')
+
+        # Unique depths
+        uni_depths = np.unique(g_cluster.depth)
+        for depth in uni_depths:
+            ds_in_event = (ds.time >= tmin) & (ds.time <= tmax) 
+
+            in_depth = g_cluster.depth == depth
+            if np.sum(in_depth) < 2:
+                continue
+            g_depth = g_cluster[in_depth]
+
+            # Calcualte the temperature
+            Ts = ds['CT'][depth, ds_in_event].values
+            # Reject NaNs
+            median_Ts = np.nanmedian(Ts)
+
+            dT = g_depth.CT.values - median_Ts
+            dTs_ex += list(dT)
+
+            # Saturation
+            SOs = ds['SO'][depth, ds_in_event]
+            sat = (SOs > 1.0) & (SOs < 1.1)
+            dT = Ts - median_Ts
+            dTs_sat += list(dT[sat])
+
+    # Histogram me
+    fig = plt.figure(figsize=(12,10))
+    plt.clf()
+    ax = plt.gca()
+
+    #embed(header='fig_upwell_search 1571')
+    sns.histplot(dTs_ex, ax=ax, bins=20, color='r', 
+                 fill=False, edgecolor='r', label='Extrema')
+    sns.histplot(dTs_sat, ax=ax, bins=20, color='b',
+                    fill=False, edgecolor='b', label='Saturated')
+
+    ax.set_xlabel('Temperature Anomaly (deg C)')
+    ax.set_ylabel('Count')
+
+    fsz = 17.
+    plot_utils.set_fontsize(ax, fsz)
+
+    ax.legend(fontsize=fsz)
+
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
 def main(flg):
     if flg== 'all':
         flg= np.sum(np.array([2 ** ii for ii in range(25)]))
@@ -1703,6 +1784,13 @@ def main(flg):
                         xlabel=r'percentile(DO$_i$ | $T_i,S_i$)',
                         ylabel=r'percentile(Buoyancy$_i$ | $T_i,S_i$)')
 
+    # Upwelling search
+    if flg & (2**33):
+        #line = '90.0'
+        line = '90.0'
+        fig_upwell_search(line, gextrem='high')
+
+
 # Command line execution
 if __name__ == '__main__':
     import sys
@@ -1735,6 +1823,7 @@ if __name__ == '__main__':
 
         #flg += 2 ** 31  # Pivot event figure
         #flg += 2 ** 32  # Pivot percentile
+        flg += 2 ** 33  # Search for upwelling
     else:
         flg = sys.argv[1]
 
