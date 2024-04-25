@@ -886,6 +886,14 @@ def fig_multi_scatter_event(outfile:str, line:str,
     print(f'Missions: {missions}')
     #print(f'Mission Profiles: {mission_profiles}')
 
+    dist, _ = cugn_utils.calc_dist_offset(
+                    line, ds.lon[ds_in_event].values, 
+                    ds.lat[ds_in_event].values)
+    imin = np.argmin(dist)
+
+    # Range of dist
+    print(f"Range of dist: {dist[0]} to {dist[-1]}")
+    print(f"Minimum dist = {dist.min()} at {ds.time[ds_in_event][imin]}")
 
     fig = plt.figure(figsize=(10,8))
     plt.clf()
@@ -901,6 +909,7 @@ def fig_multi_scatter_event(outfile:str, line:str,
     #for clr, z in zip(['b', 'g', 'r'], [10, 20, 30]):
     for col, z in enumerate([10, 20]):
         depth = z//10 - 1
+
 
         # Axis
         for ii, clr, metric in zip(
@@ -925,9 +934,6 @@ def fig_multi_scatter_event(outfile:str, line:str,
                 sv_dates = ds.time[ds_in_event][srt]
             plt_depth = depth
             if metric in ['dist']:
-                dist, _ = cugn_utils.calc_dist_offset(
-                    line, ds.lon[ds_in_event].values, 
-                    ds.lat[ds_in_event].values)
                 yvals = dist[srt]
             else:
                 yvals = ds[ds_metric][plt_depth,ds_in_event][srt]
@@ -1579,7 +1585,7 @@ def main(flg):
         #eventB = ('2022-02-15', '10D') # 
         eventC = ('2022-06-25', '10D') # 
 
-        event, t_off = eventD
+        event, t_off = eventA
         # Original
         #fig_scatter_event(f'fig_scatter_event_{line}_{event}.png', 
         #             line, event, t_off)

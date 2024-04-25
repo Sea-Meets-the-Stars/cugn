@@ -237,23 +237,25 @@ def fig_SO_cdf(outfile:str):
             
 
     # Finish
+    lsz = 17.
     for ss, depth in enumerate([0,1]):
         ax = plt.subplot(gs[ss])
-        ax.axvline(1., color='black', linestyle='--')
+        ax.axvline(1., color='black', linestyle='-')
         ax.axvline(1.1, color='black', linestyle=':')
 
         ax.set_xlim(0.5, 1.4)
         ax.set_xlabel('Oxygen Saturation')
         ax.set_ylabel('CDF')
                  #label=f'SO > {SO_cut}', log_scale=log_scale)
-        ax.text(0.95, 0.05, f'depth={(depth+1)*10}m',
+        ax.text(0.95, 0.05, f'z={(depth+1)*10}m',
                 transform=ax.transAxes,
-                fontsize=15, ha='right', color='k')
-        plot_utils.set_fontsize(ax, 15)
+                fontsize=lsz, ha='right', color='k')
+        plot_utils.set_fontsize(ax, lsz)
 
     ax = plt.subplot(gs[0])
     ax.legend(fontsize=15., loc='upper left')
 
+    plt.tight_layout(pad=0.5)#, h_pad=0.1, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
@@ -339,7 +341,7 @@ def fig_dist_doy_low(outfile:str='fig_dist_doy_low.png',
                  gextrem:str='low_noperc'):
 
 
-
+    # Start the figure
     fig = plt.figure(figsize=(10,12))
     plt.clf()
     gs = gridspec.GridSpec(4,2)
@@ -365,19 +367,28 @@ def fig_dist_doy_low(outfile:str='fig_dist_doy_low.png',
         plot_utils.set_fontsize(ax_doy, 17)
         ax_doy.set_ylabel('Count')
 
+        # Stats
+        in_spring = (grid_extrem.doy > 50) & (grid_extrem.doy < 200)
+        print(f'Line={line}: Percent of profiles with DOY=50-200: {100.*np.sum(in_spring)/len(grid_extrem):.1f}%')
+
+        # ##########################################################
         # Distance offshore
         ax_doff = plt.subplot(gs[ss, 1])
         ax_doff.hist(grid_extrem.dist, bins=20,# histtype='step',
                     color=cugn_defs.line_colors[ss], label=f'Line {line}', lw=2)
         #
         ax_doff.grid(True)
-        ax_doff.set_xlim(0., 366.)
+        ax_doff.set_xlim(-50., 250.)
         if ss < 3:
             ax_doff.set_xticklabels([])
         else:
             ax_doff.set_xlabel('Distance Offshore (km)')
         plot_utils.set_fontsize(ax_doff, 17)
         ax_doff.set_ylabel('Count')
+
+        # Stats
+        in_shore = grid_extrem.dist < 100.
+        print(f'Line={line}: Percent of profiles within 100km of shore: {100.*np.sum(in_shore)/len(grid_extrem):.1f}%')
 
     #plt.tight_layout(h_pad=0.3, w_pad=10.3)
     plt.tight_layout(pad=0.0, h_pad=0.0, w_pad=0.3)
@@ -569,10 +580,11 @@ def fig_joint_pdf_NSO(line:str, max_depth:int=30):
     # PDF
     img = ax.pcolormesh(xedges, yedges, np.log10(consv_pdf.T), 
                             cmap='Blues')
-    gen_cb(img, r'$\log_{10} \, p('+f'{xvar},{yvar})$')
+    gen_cb(img, r'$\log_{10} \, p('+f'{xvar},{yvar})$',
+           csz=19.)
 
     # ##########################################################
-    tsz = 21.
+    tsz = 25.
     ax.text(0.05, 0.9, f'Line: {line}',
                 transform=ax.transAxes,
                 fontsize=tsz, ha='left', color='k')
@@ -588,7 +600,7 @@ def fig_joint_pdf_NSO(line:str, max_depth:int=30):
     # Set x-axis interval to 0.5
     #ax.xaxis.set_major_locator(MultipleLocator(0.5))
     # 
-    fsz = 23.
+    fsz = 27.
     plot_utils.set_fontsize(ax, fsz)
     
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
