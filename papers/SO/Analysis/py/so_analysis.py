@@ -68,9 +68,31 @@ def frac_within_x_days(line:str, dt_days:int=5, dd_km=5.):
     print(f"Found {n_within_dd} of {n_prof} profiles within {dd_km} km")
     print(f"Frac dd = {n_within_dd/n_prof}")
 
+def count_clusters(line:str):
+
+    # Load
+    items = cugn_io.load_up(line)#, skip_dist=True)
+    grid_extrem = items[0]
+    times = items[2]
+
+    Dt = (times.max() - times.min()).days
+
+    # Number per year
+    uni_cluster = np.unique(grid_extrem.cluster)
+    nper_year = (uni_cluster.size - 1)/(Dt/365)
+
+    print(f"Line: {line} -- clusters per year = {nper_year}")
+    
+
 # Command line execution
 if __name__ == '__main__':
 
+    '''
     # Clustering
     for line in defs.lines:
         frac_within_x_days(line, dt_days=1, dd_km=7.)
+    '''
+
+    # Count em
+    for line in defs.lines:
+        count_clusters(line)

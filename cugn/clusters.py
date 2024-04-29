@@ -12,6 +12,7 @@ from IPython import embed
 
 def generate_clusters(grid_outliers:pandas.DataFrame,
                       time_scl:float=3.,
+                      doff_scl:float=10./3,
                       z_scl:float=5.):
     """ Generate clusters of outliers for a given line
     and percentage
@@ -35,8 +36,13 @@ def generate_clusters(grid_outliers:pandas.DataFrame,
     tscl = t / time_scl
 
     # Longitdue
-    dl = (grid_outliers.lon.max() - grid_outliers.lon) 
-    lscl = dl.values * 100 / dl.max()
+    #dl = (grid_outliers.lon.max() - grid_outliers.lon) 
+    #lscl = dl.values * 100 / dl.max()
+
+    # Distance from shore
+    doff = (grid_outliers.dist.max() - grid_outliers.dist) 
+    lscl = doff / doff_scl
+    #lscl = doff.values * 100 / doff.max()
 
     # Depth
     zscl = grid_outliers.z.values / z_scl
