@@ -966,6 +966,9 @@ def fig_multi_scatter_event(outfile:str, line:str,
                 ax.text(0.95, 0.05, f'z={z} m',
                     transform=ax.transAxes,
                     fontsize=20, ha='right', color='k')
+            elif metric == 'SO':
+                # Horizontal line at 1.1
+                ax.axhline(1.1, color='gray', linestyle='--')
 
             # Axes
             ax.set_ylabel(short_lbl[metric])

@@ -308,6 +308,7 @@ def fig_dist_doy(outfile:str, line:str, color:str,
             grid_extrem[at_depth].dist, 
             grid_extrem[at_depth].doy, 
             marker=markers[depth], label=label, facecolors=fc,
+            s=1., 
             edgecolors=clr)#, s=50.)
     
     # Axes                                 
@@ -645,15 +646,15 @@ def main(flg):
             else:
                 show_legend = False
             # High
-            #fig_dist_doy(f'fig_dist_doy_{line}.png', 
+            fig_dist_doy(f'fig_dist_doy_{line}.png', 
             #             line, clr, show_legend=show_legend,
-            #             clr_by_depth=True)
-            # Low
-            fig_dist_doy(f'fig_dist_doy_low_{line}.png', 
-                         line, clr, 
-                         gextrem='low_noperc',
-                         show_legend=show_legend,
                          clr_by_depth=True)
+            # Low
+            #fig_dist_doy(f'fig_dist_doy_low_{line}.png', 
+            #             line, clr, 
+            #             gextrem='low_noperc',
+            #             show_legend=show_legend,
+            #             clr_by_depth=True)
 
     # Figure 4 -- SO vs. N
     if flg & (2**5):
