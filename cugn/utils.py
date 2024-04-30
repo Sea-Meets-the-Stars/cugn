@@ -3,7 +3,19 @@
 import numpy as np
 
 def line_endpoints(line:str):
-    
+    """
+    Returns the longitude and latitude endpoints for a given line.
+
+    Parameters:
+        line (str): The line identifier.
+
+    Returns:
+        tuple: A tuple containing the longitude and latitude endpoints.
+
+    Raises:
+        ValueError: If the line identifier is not recognized.
+    """
+
     if line == '56.0':
         lonendpts = [-123.328, -126.204]
         latendpts = [38.502, 37.186]

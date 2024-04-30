@@ -936,7 +936,7 @@ def fig_multi_scatter_event(outfile:str, line:str,
             if metric in ['dist']:
                 yvals = dist[srt]
             else:
-                yvals = ds[ds_metric][plt_depth,ds_in_event][srt]
+                yvals = ds[ds_metric][plt_depth,ds_in_event][srt].values
 
             # Twin?
             axi = ax
@@ -955,11 +955,14 @@ def fig_multi_scatter_event(outfile:str, line:str,
                     yvals, edgecolor=clr,
                     facecolor='none', alpha=0.5, zorder=1)
 
-            #for depth, clr in zip(np.arange(3), ['b', 'g', 'r']):
+            # Plot extrema
             at_d = grid_extrem.depth[in_event] == depth
             axi.scatter(grid_extrem.time[in_event][at_d], 
                        grid_extrem[metric][in_event][at_d], 
                        color=clr, zorder=10)
+
+            # Debug
+            #embed(header='fig_multi_scatter_event 965')
 
             if metric == 'N':
                 ax.set_ylim(bottom=0.)
@@ -1679,7 +1682,7 @@ def main(flg):
         # Variation #3
         fig_multi_scatter_event(
             f'fig_multi_scatter_event_{line}_{event}.png', 
-            line, event, t_off)
+            line, event, t_off, gextrem='hi_noperc')
 
     # Scatter event
     if flg & (2**8):
