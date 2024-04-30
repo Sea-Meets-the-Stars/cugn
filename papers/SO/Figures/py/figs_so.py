@@ -859,10 +859,11 @@ def fig_multi_z_event(outfile:str, line:str,
 
 
 def fig_multi_scatter_event(outfile:str, line:str, 
-                      event:str, t_off, gextrem:str='high'):
+                      event:str, t_off, gextrem:str='high',
+                      ):
 
     # Load
-    items = cugn_io.load_up(line, gextrem=gextrem)
+    items = cugn_io.load_up(line, gextrem=gextrem, use_full=True)
     grid_extrem = items[0]
     ds = items[1]
     times = items[2]
@@ -929,18 +930,15 @@ def fig_multi_scatter_event(outfile:str, line:str,
                 ds_metric = metric
 
 
-            # yvals
-            srt = np.argsort(grid_depth.time[grid_in_event].values)
-            srt_ds = np.argsort(ds.time[ds_in_event].values)
             # Save the date
             if ii == 0:
                 #sv_dates = ds.time[ds_in_event][srt_ds]
-                sv_dates = grid_depth.time[grid_in_event].values[srt]
+                sv_dates = grid_depth.time[grid_in_event].values
             plt_depth = depth
             if metric in ['dist']:
-                yvals = dist[srt]
+                yvals = dist
             else:
-                yvals = grid_depth[metric][grid_in_event].values[srt]
+                yvals = grid_depth[metric][grid_in_event].values
                 #yvals = ds[ds_metric][plt_depth,ds_in_event][srt_ds].values
 
             # Twin?
@@ -957,15 +955,19 @@ def fig_multi_scatter_event(outfile:str, line:str,
 
             # Plot all
             #axi.scatter(ds.time[ds_in_event][srt], 
-            axi.scatter(grid_depth.time[grid_in_event].values[srt], 
+            axi.scatter(grid_depth.time[grid_in_event].values, 
                     yvals, edgecolor=clr,
                     facecolor='none', alpha=0.5, zorder=1)
 
             # Plot extrema
-            at_d = grid_extrem.depth[in_event] == depth
-            axi.scatter(grid_extrem.time[in_event][at_d], 
-                       grid_extrem[metric][in_event][at_d], 
-                       color=clr, zorder=10)
+            extrem = grid_depth.SO[grid_in_event].values > 1.1
+            axi.scatter(grid_depth.time[grid_in_event].values[extrem],
+                    yvals[extrem], color=clr,
+                    zorder=10)
+            #at_d = grid_extrem.depth[in_event] == depth
+            #axi.scatter(grid_extrem.time[in_event][at_d], 
+            #           grid_extrem[metric][in_event][at_d], 
+            #           color=clr, zorder=10)
 
             # Debug
             #embed(header='fig_multi_scatter_event 965')
@@ -1688,7 +1690,7 @@ def main(flg):
         # Variation #3
         fig_multi_scatter_event(
             f'fig_multi_scatter_event_{line}_{event}.png', 
-            line, event, t_off, gextrem='hi_noperc')
+            line, event, t_off)#, gextrem='hi_noperc')
 
     # Scatter event
     if flg & (2**8):
