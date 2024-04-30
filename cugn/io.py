@@ -17,21 +17,26 @@ data_path = os.getenv('CUGN')
 def line_files(line:str):
 
     datafile = os.path.join(data_path, f'CUGN_potential_line_{line[0:2]}.nc')
-    gridtbl_file = os.path.join(data_path, f'doxy_grid_line{line[0:2]}.parquet')
+    gridtbl_file_full = os.path.join(data_path, f'full_grid_line{line[0:2]}.parquet')
+    gridtbl_file_control = os.path.join(data_path, f'doxy_grid_line{line[0:2]}.parquet')
     edges_file = os.path.join(data_path, f'doxy_edges_line{line[0:2]}.npz')
 
     # dict em
     lfiles = dict(datafile=datafile, 
-                  gridtbl_file=gridtbl_file, 
+                  gridtbl_file_full=gridtbl_file_full, 
+                  gridtbl_file_control=gridtbl_file_control, 
                   edges_file=edges_file)
     # Return
     return lfiles
     
-def load_line(line:str):
+def load_line(line:str, use_full:bool=False):
     # Files
     lfiles = line_files(line)
 
-    grid_tbl = pandas.read_parquet(lfiles['gridtbl_file'])
+    if use_full:
+        grid_tbl = pandas.read_parquet(lfiles['gridtbl_file_full'])
+    else:   
+        grid_tbl = pandas.read_parquet(lfiles['gridtbl_file_control'])
     ds = xarray.load_dataset(lfiles['datafile'])
     edges = np.load(lfiles['edges_file'])
 
@@ -43,9 +48,9 @@ def load_line(line:str):
 
 
 
-def load_up(line:str, gextrem:str='high'):
+def load_up(line:str, gextrem:str='high', use_full:bool=False):
     # Load
-    items = load_line(line)
+    items = load_line(line, use_full=use_full)
     grid_tbl = items['grid_tbl']
     ds = items['ds']
 
@@ -83,13 +88,12 @@ def load_up(line:str, gextrem:str='high'):
     times = pandas.to_datetime(grid_extrem.time.values)
 
     # DEBUG
-    tmin = pandas.Timestamp('2020-08-22')
-    tmax = pandas.Timestamp('2020-09-11')
-    in_event = (times >= tmin) & (times <= tmax)
-    embed(header='cugn/io.py: 89')
-
-    ttimes = pandas.to_datetime(grid_tbl.time.values)
-    in_t = (ttimes >= tmin) & (ttimes <= tmax) & (grid_tbl.depth <= 1)
+    #tmin = pandas.Timestamp('2020-08-22')
+    #tmax = pandas.Timestamp('2020-09-11')
+    #in_event = (times >= tmin) & (times <= tmax)
+    #embed(header='cugn/io.py: 89')
+    #ttimes = pandas.to_datetime(grid_tbl.time.values)
+    #in_t = (ttimes >= tmin) & (ttimes <= tmax) & (grid_tbl.depth <= 1)
 
     # Fill in N_p, chla_p
     grid_utils.find_perc(grid_tbl, 'N')

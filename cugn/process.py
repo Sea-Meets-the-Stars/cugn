@@ -96,7 +96,7 @@ def add_gsw():
                    'acoustic_backscatter', 'doxy', 'CT', 'sigma0', 'SA', 'SO', 'N']
         if 'line_80' in spray_file:
             dist, _ = cugn_utils.calc_dist_offset(
-                '80', ds.lon.values, ds.lat.values)
+                '80.0', ds.lon.values, ds.lat.values)
             bad = dist < -50.
             # Zero em!!
             for key in dskeys:
@@ -155,6 +155,7 @@ def build_ds_grid(line_file:str, gridtbl_outfile:str, edges_outfile:str,
     grid_tbl.reset_index(inplace=True, drop=True)
 
     if debug:
+        grid_utils.fill_in_grid(grid_tbl, ds)
         tmin = pandas.Timestamp('2020-08-22')
         tmax = pandas.Timestamp('2020-09-11')
         ttimes = pandas.to_datetime(grid_tbl.time.values)
@@ -172,9 +173,10 @@ def build_ds_grid(line_file:str, gridtbl_outfile:str, edges_outfile:str,
     # Save
     if not debug:
         grid_tbl.to_parquet(gridtbl_outfile)
-        np.savez(edges_outfile, SA_edges=SA_edges, 
-             sigma_edges=sigma_edges,
-             counts=countsT)
+        if edges_outfile is not None:
+            np.savez(edges_outfile, SA_edges=SA_edges, 
+                sigma_edges=sigma_edges,
+                counts=countsT)
         print(f"Wrote: \n {gridtbl_outfile} \n {edges_outfile}")
 
 
@@ -182,15 +184,22 @@ def build_ds_grid(line_file:str, gridtbl_outfile:str, edges_outfile:str,
 if __name__ == '__main__':
 
     # Add potential density and salinity to the CUGN files
-    add_gsw()
+    #add_gsw()
 
     # Grids
     for line in cugn_defs.lines:
-        if line != '90.0':
-            continue
+        #if line != '90.0':
+        #    continue
         line_files = cugn_io.line_files(line)
 
+        # Control
         build_ds_grid(line_files['datafile'],
-            line_files['gridtbl_file'], 
+            line_files['gridtbl_file_control'], 
             line_files['edges_file'],
-            debug=True)
+            min_counts=50)
+
+        # Full
+        build_ds_grid(line_files['datafile'],
+            line_files['gridtbl_file_full'], 
+            None,
+            min_counts=0)

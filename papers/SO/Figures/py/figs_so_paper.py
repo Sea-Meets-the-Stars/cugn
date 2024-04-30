@@ -196,7 +196,7 @@ def fig_mean_DO_SO(line, outfile:str=None):
     print(f"Saved: {outfile}")
 
 
-def fig_SO_cdf(outfile:str):
+def fig_SO_cdf(outfile:str, use_full:bool=False):
 
     # Figure
     fig = plt.figure(figsize=(12,6))
@@ -205,7 +205,7 @@ def fig_SO_cdf(outfile:str):
 
     for clr, line in zip(line_colors, lines):
         # Load
-        items = cugn_io.load_up(line)#, skip_dist=True)
+        items = cugn_io.load_up(line, use_full=use_full)#, skip_dist=True)
         grid_extrem = items[0]
         ds = items[1]
         times = items[2]
@@ -213,7 +213,6 @@ def fig_SO_cdf(outfile:str):
 
         for ss, depth in enumerate([0,1]):
             ax = plt.subplot(gs[ss])
-            # Cut
             cut_depth = grid_tbl.depth == depth
             grid_plt = grid_tbl[cut_depth]
 
@@ -632,7 +631,7 @@ def main(flg):
 
     # Figure 4 -- SO CDFs
     if flg & (2**3):
-        fig_SO_cdf('fig_SO_cdf.png')
+        fig_SO_cdf('fig_SO_cdf.png', use_full=True)
 
 
     # Figure 5 -- DOY vs Offshore distance

@@ -879,6 +879,7 @@ def fig_multi_scatter_event(outfile:str, line:str,
     # In event
     in_event = (grid_extrem.time >= tmin) & (grid_extrem.time <= tmax)
     ds_in_event = (ds.time >= tmin) & (ds.time <= tmax)
+    grid_in_event = (grid_tbl.time >= tmin) & (grid_tbl.time <= tmax)
 
     # Mission
     missions = np.unique(ds.mission[ds_in_event].data)
@@ -910,6 +911,7 @@ def fig_multi_scatter_event(outfile:str, line:str,
     for col, z in enumerate([10, 20]):
         depth = z//10 - 1
 
+        grid_depth = grid_tbl[grid_tbl.depth == depth].copy()
 
         # Axis
         for ii, clr, metric in zip(
@@ -928,15 +930,18 @@ def fig_multi_scatter_event(outfile:str, line:str,
 
 
             # yvals
-            srt = np.argsort(ds.time[ds_in_event].values)
+            srt = np.argsort(grid_depth.time[grid_in_event].values)
+            srt_ds = np.argsort(ds.time[ds_in_event].values)
             # Save the date
             if ii == 0:
-                sv_dates = ds.time[ds_in_event][srt]
+                #sv_dates = ds.time[ds_in_event][srt_ds]
+                sv_dates = grid_depth.time[grid_in_event].values[srt]
             plt_depth = depth
             if metric in ['dist']:
                 yvals = dist[srt]
             else:
-                yvals = ds[ds_metric][plt_depth,ds_in_event][srt].values
+                yvals = grid_depth[metric][grid_in_event].values[srt]
+                #yvals = ds[ds_metric][plt_depth,ds_in_event][srt_ds].values
 
             # Twin?
             axi = ax
@@ -951,7 +956,8 @@ def fig_multi_scatter_event(outfile:str, line:str,
 
 
             # Plot all
-            axi.scatter(ds.time[ds_in_event][srt], 
+            #axi.scatter(ds.time[ds_in_event][srt], 
+            axi.scatter(grid_depth.time[grid_in_event].values[srt], 
                     yvals, edgecolor=clr,
                     facecolor='none', alpha=0.5, zorder=1)
 
@@ -1672,7 +1678,7 @@ def main(flg):
         #eventB = ('2022-02-15', '10D') # 
         eventC = ('2022-06-25', '10D') # 
 
-        event, t_off = eventA
+        event, t_off = eventD
         # Original
         #fig_scatter_event(f'fig_scatter_event_{line}_{event}.png', 
         #             line, event, t_off)
