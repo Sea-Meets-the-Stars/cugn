@@ -86,6 +86,21 @@ def count_clusters(line:str):
     # Return
     return uni_cluster.size - 1
     
+def count_profiles():
+
+    # Load
+    nprofs = 0
+    for line in defs.lines:
+        items = cugn_io.load_up(line)#, skip_dist=True)
+        grid_extrem = items[0]
+        ds = items[1]
+        times = items[2]
+        # Count
+        nprof = len(np.unique(ds.profile))
+        nprofs += nprof
+    #
+    print(f"Total number of profiles = {nprofs}")
+
 
 # Command line execution
 if __name__ == '__main__':
@@ -94,12 +109,14 @@ if __name__ == '__main__':
     # Clustering
     for line in defs.lines:
         frac_within_x_days(line, dt_days=1, dd_km=7.)
-    '''
 
     # Count em
     nclusters = 0
     for line in defs.lines:
         nc = count_clusters(line)
         nclusters += nc
-    #
     print(f"Total number of clusters = {nclusters}")
+    #
+    '''
+
+    count_profiles()
