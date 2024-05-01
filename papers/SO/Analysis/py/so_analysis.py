@@ -82,6 +82,9 @@ def count_clusters(line:str):
     nper_year = (uni_cluster.size - 1)/(Dt/365)
 
     print(f"Line: {line} -- clusters per year = {nper_year}")
+
+    # Return
+    return uni_cluster.size - 1
     
 
 # Command line execution
@@ -94,5 +97,9 @@ if __name__ == '__main__':
     '''
 
     # Count em
+    nclusters = 0
     for line in defs.lines:
-        count_clusters(line)
+        nc = count_clusters(line)
+        nclusters += nc
+    #
+    print(f"Total number of clusters = {nclusters}")

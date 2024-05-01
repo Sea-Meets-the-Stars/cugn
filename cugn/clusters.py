@@ -13,7 +13,8 @@ from IPython import embed
 def generate_clusters(grid_outliers:pandas.DataFrame,
                       time_scl:float=3.,
                       doff_scl:float=10./3,
-                      z_scl:float=5.):
+                      z_scl:float=5.,
+                      min_samples:int=10):
     """ Generate clusters of outliers for a given line
     and percentage
 
@@ -23,6 +24,8 @@ def generate_clusters(grid_outliers:pandas.DataFrame,
         grid_outliers (pandas.DataFrame): table of outliers
         time_scl (float, optional): _description_. Defaults to 3..
         z_scl (float, optional): _description_. Defaults to 5..
+        min_samples (int, optional): Minimum number of
+            objects for a cluster in DBSCAN. Defaults to 10.
 
     """
     # ###########
@@ -54,7 +57,7 @@ def generate_clusters(grid_outliers:pandas.DataFrame,
     X[:,2] = zscl
 
     # Fit
-    dbscan = DBSCAN(eps=3, min_samples=5)
+    dbscan = DBSCAN(eps=3, min_samples=min_samples)
     dbscan.fit(X)
     print(f"Found {len(np.unique(dbscan.labels_))} unique clusters")
 

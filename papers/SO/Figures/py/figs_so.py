@@ -25,7 +25,6 @@ from siosandbox import plot_utils
 from cugn import grid_utils
 from cugn import utils as cugn_utils
 from cugn import io as cugn_io
-from cugn import annualcycle
 from cugn import defs
 
 from gsw import conversions, density
@@ -656,58 +655,6 @@ def fig_percentiles(outfile:str, line:str, metric='N',
     plt.tight_layout()
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
-
-def fig_extrema_cdfs(outfile:str='fig_N_cdfs.png', metric:str='N',
-                     xyLine:tuple=(0.05, 0.90)):
-
-    # CDFs
-    fig = plt.figure(figsize=(7,7))
-    plt.clf()
-    gs = gridspec.GridSpec(2,2)
-
-    for ss, line in enumerate(defs.lines):
-        # Load
-        items = cugn_io.load_up(line)
-        grid_extrem = items[0]
-        ds = items[1]
-        times = items[2]
-        grid_tbl = items[3]
-
-        cut_grid = (grid_tbl.depth <= 5) & np.isfinite(grid_tbl[metric])
-
-        ctrl = grid_utils.grab_control_values(grid_extrem, grid_tbl[cut_grid], metric, boost=5)
-
-
-        ax = plt.subplot(gs[ss])
-
-        sns.ecdfplot(x=grid_extrem[metric], ax=ax, label='Extrema', color=defs.line_colors[ss])
-        sns.ecdfplot(x=ctrl, ax=ax, label='Control', color='k', ls='--')
-
-
-        # Finish
-        #ax.axvline(1., color='black', linestyle='--')
-        #ax.axvline(1.1, color='black', linestyle=':')
-        lsz = 12.
-        ax.legend(fontsize=lsz, loc='lower right') #loc='upper left')
-
-        #ax.set_xlim(0.5, 1.4)
-        ax.set_xlabel(ylbl_dict[metric])
-        ax.set_ylabel('CDF')
-        ax.text(xyLine[0], xyLine[1], f'Line: {line}', 
-                transform=ax.transAxes,
-                fontsize=lsz, ha='left', color='k')
-        plot_utils.set_fontsize(ax, 13)
-
-        # Stats
-        # Percentile of the extrema
-        val = np.nanpercentile(grid_extrem[metric], (10,90))
-        print(f'Line: {line} -- percentiles={val}')
-
-    plt.tight_layout(pad=0.8)#, w_pad=2.0)#, w_pad=0.8)
-    plt.savefig(outfile, dpi=300)
-    print(f"Saved: {outfile}")
-
-    
 
 def fig_scatter_event(outfile:str, line:str, 
                       event:str, t_off):
@@ -1387,79 +1334,6 @@ def fig_absolute(outfile:str, line:str, metric='N',
     print(f"Saved: {outfile}")
 
 
-def fig_relative(outfile:str, line:str, metric='N',
-                 max_depth:int=20):
-
-    # Figure
-    #sns.set()
-    fig = plt.figure(figsize=(12,12))
-    plt.clf()
-
-    if metric == 'N':
-        cmap = 'Blues'
-    elif metric == 'chla':
-        cmap = 'Greens'
-    elif metric == 'T':
-        cmap = 'Oranges'
-        ann_var = 't'
-        ylbl = 'Temperature Anomaly (deg C)'
-    elif metric == 'SA':
-        cmap = 'Greys'
-    
-
-    # Load
-    items = cugn_io.load_up(line)
-    grid_extrem = items[0]
-    ds = items[1]
-    times = items[2]
-    grid_tbl = items[3]
-
-    # Cut on depth
-    grid_tbl = grid_tbl[grid_tbl.depth <= (max_depth//10 - 1)]
-
-    # Annual T
-    annual = annualcycle.calc_for_grid(grid_tbl, line, ann_var)
-    grid_tbl[f'D{metric}'] = grid_tbl[metric] - annual
-
-    jg = sns.jointplot(data=grid_tbl, x='doxy', 
-                    y=f'D{metric}',
-                    kind='hex', bins='log', # gridsize=250, #xscale='log',
-                    # mincnt=1,
-                    cmap=cmap,
-                    marginal_kws=dict(fill=False, color='orange', 
-                                        bins=100)) 
-
-    # Axes                                 
-    jg.ax_joint.set_ylabel(ylbl)
-    jg.ax_joint.set_xlabel(ylbl_dict['doxy'])
-    plot_utils.set_fontsize(jg.ax_joint, 14)
-
-    # Extrema
-    ex_clr = 'gray'
-    annual = annualcycle.calc_for_grid(grid_extrem, line, ann_var)
-    grid_extrem[f'D{metric}'] = grid_extrem[metric] - annual
-
-    jg.ax_joint.plot(grid_extrem.doxy, 
-                     grid_extrem[f'D{metric}'],  'o',
-                     color=ex_clr, ms=0.5)
-    #jg.ax_joint.text(0.95, 0.05, r'$z \le $'+f'{max_depth}m',
-    #            transform=jg.ax_joint.transAxes,
-    #            fontsize=14., ha='right', color='k')
-    jg.ax_joint.text(0.05, 0.95, f'Line: {line}',
-                transform=jg.ax_joint.transAxes,
-                fontsize=14., ha='left', color='k')
-
-    # Add another histogram?
-    #jg.ax_marg_y.cla()
-    jg.ax_marg_y.hist(grid_extrem[f'D{metric}'], color=ex_clr, #alpha=0.5, 
-                      bins=20, fill=False, edgecolor=ex_clr,
-                      range=(-5., 5.), orientation='horizontal')
-
-    # Label
-    
-    #gs.tight_layout(fig)
-    plt.savefig(outfile, dpi=300)
-    print(f"Saved: {outfile}")
 
 def fig_lowSO_jointDO(outfile:str, line:str='56.0', 
               metric='N', max_depth:int=10,
@@ -1675,12 +1549,12 @@ def main(flg):
         eventN = ('2020-05-10', '2W') # 
         eventO = ('2022-03-01', '2W') # 
 
-        #line = '80.0'
+        line = '80.0'
         #eventA = ('2020-08-11', '1W') # NO GOOD 
         #eventB = ('2022-02-15', '10D') # 
         eventC = ('2022-06-25', '10D') # 
 
-        event, t_off = eventD
+        event, t_off = eventC
         # Original
         #fig_scatter_event(f'fig_scatter_event_{line}_{event}.png', 
         #             line, event, t_off)
@@ -1729,14 +1603,14 @@ def main(flg):
                         line, metric=metric)
 
     # Relative N, DO, Chl
-    if flg & (2**14):
-        line = '80.0'
-        line = '90.0'
-        #metric = 'chla'
-        #metric = 'N'
-        metric = 'T'
-        fig_relative(f'fig_relative_{line}_{metric}.png', 
-                        line, metric=metric)
+    #if flg & (2**14):
+    #    line = '80.0'
+    #    line = '90.0'
+    #    #metric = 'chla'
+    #    #metric = 'N'
+    #    metric = 'T'
+    #    fig_relative(f'fig_relative_{line}_{metric}.png', 
+    #                    line, metric=metric)
 
     # Line 56
     if flg & (2**15):
@@ -1754,11 +1628,7 @@ def main(flg):
         fig_joint_line90(outfile='fig_joint_NSO_line90.png',
                          metric='N', xmetric='SO')
 
-    # N CDF
-    if flg & (2**18):
-        #fig_extrema_cdfs()
-        fig_extrema_cdfs('fig_chla_cdfs.png', metric='chla',
-                         xyLine=(0.7, 0.4))
+
 
     # Scatter events for Sub-SO
     if flg & (2**19):

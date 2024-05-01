@@ -31,6 +31,7 @@ from cugn import grid_utils
 from cugn import defs as cugn_defs
 from cugn import io as cugn_io
 from siosandbox import plot_utils
+from cugn import annualcycle
 
 
 from IPython import embed
@@ -47,6 +48,7 @@ labels = dict(
     N='Buoyancy (cycles/hour)',
     DO='Dissolved Oxygen '+r'$(\mu$'+'mol/kg)',
 )
+labels['doxy'] = labels['DO']
 
 def gen_cb(img, lbl, csz = 17.):
     cbaxes = plt.colorbar(img, pad=0., fraction=0.030)
@@ -260,7 +262,7 @@ def fig_SO_cdf(outfile:str, use_full:bool=False):
 
 
 def fig_dist_doy(outfile:str, line:str, color:str,
-                 gextrem:str='high',
+                 gextrem:str='hi_noperc',
                  show_legend:bool=False, 
                  clr_by_depth:bool=False):
 
@@ -271,7 +273,7 @@ def fig_dist_doy(outfile:str, line:str, color:str,
     #ax = plt.gca()
 
     # Load
-    items = cugn_io.load_up(line, gextrem=gextrem)
+    items = cugn_io.load_up(line, gextrem=gextrem, use_full=True)
     grid_extrem = items[0]
     #ds = items[1]
     #times = items[2]
@@ -306,9 +308,26 @@ def fig_dist_doy(outfile:str, line:str, color:str,
         jg.ax_joint.scatter(
             grid_extrem[at_depth].dist, 
             grid_extrem[at_depth].doy, 
-            marker=markers[depth], label=label, facecolors=fc,
-            s=1., 
+            marker=markers[depth], label=label, 
+            facecolors=fc,
+            s=15., 
             edgecolors=clr)#, s=50.)
+        
+    # Add clusters
+    uni_cluster = np.unique(grid_extrem.cluster)
+    for cluster in uni_cluster:
+        if cluster < 0:
+            continue
+        #
+        in_cluster = grid_extrem.cluster == cluster
+        med_idx = np.where(in_cluster)[0][np.sum(in_cluster)//2]
+        jg.ax_joint.scatter(
+            grid_extrem.dist.values[med_idx], 
+            grid_extrem.doy.values[med_idx], 
+            marker='s', 
+            facecolors='none',
+            s=80., 
+            edgecolors='cyan')
     
     # Axes                                 
     jg.ax_joint.set_ylabel('DOY')
@@ -607,6 +626,149 @@ def fig_joint_pdf_NSO(line:str, max_depth:int=30):
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
+def fig_extrema_cdfs(outfile:str='fig_N_cdfs.png', metric:str='N',
+                     xyLine:tuple=(0.05, 0.90),
+                     leg_loc:str='lower right'):
+
+    # CDFs
+    fig = plt.figure(figsize=(7,7))
+    plt.clf()
+    gs = gridspec.GridSpec(2,2)
+
+    for ss, line in enumerate(cugn_defs.lines):
+        # Load
+        items = cugn_io.load_up(line)
+        grid_extrem = items[0]
+        ds = items[1]
+        times = items[2]
+        grid_tbl = items[3]
+
+        cut_grid = (grid_tbl.depth <= 5) & np.isfinite(grid_tbl[metric])
+
+        ctrl = grid_utils.grab_control_values(grid_extrem, grid_tbl[cut_grid], metric, boost=5)
+
+
+        ax = plt.subplot(gs[ss])
+
+        sns.ecdfplot(x=grid_extrem[metric], ax=ax, label='Extrema', 
+                     color=cugn_defs.line_colors[ss])
+        sns.ecdfplot(x=ctrl, ax=ax, label='Control', color='k', ls='--')
+
+
+        # Finish
+        #ax.axvline(1., color='black', linestyle='--')
+        #ax.axvline(1.1, color='black', linestyle=':')
+        lsz = 12.
+        ax.legend(fontsize=lsz, loc=leg_loc)
+
+        #ax.set_xlim(0.5, 1.4)
+        ax.set_xlabel(labels[metric])
+        ax.set_ylabel('CDF')
+        ax.text(xyLine[0], xyLine[1], f'Line: {line}', 
+                transform=ax.transAxes,
+                fontsize=lsz, ha='left', color='k')
+        plot_utils.set_fontsize(ax, 13)
+
+        # Stats
+        # Percentile of the extrema
+        val = np.nanpercentile(grid_extrem[metric], (10,90))
+        print(f'Line: {line} -- percentiles={val}')
+
+    plt.tight_layout(pad=0.8)#, w_pad=2.0)#, w_pad=0.8)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+
+def fig_annual(outfile:str, line:str, metric='N',
+                 max_depth:int=20):
+
+    # Figure
+    #sns.set()
+    fig = plt.figure(figsize=(12,12))
+    plt.clf()
+
+    if metric == 'N':
+        cmap = 'Blues'
+    elif metric == 'chla':
+        cmap = 'Greens'
+    elif metric == 'T':
+        cmap = 'Oranges'
+        ann_var = 't'
+        ylbl = 'Temperature Anomaly (deg C)'
+    elif metric == 'SA':
+        cmap = 'Greys'
+    
+
+    # Load
+    items = cugn_io.load_up(line, use_full=True,
+                            gextrem='hi_noperc')
+    low_items = cugn_io.load_up(line, use_full=True,
+                            gextrem='low_noperc')
+    # Unpack
+    low_extrem = low_items[0]
+    grid_extrem = items[0]
+    ds = items[1]
+    times = items[2]
+    grid_tbl = items[3]
+
+    # Cut on depth
+    grid_tbl = grid_tbl[grid_tbl.depth <= (max_depth//10 - 1)]
+
+    # Annual T
+    annual = annualcycle.calc_for_grid(grid_tbl, line, ann_var)
+    grid_tbl[f'D{metric}'] = grid_tbl[metric] - annual
+
+    jg = sns.jointplot(data=grid_tbl, x='doxy', 
+                    y=f'D{metric}',
+                    kind='hex', bins='log', # gridsize=250, #xscale='log',
+                    # mincnt=1,
+                    cmap=cmap,
+                    marginal_kws=dict(fill=False, color='orange', 
+                                        bins=100)) 
+
+    # Axes                                 
+    jg.ax_joint.set_ylabel(ylbl)
+    jg.ax_joint.set_xlabel(labels['doxy'])
+    plot_utils.set_fontsize(jg.ax_joint, 14)
+
+    # Extrema
+    ex_clr = 'gray'
+    annual = annualcycle.calc_for_grid(grid_extrem, line, ann_var)
+    grid_extrem[f'D{metric}'] = grid_extrem[metric] - annual
+
+    jg.ax_joint.plot(grid_extrem.doxy, 
+                     grid_extrem[f'D{metric}'],  'o',
+                     color=ex_clr, ms=0.5)
+
+    # Low extreme
+    annual = annualcycle.calc_for_grid(low_extrem, line, ann_var)
+    low_extrem[f'D{metric}'] = low_extrem[metric] - annual
+    jg.ax_joint.plot(low_extrem.doxy, 
+                     low_extrem[f'D{metric}'],  'x',
+                     color='blue', ms=1)
+
+    #jg.ax_joint.text(0.95, 0.05, r'$z \le $'+f'{max_depth}m',
+    #            transform=jg.ax_joint.transAxes,
+    #            fontsize=14., ha='right', color='k')
+    # Label
+    jg.ax_joint.text(0.05, 0.95, f'Line: {line}',
+                transform=jg.ax_joint.transAxes,
+                fontsize=14., ha='left', color='k')
+    jg.ax_joint.text(0.05, 0.88, f'z <= {max_depth}m',
+                transform=jg.ax_joint.transAxes,
+                fontsize=14., ha='left', color='k')
+
+    # Add another histogram?
+    #jg.ax_marg_y.cla()
+    jg.ax_marg_y.hist(grid_extrem[f'D{metric}'], color=ex_clr, #alpha=0.5, 
+                      bins=20, fill=False, edgecolor=ex_clr,
+                      range=(-5., 5.), orientation='horizontal')
+
+    # Label
+    
+    #gs.tight_layout(fig)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
 
 def main(flg):
     if flg== 'all':
@@ -646,7 +808,7 @@ def main(flg):
                 show_legend = False
             # High
             fig_dist_doy(f'fig_dist_doy_{line}.png', 
-            #             line, clr, show_legend=show_legend,
+                         line, clr, show_legend=show_legend,
                          clr_by_depth=True)
             # Low
             #fig_dist_doy(f'fig_dist_doy_low_{line}.png', 
@@ -673,6 +835,21 @@ def main(flg):
     if flg & (2**12):
         fig_dist_doy_low()
 
+    # Extrema CDFs
+    if flg & (2**18):
+        # N
+        #fig_extrema_cdfs()
+        # Chla
+        #fig_extrema_cdfs('fig_chla_cdfs.png', metric='chla',
+        #                 xyLine=(0.7, 0.4))
+        # DO
+        fig_extrema_cdfs('fig_doxy_cdfs.png', metric='doxy',
+                         xyLine=(0.7, 0.4), leg_loc='upper left')
+
+    # Annual cycle
+    if flg & (2**19):
+        fig_annual('fig_annual_TDO.png', line='90.0', metric='T')
+
 # Command line execution
 if __name__ == '__main__':
     import sys
@@ -686,7 +863,10 @@ if __name__ == '__main__':
         #flg += 2 ** 4  # 16 -- Figure 5: DOY vs. offshore distance
 
         #flg += 2 ** 11  
-        flg += 2 ** 12  # Low histograms
+        #flg += 2 ** 12  # Low histograms
+
+        #flg += 2 ** 18  # # Extreme CDFs
+        flg += 2 ** 19  # T anomaly vs. DO
     else:
         flg = sys.argv[1]
 
