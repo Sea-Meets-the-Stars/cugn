@@ -409,6 +409,13 @@ def fig_dist_doy_low(outfile:str='fig_dist_doy_low.png',
         in_shore = grid_extrem.dist < 100.
         print(f'Line={line}: Percent of profiles within 100km of shore: {100.*np.sum(in_shore)/len(grid_extrem):.1f}%')
 
+        # Text label
+        ax_doff.text(0.8, 0.9, f'Line {line}',
+                transform=ax_doff.transAxes,
+                fontsize=17., ha='right', color='k')
+                    
+
+
     #plt.tight_layout(h_pad=0.3, w_pad=10.3)
     plt.tight_layout(pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
@@ -821,6 +828,11 @@ def main(flg):
     if flg & (2**5):
         fig_SO_vs_N_zoom()
 
+    # Figure 9 -- doy, distance for the low extrema
+    if flg & (2**8):
+        fig_dist_doy_low()
+
+
     # Figure 2 -- average DO, SO 
     if flg & (2**10):
         line = '90'
@@ -830,10 +842,6 @@ def main(flg):
     if flg & (2**11):
         line = '90'
         fig_mean_DO_SO(line)
-
-    # Figure 2 -- T vs. DO
-    if flg & (2**12):
-        fig_dist_doy_low()
 
     # Extrema CDFs
     if flg & (2**18):
@@ -862,11 +870,13 @@ if __name__ == '__main__':
         #flg += 2 ** 3  # 8 -- SO CDFs
         #flg += 2 ** 4  # 16 -- Figure 5: DOY vs. offshore distance
 
+        flg += 2 ** 8  # 256 -- Figure 9: DOY vs. offshore distance for low
+
         #flg += 2 ** 11  
         #flg += 2 ** 12  # Low histograms
 
         #flg += 2 ** 18  # # Extreme CDFs
-        flg += 2 ** 19  # T anomaly vs. DO
+        #flg += 2 ** 19  # T anomaly vs. DO
     else:
         flg = sys.argv[1]
 
