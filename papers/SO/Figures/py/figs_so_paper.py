@@ -56,19 +56,32 @@ def gen_cb(img, lbl, csz = 17.):
     cbaxes.ax.tick_params(labelsize=csz)
 
 
-def fig_joint_pdfs(use_density:bool=False):
+def fig_joint_pdfs(use_density:bool=False, use_DO:bool=False):
 
 
     if use_density:
         axes=('SA', 'sigma0')
         outfile = 'fig_paper_jointPDFs_density.png'
         lbl = r'$\log_{10} \, p(S_A,\sigma)$'
+        xlbl = 'Absolute Salinity (g/kg)'
         ylbl = 'Potential Density (kg/m$^3$)'
         ypos = 0.9
+    elif use_DO:
+        #axes=('SA', 'doxy')
+        #xlbl = 'Absolute Salinity (g/kg)'
+        axes=('sigma0', 'doxy')
+        xlbl = labels['sigma0']
+        #axes=('CT', 'doxy')
+        #xlbl = 'Conservative Temperature (C)'
+        outfile = 'fig_paper_jointPDFs_DO.png'
+        lbl = r'$\log_{10} \, p(\sigma,DO)$'
+        ylbl = labels['DO']
+        ypos = 0.1
     else:
         axes=('SA', 'CT')
         outfile = 'fig_paper_jointPDFs.png'
         lbl = r'$\log_{10} \, p(S_A,\theta)$'
+        xlbl = 'Absolute Salinity (g/kg)'
         ylbl = 'Conservative Temperature (C)'
         ypos = 0.1
 
@@ -106,7 +119,7 @@ def fig_joint_pdfs(use_density:bool=False):
     for ss, line in enumerate(lines):
         ax = all_ax[ss]
         fsz = 17.
-        ax.set_xlabel('Absolute Salinity (g/kg)')                    
+        ax.set_xlabel(xlbl)
         ax.set_ylabel(ylbl)
         # Set x-axis interval to 0.5
         ax.xaxis.set_major_locator(MultipleLocator(0.5))
@@ -786,8 +799,9 @@ def main(flg):
 
     # Figure 1 -- Joint PDFs
     if flg & (2**0):
-        fig_joint_pdfs()
-        fig_joint_pdfs(use_density=True)
+        #fig_joint_pdfs()
+        #fig_joint_pdfs(use_density=True)
+        fig_joint_pdfs(use_DO=True)
 
     # Joint PDF: T, DO on Line 90
     if flg & (2**1):
