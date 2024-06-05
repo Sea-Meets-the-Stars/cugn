@@ -24,7 +24,7 @@ def load_ctd():
         adict[key] = mat_d['ctd'][key][0][0].flatten()
 
     # Profile arrays
-    for key in ['lat', 'lon', 'time', 'dist', 'offset']:
+    for key in ['lat', 'lon', 'time', 'dist', 'offset', 'missid']:
         adict[key] = mat_d['ctd'][key][0][0].flatten()
 
     # Profile + depth
