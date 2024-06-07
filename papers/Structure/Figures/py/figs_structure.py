@@ -19,6 +19,7 @@ import matplotlib.gridspec as gridspec
 import seaborn as sns
 
 from cugn import gliderdata
+from cugn import gliderpairs
 
 from IPython import embed
 
@@ -32,6 +33,8 @@ def fig_separations(dataset:str, outroot='fig_sep'):
     gData = gData.cut_on_good_velocity()
 
     # Generate pairs
+    gPairs = gliderpairs.GliderPairs(gData, max_time=5.)
+
     embed(header='34 of figs')
 
 def main(flg):

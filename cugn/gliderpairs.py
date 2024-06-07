@@ -20,14 +20,25 @@ class GliderPairs:
     Time difference between the two gliders
     """
 
-    def __init__(self, gdata:gliderdata.GliderData):
+    def __init__(self, gdata:gliderdata.GliderData,
+                 max_dist:float=None, max_time:float=None,
+                 from_scratch:bool=True):
         self.gdata = gdata
 
+        self.generate_pairs(max_dist=max_dist, max_time=max_time,
+                            from_scratch=from_scratch)
 
-    def find_pairs(self, max_dist:float=None, max_time:float=None,
+        # Separations
+        self.r = None
+        self.rx = None
+        self.ry = None
+        self.rxN = None
+        self.ryN = None
+
+    def generate_pairs(self, max_dist:float=None, max_time:float=None,
                    from_scratch:bool=True):
         """
-        Find pairs of gliders that are within max_dist and max_time
+        Generate pairs of gliders that are within max_dist and max_time
         """
         if max_dist is None and max_time is None:
             raise ValueError("Must specify either max_dist or max_time")
@@ -56,4 +67,34 @@ class GliderPairs:
             # Parse
             self.idx0 = idx[0]
             self.idx1 = idx[1]
-            self.dtime = dt[idx]
+
+        # Calculate standard stats
+        self.update()
+
+    @property
+    def data(key:str, ipair:int):
+        idx = self.idx0 if ipair == 0 else self.idx1
+        return getattr(self.gdata, key)[idx]
+        
+    def update(self):
+
+        # Separations
+        d0 = self.data('dist', 0)
+        d1 = self.data('dist', 1)
+        #
+        o0 = self.data('offset', 0)
+        o1 = self.data('offset', 1)
+
+        # Separation
+        self.r = np.sqrt((d0-d1)**2 + (o0-o1)**2)
+
+        # Generate the r vector
+        self.rx = d1-d0
+        self.ry = o1-o0
+        self.rxN = (d1-d0)/self.r
+        self.ryN = (o1-o0)/self.r
+
+        # Time
+        t0 = self.data('time', 0)
+        t1 = self.data('time', 1)
+        self.dtime = t1-t0
