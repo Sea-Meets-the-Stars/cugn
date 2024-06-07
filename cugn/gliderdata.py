@@ -9,9 +9,9 @@ from scipy.io import loadmat
 from IPython import embed
 
 def load_dataset(dataset:str):
-    if dataset == 'Arcteryx':
+    if dataset == 'ARCTERX':
         dfile = os.path.join(
-            os.getenv('OS_SPRAY'), 'Arcteryx', 'arcteryx_ctd.mat')
+            os.getenv('OS_SPRAY'), 'ARCTERX', 'arcterx_ctd.mat')
         cData = CTDData(dfile, dataset)
     else: 
         raise ValueError(f"Dataset {dataset} not supported")

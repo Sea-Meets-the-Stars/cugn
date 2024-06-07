@@ -3,6 +3,8 @@ import numpy as np
 
 from cugn import gliderdata
 
+from IPython import embed
+
 class GliderPairs:
 
     idx0:np.ndarray = None
@@ -25,15 +27,16 @@ class GliderPairs:
                  from_scratch:bool=True):
         self.gdata = gdata
 
-        self.generate_pairs(max_dist=max_dist, max_time=max_time,
-                            from_scratch=from_scratch)
-
         # Separations
         self.r = None
         self.rx = None
         self.ry = None
         self.rxN = None
         self.ryN = None
+
+        self.generate_pairs(max_dist=max_dist, max_time=max_time,
+                            from_scratch=from_scratch)
+
 
     def generate_pairs(self, max_dist:float=None, max_time:float=None,
                    from_scratch:bool=True):
@@ -71,9 +74,14 @@ class GliderPairs:
         # Calculate standard stats
         self.update()
 
-    @property
-    def data(key:str, ipair:int):
-        idx = self.idx0 if ipair == 0 else self.idx1
+    def data(self, key:str, ipair:int):
+        if ipair == 2:
+            idx = np.unique(np.concatenate((self.idx0, self.idx1)))
+        elif ipair in [0,1]:
+            idx = self.idx0 if ipair == 0 else self.idx1
+        else:
+            raise ValueError("Bad ipair")
+        # Return
         return getattr(self.gdata, key)[idx]
         
     def update(self):
