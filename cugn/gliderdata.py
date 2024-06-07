@@ -13,6 +13,10 @@ def load_dataset(dataset:str):
         dfile = os.path.join(
             os.getenv('OS_SPRAY'), 'ARCTERX', 'arcterx_ctd.mat')
         cData = CTDData(dfile, dataset)
+    elif dataset == 'Calypso2019':
+        dfile = os.path.join(
+            os.getenv('OS_SPRAY'), 'Calypso', 'calypso2019_ctd.mat')
+        cData = CTDData(dfile, dataset)
     else: 
         raise ValueError(f"Dataset {dataset} not supported")
     return cData

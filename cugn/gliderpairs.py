@@ -39,9 +39,23 @@ class GliderPairs:
 
 
     def generate_pairs(self, max_dist:float=None, max_time:float=None,
-                   from_scratch:bool=True):
+                       from_scratch:bool=True, avoid_same_glider:bool=True):
         """
-        Generate pairs of gliders that are within max_dist and max_time
+        Generate pairs of gliders that are within max_dist and max_time.
+
+        Args:
+            max_dist (float, optional): Maximum distance between gliders. Defaults to None.
+            max_time (float, optional): Maximum time difference between gliders. Defaults to None.
+            from_scratch (bool, optional): Whether to generate pairs from scratch. Defaults to True.
+            avoid_same_glider (bool, optional): Whether to avoid pairing the same glider with itself. Defaults to True.
+
+        Raises:
+            ValueError: If neither max_dist nor max_time is specified.
+            ValueError: If from_scratch is set to False.
+
+        Notes:
+            - If max_dist is not specified, only time-based pairing will be performed.
+            - If max_time is not specified, only distance-based pairing will be performed.
         """
         if max_dist is None and max_time is None:
             raise ValueError("Must specify either max_dist or max_time")
@@ -66,13 +80,25 @@ class GliderPairs:
             pos = dt > 0.
             tcut = dt < max_time
 
+            cut = tcut & pos
             idx = np.where(tcut & pos)
             # Parse
             self.idx0 = idx[0]
             self.idx1 = idx[1]
 
+        # Avoid using the same glider for any pairs
+        if avoid_same_glider:
+            keep = self.data('missid', 0) != self.data('missid', 1)
+            # Parse
+            self.idx0 = self.idx0[keep]
+            self.idx1 = self.idx1[keep]
+
         # Calculate standard stats
         self.update()
+
+        # Checks
+        if avoid_same_glider:
+            assert not np.any(self.data('missid', 0) == self.data('missid', 1))
 
     def data(self, key:str, ipair:int):
         if ipair == 2:

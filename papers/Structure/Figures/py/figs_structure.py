@@ -25,7 +25,7 @@ from cugn import gliderpairs
 
 from IPython import embed
 
-def fig_separations(dataset:str, outroot='fig_sep'):
+def fig_separations(dataset:str, outroot='fig_sep', max_time:float=5.):
     outfile = f'{outroot}_{dataset}.png'
 
     # Load dataset
@@ -35,7 +35,7 @@ def fig_separations(dataset:str, outroot='fig_sep'):
     gData = gData.cut_on_good_velocity()
 
     # Generate pairs
-    gPairs = gliderpairs.GliderPairs(gData, max_time=5.)
+    gPairs = gliderpairs.GliderPairs(gData, max_time=max_time)
 
     # Start the figure
     fig = plt.figure(figsize=(12,6))
@@ -62,7 +62,10 @@ def fig_separations(dataset:str, outroot='fig_sep'):
     ax_r.set_ylabel('Count')
 
     # Add dataset
-    ax_r.text(0.1, 0.9, dataset, transform=ax_r.transAxes, fontsize=15)
+    lsz = 14.
+    ax_r.text(0.1, 0.9, dataset, transform=ax_r.transAxes, fontsize=lsz)
+    # Label time separation
+    ax_r.text(0.1, 0.8, f't < {max_time} hours', transform=ax_r.transAxes, fontsize=15)
 
     for ax in [ax_ll, ax_r]:
         plotting.set_fontsize(ax, 15) 
@@ -77,9 +80,10 @@ def main(flg):
     else:
         flg= int(flg)
 
-    # Indiv
+    # Separations
     if flg == 1:
-        fig_separations('ARCTERX')
+        #fig_separations('ARCTERX')
+        fig_separations('Calypso2019', max_time=12.)
 
 # Command line execution
 if __name__ == '__main__':
