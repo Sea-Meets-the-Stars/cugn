@@ -154,11 +154,13 @@ class GliderPairs:
         t1 = self.data('time', 1)
         self.dtime = (t1-t0)/3600.
 
+    def calc_velocity(self, iz:int=4):
+
         # Velocity
-        u0 = self.data('udop', 0, 0)
-        u1 = self.data('udop', 1, 0)
-        v0 = self.data('vdop', 0, 0)
-        v1 = self.data('vdop', 1, 0)
+        u0 = self.data('udop', 0, iz)
+        u1 = self.data('udop', 1, iz)
+        v0 = self.data('vdop', 0, iz)
+        v1 = self.data('vdop', 1, iz)
 
         self.umag = np.sqrt((u1-u0)**2 + (v1-v0)**2)
         self.du = u1-u0

@@ -116,8 +116,9 @@ def fig_dtimes(dataset:str, outroot='fig_dtime', max_time:float=10.):
     print(f"Saved: {outfile}")
 
 
-def fig_dus(dataset:str, outroot='fig_du', max_time:float=10.):
-    outfile = f'{outroot}_{dataset}.png'
+def fig_dus(dataset:str, outroot='fig_du', max_time:float=10., iz:int=4):
+    # Outfile
+    outfile = f'{outroot}_z{(iz+1)*10}_{dataset}.png'
 
     # Load dataset
     gData = gliderdata.load_dataset(dataset)
@@ -127,6 +128,9 @@ def fig_dus(dataset:str, outroot='fig_du', max_time:float=10.):
 
     # Generate pairs
     gPairs = gliderpairs.GliderPairs(gData, max_time=max_time)
+
+    # Velocity
+    gPairs.calc_velocity(iz=iz)
 
     # Start the figure
     fig = plt.figure(figsize=(12,6))
@@ -145,10 +149,6 @@ def fig_dus(dataset:str, outroot='fig_du', max_time:float=10.):
     # Add dataset
     lsz = 18.
     ax_umag.text(0.1, 0.9, dataset, transform=ax_umag.transAxes, fontsize=lsz)
-    # Label time separation
-    #ax_t.text(0.1, 0.8, f't < {max_time} hours', transform=ax_r.transAxes, fontsize=15)
-    # Log scale
-    #ax_umag.set_yscale('log')
 
     # |u|
     ax_duL = plt.subplot(gs[1])
@@ -159,7 +159,8 @@ def fig_dus(dataset:str, outroot='fig_du', max_time:float=10.):
     ax_duL.set_ylabel('Count')
 
     # Label time separation
-    #ax_t.text(0.1, 0.8, f't < {max_time} hours', transform=ax_r.transAxes, fontsize=15)
+    ax_duL.text(0.1, 0.8, f'depth = {(iz+1)*10} m', 
+                transform=ax_duL.transAxes, fontsize=15, ha='left')
     # Log scale
     #ax_umag.set_yscale('log')
 
