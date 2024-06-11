@@ -154,7 +154,7 @@ class GliderPairs:
         t1 = self.data('time', 1)
         self.dtime = (t1-t0)/3600.
 
-    def calc_velocity(self, iz:int=4):
+    def calc_velocity(self, iz):
 
         # Velocity
         u0 = self.data('udop', 0, iz)
@@ -167,4 +167,28 @@ class GliderPairs:
         self.dv = v1-v0
 
         self.duL = self.rxN*self.du + self.ryN*self.dv
+        self.S3 = self.duL**3
 
+    def calc_S3_vs_r(self, rbins:np.ndarray):
+        """
+        Bin the S3 values
+
+        Parameters:
+            rbins (np.ndarray): Bin edges
+
+        Returns:
+            np.ndarray: Binned S3 values
+        """
+        avg_S3 = []
+        err_avgS3 = []
+        std_S3 = []
+        avg_r = []
+        for ss in range(rbins.size-1):
+            in_r = (self.r > rbins[ss]) & (self.r <= rbins[ss+1])
+            #
+            avg_r.append(np.nanmean(self.r[in_r]))
+            avg_S3.append(np.nanmean(self.S3[in_r])) 
+            std_S3.append(np.nanstd(self.S3[in_r])) 
+            err_avgS3.append(np.nanstd(self.S3[in_r])/np.sqrt(np.sum(np.isfinite(self.S3[in_r])))) 
+        # Return
+        return np.array(avg_r), np.array(avg_S3), np.array(std_S3), np.array(err_avgS3)
