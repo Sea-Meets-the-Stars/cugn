@@ -34,6 +34,12 @@ class GliderPairs:
         self.rxN = None
         self.ryN = None
 
+        # Velocity
+        self.umag = None
+        self.du = None
+        self.dv = None
+        self.duL = None
+
         self.generate_pairs(max_dist=max_dist, max_time=max_time,
                             from_scratch=from_scratch)
 
@@ -150,9 +156,9 @@ class GliderPairs:
 
         # Velocity
         u0 = self.data('udop', 0, 0)
-        u1 = self.data('udop', 0, 1)
+        u1 = self.data('udop', 1, 0)
         v0 = self.data('vdop', 0, 0)
-        v1 = self.data('vdop', 0, 1)
+        v1 = self.data('vdop', 1, 0)
 
         self.umag = np.sqrt((u1-u0)**2 + (v1-v0)**2)
         self.du = u1-u0
