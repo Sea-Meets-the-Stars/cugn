@@ -19,7 +19,7 @@ class GliderPairs:
 
     dtime:np.ndarray = None
     """
-    Time difference between the two gliders
+    Time difference between the two gliders [hours]
     """
 
     def __init__(self, gdata:gliderdata.GliderData,
@@ -76,6 +76,9 @@ class GliderPairs:
             for kk in range(t.size):
                 dt[kk] = (t[kk] - t)/3600.  # hours
 
+            # Insert a negative sign (trust me)
+            dt = -1.*dt
+
             # Restrcit to the positive values to avoid double counting
             pos = dt > 0.
             tcut = dt < max_time
@@ -100,7 +103,7 @@ class GliderPairs:
         if avoid_same_glider:
             assert not np.any(self.data('missid', 0) == self.data('missid', 1))
 
-    def data(self, key:str, ipair:int):
+    def data(self, key:str, ipair:int, iz:int=None):
         if ipair == 2:
             idx = np.unique(np.concatenate((self.idx0, self.idx1)))
         elif ipair in [0,1]:
@@ -108,10 +111,22 @@ class GliderPairs:
         else:
             raise ValueError("Bad ipair")
         # Return
-        return getattr(self.gdata, key)[idx]
+        if iz is None:
+            return getattr(self.gdata, key)[idx]
+        else:
+            return getattr(self.gdata, key)[iz][idx]
         
     def update(self):
+        """
+        Update the glider pairs.
 
+        This method calculates the separation between two gliders, generates the r vector,
+        and calculates the time difference between the two gliders.
+
+        Parameters:
+            None
+
+        """
         # Separations
         d0 = self.data('dist', 0)
         d1 = self.data('dist', 1)
@@ -131,4 +146,17 @@ class GliderPairs:
         # Time
         t0 = self.data('time', 0)
         t1 = self.data('time', 1)
-        self.dtime = t1-t0
+        self.dtime = (t1-t0)/3600.
+
+        # Velocity
+        u0 = self.data('udop', 0, 0)
+        u1 = self.data('udop', 0, 1)
+        v0 = self.data('vdop', 0, 0)
+        v1 = self.data('vdop', 0, 1)
+
+        self.umag = np.sqrt((u1-u0)**2 + (v1-v0)**2)
+        self.du = u1-u0
+        self.dv = v1-v0
+
+        self.duL = self.rxN*self.du + self.ryN*self.dv
+
