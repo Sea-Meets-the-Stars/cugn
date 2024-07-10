@@ -167,11 +167,15 @@ class GliderPairs:
         self.dv = v1-v0
 
         self.duL = self.rxN*self.du + self.ryN*self.dv
+
+        # Sn
+        self.S1 = self.duL
+        self.S2 = self.duL**2
         self.S3 = self.duL**3
 
-    def calc_S3_vs_r(self, rbins:np.ndarray):
+    def calc_Sn_vs_r(self, rbins:np.ndarray):
         """
-        Bin the S3 values
+        Calculate S1, S2, S3 vs r in bins.
 
         Parameters:
             rbins (np.ndarray): Bin edges
@@ -179,16 +183,49 @@ class GliderPairs:
         Returns:
             np.ndarray: Binned S3 values
         """
+        N = []
+        avg_S1 = []
+        std_S1 = []
+        err_S1 = []
+        avg_S2 = []
+        std_S2 = []
+        err_S2 = []
         avg_S3 = []
-        err_avgS3 = []
         std_S3 = []
+        err_S3 = []
+
         avg_r = []
         for ss in range(rbins.size-1):
             in_r = (self.r > rbins[ss]) & (self.r <= rbins[ss+1])
             #
+            N.append(np.sum(in_r))
             avg_r.append(np.nanmean(self.r[in_r]))
+
+            # Stats
+            avg_S1.append(np.nanmean(self.S1[in_r])) 
+            std_S1.append(np.nanstd(self.S1[in_r])) 
+            err_S1.append(np.nanstd(self.S1[in_r])/np.sqrt(np.sum(np.isfinite(self.S1[in_r])))) 
+            avg_S2.append(np.nanmean(self.S2[in_r])) 
+            std_S2.append(np.nanstd(self.S2[in_r])) 
+            err_S2.append(np.nanstd(self.S2[in_r])/np.sqrt(np.sum(np.isfinite(self.S2[in_r])))) 
             avg_S3.append(np.nanmean(self.S3[in_r])) 
             std_S3.append(np.nanstd(self.S3[in_r])) 
-            err_avgS3.append(np.nanstd(self.S3[in_r])/np.sqrt(np.sum(np.isfinite(self.S3[in_r])))) 
+            err_S3.append(np.nanstd(self.S3[in_r])/np.sqrt(np.sum(np.isfinite(self.S3[in_r])))) 
+
+        # generate a dict
+        out_dict = {}
+        out_dict['N'] = np.array(N)
+        out_dict['r'] = np.array(avg_r)
+
+        out_dict['S1'] = np.array(avg_S1)
+        out_dict['std_S1'] = np.array(std_S1)
+        out_dict['err_S1'] = np.array(err_S1)
+        out_dict['S2'] = np.array(avg_S2)
+        out_dict['std_S2'] = np.array(std_S2)
+        out_dict['err_S2'] = np.array(err_S2)
+        out_dict['S3'] = np.array(avg_S3)
+        out_dict['std_S3'] = np.array(std_S3)
+        out_dict['err_S3'] = np.array(err_S3)
+
         # Return
-        return np.array(avg_r), np.array(avg_S3), np.array(std_S3), np.array(err_avgS3)
+        return out_dict
