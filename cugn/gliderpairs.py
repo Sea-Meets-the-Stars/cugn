@@ -157,10 +157,10 @@ class GliderPairs:
     def calc_velocity(self, iz):
 
         # Velocity
-        u0 = self.data('udop', 0, iz)
-        u1 = self.data('udop', 1, iz)
-        v0 = self.data('vdop', 0, iz)
-        v1 = self.data('vdop', 1, iz)
+        u0 = self.data('udopacross', 0, iz)
+        u1 = self.data('udopacross', 1, iz)
+        v0 = self.data('udopalong', 0, iz)
+        v1 = self.data('udopalong', 1, iz)
 
         self.umag = np.sqrt((u1-u0)**2 + (v1-v0)**2)
         self.du = u1-u0

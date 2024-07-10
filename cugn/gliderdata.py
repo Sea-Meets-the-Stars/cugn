@@ -12,13 +12,16 @@ def load_dataset(dataset:str):
     if dataset == 'ARCTERX':
         dfile = os.path.join(
             os.getenv('OS_SPRAY'), 'ARCTERX', 'arcterx_ctd.mat')
-        cData = CTDData(dfile, dataset)
     elif dataset == 'Calypso2019':
         dfile = os.path.join(
             os.getenv('OS_SPRAY'), 'Calypso', 'calypso2019_ctd.mat')
-        cData = CTDData(dfile, dataset)
+    elif dataset == 'Calypso2022':
+        dfile = os.path.join(
+            os.getenv('OS_SPRAY'), 'Calypso', 'calypso2022_ctd.mat')
     else: 
         raise ValueError(f"Dataset {dataset} not supported")
+    # Load
+    cData = CTDData(dfile, dataset)
     return cData
 
 class GliderData:
@@ -112,7 +115,7 @@ class CTDData(GliderData):
             setattr(self, key, mat_d['ctd'][key][0][0].flatten())
 
         # Profile + depth
-        self.profile_depth_arrays = ['udop', 'vdop']
+        self.profile_depth_arrays = ['udop', 'vdop', 'udopacross', 'udopalong']
         for key in self.profile_depth_arrays:
             setattr(self, key, mat_d['ctd'][key][0][0])
 

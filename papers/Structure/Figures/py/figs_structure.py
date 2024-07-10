@@ -64,7 +64,7 @@ def fig_separations(dataset:str, outroot='fig_sep', max_time:float=10.):
     ax_r.set_ylabel('Count')
 
     # Add dataset
-    lsz = 14.
+    lsz = 16.
     ax_r.text(0.1, 0.9, dataset, transform=ax_r.transAxes, fontsize=lsz)
     # Label time separation
     ax_r.text(0.1, 0.8, f't < {max_time} hours', transform=ax_r.transAxes, fontsize=15)
@@ -173,8 +173,8 @@ def fig_dus(dataset:str, outroot='fig_du', max_time:float=10., iz:int=4):
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
-def fig_structure(dataset:str, outroot='fig_structure', max_time:float=10., 
-                  iz:int=4, nbins:int=15):
+def fig_structure(dataset:str, outroot='fig_structure', 
+                  max_time:float=10., iz:int=4, nbins:int=15):
 
     # Outfile
     outfile = f'{outroot}_z{(iz+1)*10}_{dataset}.png'
@@ -244,7 +244,7 @@ def main(flg):
 
     # Separations
     if flg == 1:
-        #fig_separations('ARCTERX')
+        fig_separations('ARCTERX')
         fig_separations('Calypso2019', max_time=10.)
 
     # Delta times
@@ -261,6 +261,14 @@ def main(flg):
     if flg == 4:
         fig_structure('ARCTERX')
         fig_structure('Calypso2019')
+
+    # Calypso 2022
+    if flg == 5:
+        dataset = 'Calypso2022'
+        fig_separations(dataset)
+        fig_dtimes(dataset)
+        fig_dus(dataset)
+        fig_structure(dataset)
 
 
 # Command line execution
