@@ -262,7 +262,7 @@ def main(flg):
     if flg == 4:
         fig_structure('ARCTERX')
         fig_structure('Calypso2019')
-        #fig_structure('Calypso2022')
+        fig_structure('Calypso2022')
 
     # Calypso 2022
     if flg == 5:
