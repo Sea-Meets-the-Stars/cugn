@@ -229,3 +229,14 @@ class GliderPairs:
 
         # Return
         return out_dict
+
+    def calc_corr_Sn(self, Sn_dict:dict):
+
+        # Init
+        Sn_dict['S2corr'] = Sn_dict['S2'].copy()
+        Sn_dict['S3corr'] = Sn_dict['S3'].copy()
+
+        # Correct me
+        for ibin in range(Sn_dict['r'].size):
+            Sn_dict['S2corr'][ibin] -= Sn_dict['S1'][ibin]**2
+            Sn_dict['S3corr'][ibin] -= 3.*Sn_dict['S1'][ibin]*Sn_dict['S2'][ibin] + 2.*Sn_dict['S1'][ibin]**3

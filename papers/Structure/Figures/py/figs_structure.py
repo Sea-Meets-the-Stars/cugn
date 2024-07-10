@@ -197,6 +197,7 @@ def fig_structure(dataset:str, outroot='fig_structure',
 
     rbins = 10**np.linspace(0., np.log10(400), nbins) # km
     Sn_dict = gPairs.calc_Sn_vs_r(rbins)
+    gPairs.calc_corr_Sn(Sn_dict)
 
     # Start the figure
     fig = plt.figure(figsize=(17,6))
@@ -210,6 +211,11 @@ def fig_structure(dataset:str, outroot='fig_structure',
                     yerr=Sn_dict['err_'+Skey],
                     color=clr,
                     fmt='o', capsize=5)  # fmt defines marker style, capsize sets error bar cap length
+
+        # Corrected
+        if n > 0:
+            ax.plot(Sn_dict['r'], Sn_dict[Skey+'corr'],  'x',
+                    color=clr)
 
 
         ax.set_xscale('log')
