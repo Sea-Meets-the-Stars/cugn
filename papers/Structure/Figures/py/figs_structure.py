@@ -225,8 +225,8 @@ def fig_structure(dataset:str, outroot='fig_structure',
 
         # Label time separation
         if n == 0:
-            ax.text(0.9, 0.9, f'depth = {(iz+1)*10} m', 
-                transform=ax.transAxes, fontsize=15, ha='right')
+            ax.text(0.1, 0.9, f'{dataset}\n depth = {(iz+1)*10} m', 
+                transform=ax.transAxes, fontsize=15, ha='left')
         # 0 line
         ax.axhline(0., color='red', linestyle='--')
 
@@ -261,7 +261,8 @@ def main(flg):
     # Sn
     if flg == 4:
         fig_structure('ARCTERX')
-        #fig_structure('Calypso2019')
+        fig_structure('Calypso2019')
+        #fig_structure('Calypso2022')
 
     # Calypso 2022
     if flg == 5:
