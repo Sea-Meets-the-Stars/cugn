@@ -24,7 +24,7 @@ class GliderPairs:
 
     def __init__(self, gdata:gliderdata.GliderData,
                  max_dist:float=None, max_time:float=None,
-                 from_scratch:bool=True):
+                 from_scratch:bool=True, avoid_same_glider:bool=True):
         self.gdata = gdata
 
         # Separations
@@ -41,7 +41,8 @@ class GliderPairs:
         self.duL = None
 
         self.generate_pairs(max_dist=max_dist, max_time=max_time,
-                            from_scratch=from_scratch)
+                            from_scratch=from_scratch,
+                            avoid_same_glider=avoid_same_glider)
 
 
     def generate_pairs(self, max_dist:float=None, max_time:float=None,
@@ -173,7 +174,7 @@ class GliderPairs:
         self.S2 = self.duL**2
         self.S3 = self.duL**3
 
-    def calc_Sn_vs_r(self, rbins:np.ndarray):
+    def calc_Sn_vs_r(self, rbins:np.ndarray, nboot:int=None):
         """
         Calculate S1, S2, S3 vs r in bins.
 
@@ -199,18 +200,32 @@ class GliderPairs:
             in_r = (self.r > rbins[ss]) & (self.r <= rbins[ss+1])
             #
             N.append(np.sum(in_r))
-            avg_r.append(np.nanmean(self.r[in_r]))
 
+            # Bootstrap?
+            if nboot is not None:
+                # Bootstrap samples
+                r_idx = np.where(in_r)[0]
+                in_r = np.random.choice(
+                    r_idx, size=(nboot,N[-1]), replace=True)
+            
             # Stats
+            avg_r.append(np.nanmean(self.r[in_r]))
             avg_S1.append(np.nanmean(self.S1[in_r])) 
             std_S1.append(np.nanstd(self.S1[in_r])) 
-            err_S1.append(np.nanstd(self.S1[in_r])/np.sqrt(np.sum(np.isfinite(self.S1[in_r])))) 
             avg_S2.append(np.nanmean(self.S2[in_r])) 
             std_S2.append(np.nanstd(self.S2[in_r])) 
-            err_S2.append(np.nanstd(self.S2[in_r])/np.sqrt(np.sum(np.isfinite(self.S2[in_r])))) 
             avg_S3.append(np.nanmean(self.S3[in_r])) 
             std_S3.append(np.nanstd(self.S3[in_r])) 
-            err_S3.append(np.nanstd(self.S3[in_r])/np.sqrt(np.sum(np.isfinite(self.S3[in_r])))) 
+
+            if nboot is not None:
+                err_S1.append(np.nanstd(np.nanmean(self.S1[in_r], axis=1)))
+                err_S2.append(np.nanstd(np.nanmean(self.S2[in_r], axis=1)))
+                err_S3.append(np.nanstd(np.nanmean(self.S3[in_r], axis=1)))
+                #embed(header='calc_Sn_vs_r 223')
+            else:
+                err_S1.append(np.nanstd(self.S1[in_r])/np.sqrt(np.sum(np.isfinite(self.S1[in_r])))) 
+                err_S2.append(np.nanstd(self.S2[in_r])/np.sqrt(np.sum(np.isfinite(self.S2[in_r])))) 
+                err_S3.append(np.nanstd(self.S3[in_r])/np.sqrt(np.sum(np.isfinite(self.S3[in_r])))) 
 
         # generate a dict
         out_dict = {}

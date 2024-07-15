@@ -178,7 +178,8 @@ def fig_dus(dataset:str, outroot='fig_du', max_time:float=10., iz:int=4):
     print(f"Saved: {outfile}")
 
 def fig_structure(dataset:str, outroot='fig_structure', 
-                  max_time:float=10., iz:int=4, nbins:int=15):
+                  max_time:float=10., iz:int=4, nbins:int=15,
+                  minN:int=10, avoid_same_glider:bool=True):
 
     # Outfile
     outfile = f'{outroot}_z{(iz+1)*10}_{dataset}.png'
@@ -190,13 +191,15 @@ def fig_structure(dataset:str, outroot='fig_structure',
     gData = gData.cut_on_good_velocity()
 
     # Generate pairs
-    gPairs = gliderpairs.GliderPairs(gData, max_time=max_time)
+    gPairs = gliderpairs.GliderPairs(
+        gData, max_time=max_time, 
+        avoid_same_glider=avoid_same_glider)
 
     # Velocity
     gPairs.calc_velocity(iz)
 
     rbins = 10**np.linspace(0., np.log10(400), nbins) # km
-    Sn_dict = gPairs.calc_Sn_vs_r(rbins)
+    Sn_dict = gPairs.calc_Sn_vs_r(rbins, nboot=10000)
     gPairs.calc_corr_Sn(Sn_dict)
 
     # Start the figure
@@ -204,17 +207,20 @@ def fig_structure(dataset:str, outroot='fig_structure',
     plt.clf()
     gs = gridspec.GridSpec(1,3)
 
+    goodN = Sn_dict['N'] > minN
+    
+
     for n, clr in enumerate('krb'):
         ax = plt.subplot(gs[n])
         Skey = f'S{n+1}'
-        ax.errorbar(Sn_dict['r'], Sn_dict[Skey], 
-                    yerr=Sn_dict['err_'+Skey],
+        ax.errorbar(Sn_dict['r'][goodN], Sn_dict[Skey][goodN], 
+                    yerr=Sn_dict['err_'+Skey][goodN],
                     color=clr,
                     fmt='o', capsize=5)  # fmt defines marker style, capsize sets error bar cap length
 
         # Corrected
         if n > 0:
-            ax.plot(Sn_dict['r'], Sn_dict[Skey+'corr'],  'x',
+            ax.plot(Sn_dict['r'][goodN], Sn_dict[Skey+'corr'][goodN],  'x',
                     color=clr)
 
 
@@ -224,9 +230,11 @@ def fig_structure(dataset:str, outroot='fig_structure',
         ax.set_ylabel(Sn_lbls[Skey])
 
         # Label time separation
-        if n == 0:
-            ax.text(0.1, 0.9, f'{dataset}\n depth = {(iz+1)*10} m', 
-                transform=ax.transAxes, fontsize=15, ha='left')
+        if n == 2:
+            same_glider = 'True' if avoid_same_glider else 'False'
+            ax.text(0.1, 0.8, 
+                    f'{dataset}\n depth = {(iz+1)*10} m\nAvoid same glider? {same_glider}', 
+                transform=ax.transAxes, fontsize=16, ha='left')
         # 0 line
         ax.axhline(0., color='red', linestyle='--')
 
@@ -260,9 +268,10 @@ def main(flg):
 
     # Sn
     if flg == 4:
-        fig_structure('ARCTERX')
-        fig_structure('Calypso2019')
-        fig_structure('Calypso2022')
+        #fig_structure('ARCTERX')
+        fig_structure('ARCTERX', avoid_same_glider=False)
+        #fig_structure('Calypso2019')
+        #fig_structure('Calypso2022')
 
     # Calypso 2022
     if flg == 5:
