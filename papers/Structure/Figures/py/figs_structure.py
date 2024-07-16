@@ -203,7 +203,7 @@ def fig_structure(dataset:str, outroot='fig_structure',
     gPairs.calc_corr_Sn(Sn_dict)
 
     # Start the figure
-    fig = plt.figure(figsize=(17,6))
+    fig = plt.figure(figsize=(19,6))
     plt.clf()
     gs = gridspec.GridSpec(1,3)
 
@@ -269,17 +269,18 @@ def main(flg):
     # Sn
     if flg == 4:
         #fig_structure('ARCTERX')
-        fig_structure('ARCTERX', avoid_same_glider=False)
+        #fig_structure('ARCTERX', avoid_same_glider=False)
         #fig_structure('Calypso2019')
-        #fig_structure('Calypso2022')
+        fig_structure('Calypso2022')
 
     # Calypso 2022
     if flg == 5:
         dataset = 'Calypso2022'
-        fig_separations(dataset)
-        fig_dtimes(dataset)
-        fig_dus(dataset)
-        fig_structure(dataset)
+        #fig_separations(dataset)
+        #fig_dtimes(dataset)
+        #fig_dus(dataset)
+        fig_structure(dataset, avoid_same_glider=False)
+        fig_structure(dataset, avoid_same_glider=False, iz=10)
 
 
 # Command line execution
