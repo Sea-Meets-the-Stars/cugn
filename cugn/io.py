@@ -15,7 +15,19 @@ from IPython import embed
 data_path = os.getenv('CUGN')
 
 def line_files(line:str):
+    """
+    Returns a dictionary containing file paths for various data files related to the given line.
 
+    Parameters:
+    line (str): The line identifier.
+
+    Returns:
+    dict: A dictionary containing the following file paths:
+        - datafile: The path to the data file for the given line.
+        - gridtbl_file_full: The path to the full grid table file for the given line.
+        - gridtbl_file_control: The path to the control grid table file for the given line.
+        - edges_file: The path to the edges file for the given line.
+    """
     datafile = os.path.join(data_path, f'CUGN_potential_line_{line[0:2]}.nc')
     gridtbl_file_full = os.path.join(data_path, f'full_grid_line{line[0:2]}.parquet')
     gridtbl_file_control = os.path.join(data_path, f'doxy_grid_line{line[0:2]}.parquet')
@@ -30,6 +42,16 @@ def line_files(line:str):
     return lfiles
     
 def load_line(line:str, use_full:bool=False):
+    """
+    Load data for a given line.
+
+    Parameters:
+        line (str): The line identifier.
+        use_full (bool, optional): Whether to use the full grid table file or the control grid table file. Defaults to False.
+
+    Returns:
+        dict: A dictionary containing the loaded data, including the dataset, grid table, and edges.
+    """
     # Files
     lfiles = line_files(line)
 
@@ -39,7 +61,6 @@ def load_line(line:str, use_full:bool=False):
         grid_tbl = pandas.read_parquet(lfiles['gridtbl_file_control'])
     ds = xarray.load_dataset(lfiles['datafile'])
     edges = np.load(lfiles['edges_file'])
-
 
     # dict em
     items = dict(ds=ds, grid_tbl=grid_tbl, edges=edges)
@@ -121,3 +142,11 @@ def load_up(line:str, gextrem:str='high', use_full:bool=False):
     cluster_stats = clusters.cluster_stats(grid_extrem)
 
     return grid_extrem, ds, times, grid_tbl
+
+def gpair_filename(dataset:str, iz:int, variables:list):
+
+    # Generate a filename
+    outfile = f'gpair_{dataset}_{iz}_{"".join(variables)}'
+    outfile += '.json'
+
+    return outfile

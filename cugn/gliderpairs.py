@@ -25,7 +25,12 @@ class GliderPairs:
     def __init__(self, gdata:gliderdata.GliderData,
                  max_dist:float=None, max_time:float=None,
                  from_scratch:bool=True, avoid_same_glider:bool=True):
+
+        # Inputs
         self.gdata = gdata
+        self.max_dist = max_dist
+        self.max_time = max_time
+        self.avoid_same_glider = avoid_same_glider
 
         # Separations
         self.r = None
@@ -44,6 +49,18 @@ class GliderPairs:
                             from_scratch=from_scratch,
                             avoid_same_glider=avoid_same_glider)
 
+
+    def add_meta(self, sdict:dict):
+        """
+        Add metadata to the GliderPairs object.
+
+        Args:
+            sdict (dict): A dictionary containing analysis output
+        """
+        sdict['max_dist'] = self.max_dist
+        sdict['max_time'] = self.max_time
+        sdict['avoid_self'] = self.avoid_same_glider
+        sdict['dataset'] = self.gdata.dataset
 
     def generate_pairs(self, max_dist:float=None, max_time:float=None,
                        from_scratch:bool=True, avoid_same_glider:bool=True):
@@ -186,6 +203,7 @@ class GliderPairs:
         """
         N = []
         avg_S1 = []
+        med_S1 = []
         std_S1 = []
         err_S1 = []
         avg_S2 = []
@@ -211,6 +229,7 @@ class GliderPairs:
             # Stats
             avg_r.append(np.nanmean(self.r[in_r]))
             avg_S1.append(np.nanmean(self.S1[in_r])) 
+            med_S1.append(np.nanmedian(self.S1[in_r])) 
             std_S1.append(np.nanstd(self.S1[in_r])) 
             avg_S2.append(np.nanmean(self.S2[in_r])) 
             std_S2.append(np.nanstd(self.S2[in_r])) 
@@ -229,6 +248,7 @@ class GliderPairs:
 
         # generate a dict
         out_dict = {}
+        out_dict['variables'] = ['duL','duL','duL']
         out_dict['N'] = np.array(N)
         out_dict['r'] = np.array(avg_r)
 

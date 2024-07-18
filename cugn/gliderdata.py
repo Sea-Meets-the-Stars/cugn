@@ -20,7 +20,7 @@ def load_dataset(dataset:str):
         cData (CTDData): The loaded CTDData object.
 
     Raises:
-    ValueError: If the provided dataset is not supported.
+        ValueError: If the provided dataset is not supported.
     """
     if dataset == 'ARCTERX':
         dfile = os.path.join(

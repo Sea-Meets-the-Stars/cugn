@@ -202,6 +202,8 @@ def fig_structure(dataset:str, outroot='fig_structure',
     Sn_dict = gPairs.calc_Sn_vs_r(rbins, nboot=10000)
     gPairs.calc_corr_Sn(Sn_dict)
 
+    embed(header='fig_structure 205')
+
     # Start the figure
     fig = plt.figure(figsize=(19,6))
     plt.clf()
