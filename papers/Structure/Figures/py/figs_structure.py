@@ -22,6 +22,8 @@ from ocpy.utils import plotting
 
 from cugn import gliderdata
 from cugn import gliderpairs
+from cugn import io as cugn_io
+from cugn import utils as cugn_utils
 
 from IPython import embed
 
@@ -178,12 +180,13 @@ def fig_dus(dataset:str, outroot='fig_du', max_time:float=10., iz:int=4):
     print(f"Saved: {outfile}")
 
 def fig_structure(dataset:str, outroot='fig_structure', 
-                  max_time:float=10., iz:int=4, nbins:int=15,
+                  max_time:float=10., iz:int=5, nbins:int=15,
                   minN:int=10, avoid_same_glider:bool=True):
 
     # Outfile
     outfile = f'{outroot}_z{(iz+1)*10}_{dataset}.png'
 
+    '''
     # Load dataset
     gData = gliderdata.load_dataset(dataset)
     
@@ -201,8 +204,16 @@ def fig_structure(dataset:str, outroot='fig_structure',
     rbins = 10**np.linspace(0., np.log10(400), nbins) # km
     Sn_dict = gPairs.calc_Sn_vs_r(rbins, nboot=10000)
     gPairs.calc_corr_Sn(Sn_dict)
+    '''
 
-    embed(header='fig_structure 205')
+    # Load
+    variables = ['duL','duL','duL']
+    gpair_file = cugn_io.gpair_filename(dataset, iz, variables)
+    gpair_file = os.path.join('..', 'Analysis', 'Outputs', gpair_file)
+
+    Sn_dict = gliderpairs.load_Sndict(gpair_file)
+
+    #embed(header='fig_structure: 215')
 
     # Start the figure
     fig = plt.figure(figsize=(19,6))
@@ -224,6 +235,9 @@ def fig_structure(dataset:str, outroot='fig_structure',
         if n > 0:
             ax.plot(Sn_dict['r'][goodN], Sn_dict[Skey+'corr'][goodN],  'x',
                     color=clr)
+        else:
+            ax.plot(Sn_dict['r'][goodN], Sn_dict['med_S1'][goodN],  
+                    'x', color=clr)
 
 
         ax.set_xscale('log')

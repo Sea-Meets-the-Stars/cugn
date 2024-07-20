@@ -146,7 +146,8 @@ def load_up(line:str, gextrem:str='high', use_full:bool=False):
 def gpair_filename(dataset:str, iz:int, variables:list):
 
     # Generate a filename
-    outfile = f'gpair_{dataset}_{iz}_{"".join(variables)}'
+    outfile = f'gpair_{dataset}_z{iz:02d}_{"".join(variables)}'
+    embed(header='cug 150')
     outfile += '.json'
 
     return outfile

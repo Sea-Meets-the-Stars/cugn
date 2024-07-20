@@ -176,7 +176,15 @@ def savejson(filename:str, obj:dict, overwrite=False, indent=None, easy_to_read=
 
 
 def loadjson(filename):
-    """ Load a python object saved with savejson."""
+    """Load a python object saved with savejson.
+
+    Args:
+        filename (str): The path to the JSON file.
+
+    Returns:
+        obj: The loaded Python object.
+
+    """
     if filename.endswith('.gz'):
         with gzip.open(filename, "rb") as f:
             obj = json.loads(f.read().decode("ascii"))

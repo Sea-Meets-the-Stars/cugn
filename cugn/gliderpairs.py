@@ -2,8 +2,19 @@
 import numpy as np
 
 from cugn import gliderdata
+from cugn import utils as cugn_utils
 
 from IPython import embed
+
+def load_Sndict(filename:str):
+    Sn_dict = cugn_utils.loadjson(filename)
+    # Convert lists to numpy arrays
+    for key in Sn_dict.keys():
+        if isinstance(Sn_dict[key], list):
+            Sn_dict[key] = np.array(Sn_dict[key])
+
+    # Return
+    return Sn_dict
 
 class GliderPairs:
 
@@ -254,6 +265,7 @@ class GliderPairs:
 
         out_dict['S1'] = np.array(avg_S1)
         out_dict['std_S1'] = np.array(std_S1)
+        out_dict['med_S1'] = np.array(med_S1)
         out_dict['err_S1'] = np.array(err_S1)
         out_dict['S2'] = np.array(avg_S2)
         out_dict['std_S2'] = np.array(std_S2)
