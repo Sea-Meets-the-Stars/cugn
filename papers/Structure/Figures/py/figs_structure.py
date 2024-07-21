@@ -180,7 +180,7 @@ def fig_dus(dataset:str, outroot='fig_du', max_time:float=10., iz:int=4):
     print(f"Saved: {outfile}")
 
 def fig_structure(dataset:str, outroot='fig_structure', 
-                  max_time:float=10., iz:int=5, nbins:int=15,
+                  iz:int=5, 
                   minN:int=10, avoid_same_glider:bool=True):
 
     # Outfile
@@ -226,7 +226,8 @@ def fig_structure(dataset:str, outroot='fig_structure',
     for n, clr in enumerate('krb'):
         ax = plt.subplot(gs[n])
         Skey = f'S{n+1}'
-        ax.errorbar(Sn_dict['r'][goodN], Sn_dict[Skey][goodN], 
+        ax.errorbar(Sn_dict['r'][goodN], 
+                    Sn_dict[Skey][goodN], 
                     yerr=Sn_dict['err_'+Skey][goodN],
                     color=clr,
                     fmt='o', capsize=5)  # fmt defines marker style, capsize sets error bar cap length
@@ -260,6 +261,101 @@ def fig_structure(dataset:str, outroot='fig_structure',
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
+
+def fig_Sn_depth(dataset:str, outroot='fig_Sn_depth',
+    variables = ['duL','duL','duL'], minN:int=10,
+    nz:int=50):
+
+    outfile = f'{outroot}_{dataset}_{"".join(variables)}'
+    varlbl = "".join(variables)
+    
+    
+    # Load and parse
+    all_N = []
+    all_S1 = []
+    all_S2 = []
+    all_S3 = []
+    for iz in range(nz):
+        # Load
+        gpair_file = cugn_io.gpair_filename(dataset, iz, variables)
+        gpair_file = os.path.join('..', 'Analysis', 'Outputs', gpair_file)
+
+        Sn_dict = gliderpairs.load_Sndict(gpair_file)
+        # Grab em
+        all_N.append(Sn_dict['N'])
+        all_S1.append(Sn_dict['S1'])
+        all_S2.append(Sn_dict['S2corr'])
+        all_S3.append(Sn_dict['S3corr'])
+        # r
+        if iz == 0:
+            r = Sn_dict['r']
+
+    all_N = np.array(all_N)
+    all_S1 = np.array(all_S1)
+    all_S2 = np.array(all_S2)
+    all_S3 = np.array(all_S3)
+
+    goodN = all_N[0] > minN
+
+    # Median
+    med_S1 = np.median(all_S1, axis=0)
+    med_S2 = np.median(all_S2, axis=0)
+    med_S3 = np.median(all_S3, axis=0)
+
+    std_S1 = np.std(all_S1, axis=0)
+    std_S2 = np.std(all_S2, axis=0)
+    std_S3 = np.std(all_S3, axis=0)
+
+    #embed(header='297 of figs')
+
+    # Start the figure
+    fig = plt.figure(figsize=(19,6))
+    plt.clf()
+    gs = gridspec.GridSpec(1,3)
+
+    for n, clr in enumerate(['g','r','b']):
+        ax = plt.subplot(gs[n])
+        Skey = f'S{n+1}'
+        if n == 0:
+            Sn = all_S1
+            medSn = med_S1
+        elif n == 1:
+            Sn = all_S2
+            medSn = med_S2
+        else:
+            Sn = all_S3
+            medSn = med_S3
+
+        for iz in range(nz):
+            #a = 0.9 - 0.8*iz/nz
+            a = 0.1 + 0.8*iz/nz
+            ax.plot(r[goodN], Sn[iz][goodN], color=clr, alpha=a)
+
+        # Median
+        ax.plot(r[goodN], medSn[goodN], color='k')
+
+        ax.set_xscale('log')
+        ax.set_xlabel('Separation (km)')
+        ax.set_ylabel(r'$S_'+str(n+1)+r'$ Corrected')
+        # 0 line
+        ax.axhline(0., color='k', linestyle='--')
+
+        plotting.set_fontsize(ax, 19) 
+        ax.grid()
+
+        ax.set_xlim(1., 100.)
+        ax.minorticks_on()
+
+        # Label time separation
+        if n == 2:
+            ax.text(0.9, 0.1, f'{dataset}\n  {varlbl}', 
+                transform=ax.transAxes, fontsize=18, ha='right')
+        
+
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+    
 
 def main(flg):
     if flg== 'all':
@@ -298,6 +394,9 @@ def main(flg):
         fig_structure(dataset, avoid_same_glider=False)
         fig_structure(dataset, avoid_same_glider=False, iz=10)
 
+    # Sn with depth
+    if flg == 6:
+        fig_Sn_depth('Calypso2022')
 
 # Command line execution
 if __name__ == '__main__':

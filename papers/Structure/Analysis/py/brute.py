@@ -48,12 +48,14 @@ def run(dataset:str, iz:int, variables:list,
         dataset, iz, Sn_dict['variables']))
     jdict = cugn_utils.jsonify(Sn_dict)
     cugn_utils.savejson(outfile, jdict, easy_to_read=True, overwrite=clobber)
+    print(f'Wrote: {outfile}')
 
 if __name__ == '__main__':
 
     # Test
-    test_case()
+    #test_case()
 
     # Calypso 2022
-    #for iz in range(50):
+    for iz in range(50):
         #run('Calypso2022', iz, ['duL','duL','duL'])
+        run('Calypso2022', iz, ['duL','S','S'])
