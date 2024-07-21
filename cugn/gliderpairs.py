@@ -56,6 +56,10 @@ class GliderPairs:
         self.dv = None
         self.duL = None
 
+        # Other variables
+        self.dS = None
+        self.dT = None
+
         self.generate_pairs(max_dist=max_dist, max_time=max_time,
                             from_scratch=from_scratch,
                             avoid_same_glider=avoid_same_glider)
@@ -183,7 +187,7 @@ class GliderPairs:
         t1 = self.data('time', 1)
         self.dtime = (t1-t0)/3600.
 
-    def calc_velocity(self, iz):
+    def calc_delta(self, iz:int, variables:str):
 
         # Velocity
         u0 = self.data('udopacross', 0, iz)
@@ -197,10 +201,29 @@ class GliderPairs:
 
         self.duL = self.rxN*self.du + self.ryN*self.dv
 
-        # Sn
-        self.S1 = self.duL
-        self.S2 = self.duL**2
-        self.S3 = self.duL**3
+        # Other
+        if 'dS' in variables:
+            s0 = self.data('s', 0, iz)
+            s1 = self.data('s', 1, iz)
+            self.dS = s1-s0
+
+
+    def calc_Sn(self, variables:str):
+
+        self.variables = variables
+        # duL
+        if variables == 'duLduLduL':
+            self.S1 = self.duL
+            self.S2 = self.duL**2
+            self.S3 = self.duL**3
+            self.dlbls = ['duL', 'duL**2', variables]
+        elif variables == 'duLdSdS':
+            self.S1 = self.duL
+            self.S2 = self.dS**2
+            self.S3 = self.duL*self.dS*self.dS
+            self.dlbls = ['duL', 'dS**2', variables]
+        else: 
+            raise ValueError("Bad variables")
 
     def calc_Sn_vs_r(self, rbins:np.ndarray, nboot:int=None):
         """
@@ -259,20 +282,20 @@ class GliderPairs:
 
         # generate a dict
         out_dict = {}
-        out_dict['variables'] = ['duL','duL','duL']
+        out_dict['variables'] = self.variables 
         out_dict['N'] = np.array(N)
         out_dict['r'] = np.array(avg_r)
 
-        out_dict['S1'] = np.array(avg_S1)
-        out_dict['std_S1'] = np.array(std_S1)
-        out_dict['med_S1'] = np.array(med_S1)
-        out_dict['err_S1'] = np.array(err_S1)
-        out_dict['S2'] = np.array(avg_S2)
-        out_dict['std_S2'] = np.array(std_S2)
-        out_dict['err_S2'] = np.array(err_S2)
-        out_dict['S3'] = np.array(avg_S3)
-        out_dict['std_S3'] = np.array(std_S3)
-        out_dict['err_S3'] = np.array(err_S3)
+        out_dict['S1_'+f'{self.dlbls[0]}'] = np.array(avg_S1)
+        out_dict['std_S1_'+f'{self.dlbls[0]}'] = np.array(std_S1)
+        out_dict['med_S1_'+f'{self.dlbls[0]}'] = np.array(med_S1)
+        out_dict['err_S1_'+f'{self.dlbls[0]}'] = np.array(err_S1)
+        out_dict['S2_'+f'{self.dlbls[1]}'] = np.array(avg_S2)
+        out_dict['std_S2_'+f'{self.dlbls[1]}'] = np.array(std_S2)
+        out_dict['err_S2_'+f'{self.dlbls[1]}'] = np.array(err_S2)
+        out_dict['S3_'+f'{self.dlbls[2]}'] = np.array(avg_S3)
+        out_dict['std_S3_'+f'{self.dlbls[2]}'] = np.array(std_S3)
+        out_dict['err_S3_'+f'{self.dlbls[2]}'] = np.array(err_S3)
 
         # Return
         return out_dict
@@ -280,10 +303,11 @@ class GliderPairs:
     def calc_corr_Sn(self, Sn_dict:dict):
 
         # Init
-        Sn_dict['S2corr'] = Sn_dict['S2'].copy()
-        Sn_dict['S3corr'] = Sn_dict['S3'].copy()
+        Sn_dict['S2corr_'+f'{self.dlbls[1]}'] = Sn_dict['S2_'+f'{self.dlbls[1]}'].copy()
+        Sn_dict['S3corr_'+f'{self.dlbls[2]}'] = Sn_dict['S3_'+f'{self.dlbls[2]}'].copy()
 
         # Correct me
         for ibin in range(Sn_dict['r'].size):
-            Sn_dict['S2corr'][ibin] -= Sn_dict['S1'][ibin]**2
-            Sn_dict['S3corr'][ibin] -= 3.*Sn_dict['S1'][ibin]*Sn_dict['S2'][ibin] + 2.*Sn_dict['S1'][ibin]**3
+            Sn_dict['S2corr_'+f'{self.dlbls[1]}'][ibin] -= Sn_dict['S1_'+f'{self.dlbls[0]}'][ibin]**2
+            Sn_dict['S3corr_'+f'{self.dlbls[2]}'][ibin] -= 3.*Sn_dict['S1_'+f'{self.dlbls[0]}'][ibin]*Sn_dict['S2_'+f'{self.dlbls[1]}'][ibin] \
+                + 2.*Sn_dict['S1_'+f'{self.dlbls[0]}'][ibin]**3

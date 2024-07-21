@@ -13,10 +13,10 @@ from IPython import embed
 
 
 def test_case(dataset='Calypso2022', iz=5):
-    run(dataset, iz, ['duL','duL','duL'])
+    run(dataset, iz, 'duLduLduL')
 
 
-def run(dataset:str, iz:int, variables:list,
+def run(dataset:str, iz:int, variables:str,
         max_time=10., avoid_same_glider=True, nbins=20,
         clobber:bool=True):
 
@@ -34,14 +34,15 @@ def run(dataset:str, iz:int, variables:list,
         avoid_same_glider=avoid_same_glider)
 
     # Velocity
-    gPairs.calc_velocity(iz)
+    gPairs.calc_delta(iz, variables)
+    gPairs.calc_Sn(variables)
 
-    if variables != ['duL','duL','duL']:
-        raise ValueError('Only duL, duL, duL is supported')
     Sn_dict = gPairs.calc_Sn_vs_r(rbins, nboot=10000)
     gPairs.calc_corr_Sn(Sn_dict) 
 
     gPairs.add_meta(Sn_dict)
+
+    embed(header='End of run 45')
 
     # Output
     outfile = os.path.join('Outputs', cugn_io.gpair_filename(
@@ -57,5 +58,5 @@ if __name__ == '__main__':
 
     # Calypso 2022
     for iz in range(50):
-        #run('Calypso2022', iz, ['duL','duL','duL'])
-        run('Calypso2022', iz, ['duL','S','S'])
+        #run('Calypso2022', iz, 'duLduLduL])
+        run('Calypso2022', iz, 'duLdSdS')

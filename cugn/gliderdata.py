@@ -141,7 +141,10 @@ class CTDData(GliderData):
                 setattr(self, key, mat_d['ctd'][key][0][0].flatten())
 
             # Profile + depth
-            self.profile_depth_arrays = ['udop', 'vdop', 'udopacross', 'udopalong']
+            #embed(header='144 of gliderdata')
+            self.profile_depth_arrays = ['udop', 'vdop', 
+                                         'udopacross', 'udopalong',
+                                         's', 't']
             for key in self.profile_depth_arrays:
                 setattr(self, key, mat_d['ctd'][key][0][0])
 

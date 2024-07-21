@@ -207,7 +207,7 @@ def fig_structure(dataset:str, outroot='fig_structure',
     '''
 
     # Load
-    variables = ['duL','duL','duL']
+    variables = 'duLduLduL'
     gpair_file = cugn_io.gpair_filename(dataset, iz, variables)
     gpair_file = os.path.join('..', 'Analysis', 'Outputs', gpair_file)
 
@@ -263,11 +263,11 @@ def fig_structure(dataset:str, outroot='fig_structure',
     print(f"Saved: {outfile}")
 
 def fig_Sn_depth(dataset:str, outroot='fig_Sn_depth',
-    variables = ['duL','duL','duL'], minN:int=10,
+    variables = 'duLduLduL', minN:int=10,
     nz:int=50):
 
-    outfile = f'{outroot}_{dataset}_{"".join(variables)}'
-    varlbl = "".join(variables)
+    outfile = f'{outroot}_{dataset}_{variables}'
+    varlbl = variables
     
     
     # Load and parse
