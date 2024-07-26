@@ -52,7 +52,7 @@ def run(dataset:str, iz:int,
 
     # Output
     outfile = os.path.join('Outputs', cugn_io.gpair_filename(
-        dataset, iz, Sn_dict['variables']))
+        dataset, iz))
     jdict = cugn_utils.jsonify(final_dict)
     cugn_utils.savejson(outfile, jdict, easy_to_read=True, overwrite=clobber)
     print(f'Wrote: {outfile}')

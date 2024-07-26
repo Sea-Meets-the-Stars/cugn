@@ -143,10 +143,10 @@ def load_up(line:str, gextrem:str='high', use_full:bool=False):
 
     return grid_extrem, ds, times, grid_tbl
 
-def gpair_filename(dataset:str, iz:int, variables:str):
+def gpair_filename(dataset:str, iz:int):
 
     # Generate a filename
-    outfile = f'gpair_{dataset}_z{iz:02d}_{variables}'
+    outfile = f'gpair_{dataset}_z{iz:02d}'
     outfile += '.json'
 
     return outfile

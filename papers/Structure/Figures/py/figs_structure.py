@@ -191,7 +191,7 @@ def fig_structure(dataset:str, outroot='fig_structure',
     outfile = f'{outroot}_z{(iz+1)*10}_{dataset}_{variables}.png'
 
     # Load
-    gpair_file = cugn_io.gpair_filename(dataset, iz, variables)
+    gpair_file = cugn_io.gpair_filename(dataset, iz)
     gpair_file = os.path.join('..', 'Analysis', 'Outputs', gpair_file)
 
     Sn_dict = gliderpairs.load_Sndict(gpair_file)
