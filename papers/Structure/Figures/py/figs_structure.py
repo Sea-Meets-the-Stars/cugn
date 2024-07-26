@@ -29,9 +29,12 @@ from IPython import embed
 
 Sn_lbls = dict(
     S1=r'$<\delta u_L> \;\; \rm [m/s]$',
+    S1_duL=r'$<\delta u_L> \;\; \rm [m/s]$',
     S2=r'$<\delta u_L^2> \;\; \rm [m/s]^2$',
     S3=r'$<\delta u_L^3> \;\; \rm [m/s]^3$',
 )
+Sn_lbls['S2_dS**2'] = r'$<\delta S^2> \;\; \rm [m/s]^2$'
+Sn_lbls['S3_duLdSdS'] = r'$<\delta u_L \delta S^2> \;\; \rm [m/s]^2$'
 
 def fig_separations(dataset:str, outroot='fig_sep', max_time:float=10.):
     outfile = f'{outroot}_{dataset}.png'
@@ -180,11 +183,12 @@ def fig_dus(dataset:str, outroot='fig_du', max_time:float=10., iz:int=4):
     print(f"Saved: {outfile}")
 
 def fig_structure(dataset:str, outroot='fig_structure', 
+    variables = 'duLduLduL',
                   iz:int=5, 
                   minN:int=10, avoid_same_glider:bool=True):
 
     # Outfile
-    outfile = f'{outroot}_z{(iz+1)*10}_{dataset}.png'
+    outfile = f'{outroot}_z{(iz+1)*10}_{dataset}_{variables}.png'
 
     '''
     # Load dataset
@@ -207,7 +211,6 @@ def fig_structure(dataset:str, outroot='fig_structure',
     '''
 
     # Load
-    variables = 'duLduLduL'
     gpair_file = cugn_io.gpair_filename(dataset, iz, variables)
     gpair_file = os.path.join('..', 'Analysis', 'Outputs', gpair_file)
 
@@ -223,9 +226,16 @@ def fig_structure(dataset:str, outroot='fig_structure',
     goodN = Sn_dict['N'] > minN
     
 
+    # Generate the keys
+    if variables == 'duLduLduL':
+        Skeys = ['S1', 'S2', 'S3']
+    elif variables == 'duLdSdS':
+        Skeys = ['S1_duL', 'S2_dS**2', 'S3_'+variables]
+
+
     for n, clr in enumerate('krb'):
         ax = plt.subplot(gs[n])
-        Skey = f'S{n+1}'
+        Skey = Skeys[n] 
         ax.errorbar(Sn_dict['r'][goodN], 
                     Sn_dict[Skey][goodN], 
                     yerr=Sn_dict['err_'+Skey][goodN],
@@ -234,9 +244,12 @@ def fig_structure(dataset:str, outroot='fig_structure',
 
         # Corrected
         if n > 0:
-            ax.plot(Sn_dict['r'][goodN], Sn_dict[Skey+'corr'][goodN],  'x',
+            corr_key = Skey[0:2]+'corr'+Skey[2:]
+            ax.plot(Sn_dict['r'][goodN], 
+                    Sn_dict[corr_key][goodN],  
+                    'x',
                     color=clr)
-        else:
+        elif 'med_S1' in Sn_dict.keys():
             ax.plot(Sn_dict['r'][goodN], Sn_dict['med_S1'][goodN],  
                     'x', color=clr)
 
@@ -250,7 +263,7 @@ def fig_structure(dataset:str, outroot='fig_structure',
         if n == 2:
             same_glider = 'True' if avoid_same_glider else 'False'
             ax.text(0.1, 0.8, 
-                    f'{dataset}\n depth = {(iz+1)*10} m\nAvoid same glider? {same_glider}', 
+                    f'{dataset}\n depth = {(iz+1)*10} m\nAvoid same glider? {same_glider}\n {variables}', 
                 transform=ax.transAxes, fontsize=16, ha='left')
         # 0 line
         ax.axhline(0., color='red', linestyle='--')
@@ -383,7 +396,8 @@ def main(flg):
         #fig_structure('ARCTERX')
         #fig_structure('ARCTERX', avoid_same_glider=False)
         #fig_structure('Calypso2019')
-        fig_structure('Calypso2022')
+        #fig_structure('Calypso2022')
+        fig_structure('Calypso2022', variables='duLdSdS')
 
     # Calypso 2022
     if flg == 5:

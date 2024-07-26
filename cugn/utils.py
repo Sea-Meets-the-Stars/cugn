@@ -193,3 +193,9 @@ def loadjson(filename):
             obj = json.load(fh)
 
     return obj
+
+def merge_dicts(dict_list:list):
+    result = {}
+    for d in dict_list:
+        result.update(d)
+    return result

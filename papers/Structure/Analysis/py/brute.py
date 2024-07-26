@@ -16,7 +16,7 @@ def test_case(dataset='Calypso2022', iz=5):
     run(dataset, iz, 'duLduLduL')
 
 
-def run(dataset:str, iz:int, variables:str,
+def run(dataset:str, iz:int, 
         max_time=10., avoid_same_glider=True, nbins=20,
         clobber:bool=True):
 
@@ -33,21 +33,27 @@ def run(dataset:str, iz:int, variables:str,
         gData, max_time=max_time, 
         avoid_same_glider=avoid_same_glider)
 
-    # Velocity
-    gPairs.calc_delta(iz, variables)
-    gPairs.calc_Sn(variables)
 
-    Sn_dict = gPairs.calc_Sn_vs_r(rbins, nboot=10000)
-    gPairs.calc_corr_Sn(Sn_dict) 
+    all_dicts = []
+    for variables in ['duLduLduL', 'duLdSdS']:
+        # Velocity
+        gPairs.calc_delta(iz, variables)
+        gPairs.calc_Sn(variables)
 
-    gPairs.add_meta(Sn_dict)
+        Sn_dict = gPairs.calc_Sn_vs_r(rbins, nboot=10000)
+        gPairs.calc_corr_Sn(Sn_dict) 
 
-    embed(header='End of run 45')
+        gPairs.add_meta(Sn_dict)
+        all_dicts.append(Sn_dict)
+
+
+    # Merge the dicts
+    final_dict = cugn_utils.merge_dicts(all_dicts)
 
     # Output
     outfile = os.path.join('Outputs', cugn_io.gpair_filename(
         dataset, iz, Sn_dict['variables']))
-    jdict = cugn_utils.jsonify(Sn_dict)
+    jdict = cugn_utils.jsonify(final_dict)
     cugn_utils.savejson(outfile, jdict, easy_to_read=True, overwrite=clobber)
     print(f'Wrote: {outfile}')
 
@@ -59,4 +65,4 @@ if __name__ == '__main__':
     # Calypso 2022
     for iz in range(50):
         #run('Calypso2022', iz, 'duLduLduL])
-        run('Calypso2022', iz, 'duLdSdS')
+        run('Calypso2022', iz)
