@@ -190,26 +190,6 @@ def fig_structure(dataset:str, outroot='fig_structure',
     # Outfile
     outfile = f'{outroot}_z{(iz+1)*10}_{dataset}_{variables}.png'
 
-    '''
-    # Load dataset
-    gData = gliderdata.load_dataset(dataset)
-    
-    # Cut on valid velocity data 
-    gData = gData.cut_on_good_velocity()
-
-    # Generate pairs
-    gPairs = gliderpairs.GliderPairs(
-        gData, max_time=max_time, 
-        avoid_same_glider=avoid_same_glider)
-
-    # Velocity
-    gPairs.calc_velocity(iz)
-
-    rbins = 10**np.linspace(0., np.log10(400), nbins) # km
-    Sn_dict = gPairs.calc_Sn_vs_r(rbins, nboot=10000)
-    gPairs.calc_corr_Sn(Sn_dict)
-    '''
-
     # Load
     gpair_file = cugn_io.gpair_filename(dataset, iz, variables)
     gpair_file = os.path.join('..', 'Analysis', 'Outputs', gpair_file)
@@ -399,7 +379,8 @@ def main(flg):
         #fig_structure('ARCTERX', avoid_same_glider=False)
         #fig_structure('Calypso2019')
         #fig_structure('Calypso2022')
-        fig_structure('Calypso2022', variables='duLdSdS')
+        #fig_structure('Calypso2022', variables='duLdSdS')
+        fig_structure('Calypso2022', variables='duLdTdT', iz=3)
 
     # Calypso 2022
     if flg == 5:
