@@ -207,6 +207,12 @@ class GliderPairs:
             s1 = self.data('s', 1, iz)
             self.dS = s1-s0
 
+        # Other
+        if 'dT' in variables:
+            t0 = self.data('t', 0, iz)
+            t1 = self.data('t', 1, iz)
+            self.dT = t1-t0
+
 
     def calc_Sn(self, variables:str):
 
@@ -222,6 +228,11 @@ class GliderPairs:
             self.S2 = self.dS**2
             self.S3 = self.duL*self.dS*self.dS
             self.dlbls = ['duL', 'dS**2', variables]
+        elif variables == 'duLdTdT':
+            self.S1 = self.duL
+            self.S2 = self.dT**2
+            self.S3 = self.duL*self.dT*self.dT
+            self.dlbls = ['duL', 'dT**2', variables]
         else: 
             raise ValueError("Bad variables")
 

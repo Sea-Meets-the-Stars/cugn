@@ -35,7 +35,7 @@ def run(dataset:str, iz:int,
 
 
     all_dicts = []
-    for variables in ['duLduLduL', 'duLdSdS']:
+    for variables in ['duLduLduL', 'duLdSdS', 'duLdTdT']:
         # Velocity
         gPairs.calc_delta(iz, variables)
         gPairs.calc_Sn(variables)
