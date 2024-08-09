@@ -52,7 +52,7 @@ def run(dataset:str, iz:int,
 
     # Output
     outfile = os.path.join('Outputs', cugn_io.gpair_filename(
-        dataset, iz))
+        dataset, iz, not avoid_same_glider))
     jdict = cugn_utils.jsonify(final_dict)
     cugn_utils.savejson(outfile, jdict, easy_to_read=True, overwrite=clobber)
     print(f'Wrote: {outfile}')
@@ -66,3 +66,4 @@ if __name__ == '__main__':
     for iz in range(50):
         #run('Calypso2022', iz, 'duLduLduL])
         run('Calypso2022', iz)
+        run('Calypso2022', iz, avoid_same_glider=False)
