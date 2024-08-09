@@ -790,6 +790,156 @@ def fig_annual(outfile:str, line:str, metric='N',
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
+
+def fig_multi_scatter_event(outfile:str, line:str, 
+                      event:str, t_off, gextrem:str='high',
+                      ):
+
+    # Load
+    items = cugn_io.load_up(line, gextrem=gextrem, use_full=True)
+    grid_extrem = items[0]
+    ds = items[1]
+    times = items[2]
+    grid_tbl = items[3]
+
+    # Grid extrem
+    #uni, n_uni = np.unique(grid_extrem.cluster, return_counts=True)
+
+    # Grab event
+    tevent = pandas.Timestamp(event)
+    tmin = tevent - pandas.Timedelta(t_off)
+    tmax = tevent + pandas.Timedelta(t_off)
+
+    # In event
+    in_event = (grid_extrem.time >= tmin) & (grid_extrem.time <= tmax)
+    ds_in_event = (ds.time >= tmin) & (ds.time <= tmax)
+    grid_in_event = (grid_tbl.time >= tmin) & (grid_tbl.time <= tmax)
+
+    # Mission
+    missions = np.unique(ds.mission[ds_in_event].data)
+    mission_profiles = np.unique(ds.mission_profile[ds_in_event].data)
+    print(f'Missions: {missions}')
+    #print(f'Mission Profiles: {mission_profiles}')
+
+    dist, _ = cugn_utils.calc_dist_offset(
+                    line, ds.lon[ds_in_event].values, 
+                    ds.lat[ds_in_event].values)
+    imin = np.argmin(dist)
+
+    # Range of dist
+    print(f"Range of dist: {dist[0]} to {dist[-1]}")
+    print(f"Minimum dist = {dist.min()} at {ds.time[ds_in_event][imin]}")
+
+    fig = plt.figure(figsize=(10,8))
+    plt.clf()
+
+    gs = gridspec.GridSpec(5,2)
+
+    cnt = 0
+    #metrics = ['SO', 'doxy', 'N', 'CT', 'dist']
+    metrics = ['SO', 'doxy', 'N', 'CT', 'chla']
+    #metrics = ['SO', 'doxy', 'N', 'CT', 'SA']
+    clrs = ['gray', 'purple', 'blue', 'red', 'green']
+    nsub = len(metrics)
+    #for clr, z in zip(['b', 'g', 'r'], [10, 20, 30]):
+    for col, z in enumerate([10, 20]):
+        depth = z//10 - 1
+
+        grid_depth = grid_tbl[grid_tbl.depth == depth].copy()
+
+        # Axis
+        for ii, clr, metric in zip(
+            np.arange(nsub), clrs, metrics):
+
+            #row = col*3 + ii
+            row = ii
+            ax = plt.subplot(gs[row:row+1, col:col+1])
+                                     #'dist']):
+            if metric == 'T':
+                ds_metric = 'CT'
+            elif metric == 'chla':
+                ds_metric = 'chlorophyll_a'
+            else:
+                ds_metric = metric
+
+
+            # Save the date
+            if ii == 0:
+                #sv_dates = ds.time[ds_in_event][srt_ds]
+                sv_dates = grid_depth.time[grid_in_event].values
+            plt_depth = depth
+            if metric in ['dist']:
+                yvals = dist
+            else:
+                yvals = grid_depth[metric][grid_in_event].values
+                #yvals = ds[ds_metric][plt_depth,ds_in_event][srt_ds].values
+
+            # Twin?
+            axi = ax
+            #if metric == 'T':
+            #    ax2 = ax.twinx()
+            #    ax2.set_ylim(yvals.min(), yvals.max())
+            #    axi = ax2
+            #elif metric == 'N':
+            #    ax3 = ax2.twinx()
+            #    ax3.set_ylim(yvals.min(), yvals.max())
+            #    axi = ax3
+
+
+            # Plot all
+            #axi.scatter(ds.time[ds_in_event][srt], 
+            axi.scatter(grid_depth.time[grid_in_event].values, 
+                    yvals, edgecolor=clr,
+                    facecolor='none', alpha=0.5, zorder=1)
+
+            # Plot extrema
+            extrem = grid_depth.SO[grid_in_event].values > 1.1
+            axi.scatter(grid_depth.time[grid_in_event].values[extrem],
+                    yvals[extrem], color=clr,
+                    zorder=10)
+            #at_d = grid_extrem.depth[in_event] == depth
+            #axi.scatter(grid_extrem.time[in_event][at_d], 
+            #           grid_extrem[metric][in_event][at_d], 
+            #           color=clr, zorder=10)
+
+            # Debug
+            #embed(header='fig_multi_scatter_event 965')
+
+            if metric == 'N':
+                ax.set_ylim(bottom=0.)
+                ax.text(0.95, 0.05, f'z={z} m',
+                    transform=ax.transAxes,
+                    fontsize=20, ha='right', color='k')
+            elif metric == 'SO':
+                # Horizontal line at 1.1
+                ax.axhline(1.1, color='gray', linestyle='--')
+
+            # Axes
+            ax.set_ylabel(short_lbl[metric])
+            plot_utils.set_fontsize(ax, 14.)
+            #if z < 20 or ii < 3:
+            if ii < (nsub-1):
+                ax.set_xticklabels([])
+                ax.tick_params(bottom=False)
+            else:
+                #plt.locator_params(axis='x', nbins=5)  # Show at most 5 ticks
+                #locator = mdates.MultipleLocator(2)
+                #ax.xaxis.set_major_locator(locator)
+                ax.tick_params(axis='x', rotation=45)
+
+            ax.set_xlim(sv_dates[0], sv_dates[-1])
+            ax.xaxis.set_major_locator(mdates.DayLocator(interval=2))
+
+            # Add grid
+            ax.grid(True)
+
+            cnt += 1
+
+    #gs.tight_layout(fig)
+    plt.tight_layout(pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
 def main(flg):
     if flg== 'all':
         flg= np.sum(np.array([2 ** ii for ii in range(25)]))
@@ -803,22 +953,22 @@ def main(flg):
         #fig_joint_pdfs(use_density=True)
         fig_joint_pdfs(use_DO=True)
 
-    # Joint PDF: T, DO on Line 90
-    if flg & (2**1):
+    # Figure 3 -- Joint PDF: T, DO on Line 90
+    if flg & (2**2):
         fig_joint_line90()
 
     # Figure 3  Joint PDF: T, DO on Line 90
-    if flg & (2**2):
+    if flg & (2**3):
         line = '90'
         fig_joint_pdf_NSO(line)
 
     # Figure 4 -- SO CDFs
-    if flg & (2**3):
+    if flg & (2**4):
         fig_SO_cdf('fig_SO_cdf.png', use_full=True)
 
 
     # Figure 5 -- DOY vs Offshore distance
-    if flg & (2**4):
+    if flg & (2**5):
         for line, clr in zip(lines, line_colors):
             # Skip for now
             #if line == '56':
@@ -838,9 +988,20 @@ def main(flg):
             #             show_legend=show_legend,
             #             clr_by_depth=True)
 
-    # Figure 4 -- SO vs. N
-    if flg & (2**5):
+    # Figure ? -- SO vs. N
+    if flg & (2**6):
         fig_SO_vs_N_zoom()
+
+    # Figure 7 -- multi-scatter
+    if flg & (2**7):
+        line = '90.0'
+        eventA = ('2020-09-01', '10D') # Sub-surface
+
+        event, t_off = eventA
+        fig_multi_scatter_event(
+            f'fig_multi_scatter_event_{line}_{event}.png', 
+            line, event, t_off)#, gextrem='hi_noperc')
+        
 
     # Figure 9 -- doy, distance for the low extrema
     if flg & (2**8):
@@ -883,8 +1044,11 @@ if __name__ == '__main__':
         #flg += 2 ** 2  # 4 -- Joint PDF, N vs SO
         #flg += 2 ** 3  # 8 -- SO CDFs
         #flg += 2 ** 4  # 16 -- Figure 5: DOY vs. offshore distance
+        #flg += 2 ** 4  # 16 -- Figure 5: DOY vs. offshore distance
+        #flg += 2 ** 4  # 16 -- Figure 5: DOY vs. offshore distance
+        flg += 2 ** 7  # 16 -- Figure 5: DOY vs. offshore distance
 
-        flg += 2 ** 8  # 256 -- Figure 9: DOY vs. offshore distance for low
+        #flg += 2 ** 8  # 256 -- Figure 9: DOY vs. offshore distance for low
 
         #flg += 2 ** 11  
         #flg += 2 ** 12  # Low histograms
