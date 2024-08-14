@@ -6,7 +6,7 @@ from scipy.io import loadmat
 
 import pandas
 
-from siosandbox.cugn import utils as cugn_utils
+from cugn import utils as cugn_utils
 
 from IPython import embed
 
@@ -38,16 +38,24 @@ def evaluate(Aarray:np.ndarray, variable:str, level:int, time:np.ndarray, dist:n
     Returns:
         np.ndarray: evals
     """
+    var_dict = {'t': 12, 
+                's': 13,
+                'fl': 14,
+                'oxumolkg': 16,
+                }
+    idx = var_dict[variable]
 
     evals = np.zeros(time.size)
     
     # Unpack A for convenience
     A = {}
-    A['t'] = {}
+    A[variable] = {}
     for key in ['constant', 'sin', 'cos']:
         # Temperature
-        A['t'][key] = Aarray[0][0][12][key][0][0]
+        A[variable][key] = Aarray[0][0][idx][key][0][0]
     A['xcenter'] = Aarray[0][0][5][:,0].astype(float)
+
+    #embed(header='54 of annualcycle.py')
 
     # Prep
     timebin=2*np.pi*time/86400/365.25
@@ -99,6 +107,8 @@ def calc_for_grid(grid:pandas.DataFrame,
         grid (pandas.DataFrame): The grid data.
         line (str): The line identifier.
         variable (str): The variable to calculate the annual cycle for.
+            't': temperature
+            'oxumolkg': dissolved oxygen
 
     Returns:
         numpy.ndarray: The calculated annual cycle.
