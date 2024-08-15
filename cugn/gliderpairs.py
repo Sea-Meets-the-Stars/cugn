@@ -1,5 +1,7 @@
 """ Simple Class to Analyze Pairs of Gliders """
 import numpy as np
+import datetime
+import getpass
 
 from cugn import gliderdata
 from cugn import utils as cugn_utils
@@ -83,6 +85,10 @@ class GliderPairs:
         sdict['config']['dataset'] = self.gdata.dataset
         if self.iz is not None:
             sdict['config']['iz'] = self.iz
+        # Add creation date
+        sdict['config']['creation_date'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        # Add created by
+        sdict['config']['created_by'] = getpass.getuser()
 
     def generate_pairs(self, max_dist:float=None, max_time:float=None,
                        from_scratch:bool=True, avoid_same_glider:bool=True):

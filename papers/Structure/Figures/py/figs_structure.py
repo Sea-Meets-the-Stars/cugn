@@ -141,7 +141,8 @@ def fig_dus(dataset:str, outroot='fig_du', max_time:float=10., iz:int=4):
     gPairs = gliderpairs.GliderPairs(gData, max_time=max_time)
 
     # Velocity
-    gPairs.calc_velocity(iz)
+    #gPairs.calc_velocity(iz)
+    gPairs.calc_delta(iz, '')
 
     # Start the figure
     fig = plt.figure(figsize=(12,6))
@@ -385,9 +386,9 @@ def main(flg):
     # Calypso 2022
     if flg == 5:
         dataset = 'Calypso2022'
-        #fig_separations(dataset)
-        #fig_dtimes(dataset)
-        #fig_dus(dataset)
+        fig_separations(dataset)
+        fig_dtimes(dataset)
+        fig_dus(dataset)
         fig_structure(dataset, avoid_same_glider=False)
         fig_structure(dataset, avoid_same_glider=False, iz=10)
 
