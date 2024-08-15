@@ -33,6 +33,11 @@ class GliderPairs:
     Time difference between the two gliders [hours]
     """
 
+    iz:int = None
+    """
+    Index of the vertical level
+    """
+
     def __init__(self, gdata:gliderdata.GliderData,
                  max_dist:float=None, max_time:float=None,
                  from_scratch:bool=True, avoid_same_glider:bool=True):
@@ -72,10 +77,12 @@ class GliderPairs:
         Args:
             sdict (dict): A dictionary containing analysis output
         """
-        sdict['max_dist'] = self.max_dist
-        sdict['max_time'] = self.max_time
-        sdict['avoid_self'] = self.avoid_same_glider
-        sdict['dataset'] = self.gdata.dataset
+        sdict['config']['max_dist'] = self.max_dist
+        sdict['config']['max_time'] = self.max_time
+        sdict['config']['avoid_self'] = self.avoid_same_glider
+        sdict['config']['dataset'] = self.gdata.dataset
+        if self.iz is not None:
+            sdict['config']['iz'] = self.iz
 
     def generate_pairs(self, max_dist:float=None, max_time:float=None,
                        from_scratch:bool=True, avoid_same_glider:bool=True):
@@ -189,6 +196,8 @@ class GliderPairs:
 
     def calc_delta(self, iz:int, variables:str):
 
+        self.iz = iz
+
         # Velocity
         u0 = self.data('udopacross', 0, iz)
         u1 = self.data('udopacross', 1, iz)
@@ -293,8 +302,9 @@ class GliderPairs:
 
         # generate a dict
         out_dict = {}
-        out_dict['variables'] = self.variables 
-        out_dict['N'] = np.array(N)
+        out_dict['config'] = {}
+        out_dict['config']['variables'] = self.variables 
+        out_dict['config']['N'] = np.array(N)
         out_dict['r'] = np.array(avg_r)
 
         out_dict['S1_'+f'{self.dlbls[0]}'] = np.array(avg_S1)

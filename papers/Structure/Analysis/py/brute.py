@@ -65,4 +65,4 @@ if __name__ == '__main__':
     # Calypso 2022
     for iz in range(50):
         #run('Calypso2022', iz, 'duLduLduL])
-        run('Calypso2022', iz)
+        run('Calypso2022', iz, avoid_same_glider=False)
