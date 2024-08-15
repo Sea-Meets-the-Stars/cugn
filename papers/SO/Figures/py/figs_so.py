@@ -1480,9 +1480,10 @@ def fig_upwell_search(line:str, gextrem:str='high',
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
+
 def fig_do_anomalies(line:str, zmax:int=9, dmax:float=100.):
 
-    outfile = f'fig_do_anomalies_{line}.png' 
+    outfile = f'fig_do_anomalies_{line}_{int(dmax)}.png' 
     iline = lines.index(line)
     clr = line_colors[iline]
 
@@ -1769,8 +1770,8 @@ def main(flg):
 
     # Upwelling search
     if flg & (2**34):
-        line = '90.0'
-        fig_do_anomalies(line)
+        for line in lines:
+            fig_do_anomalies(line, dmax=50.)
 
 # Command line execution
 if __name__ == '__main__':
@@ -1807,7 +1808,7 @@ if __name__ == '__main__':
         #flg += 2 ** 33  # Search for upwelling
 
         # Anamolies
-        flg += 2 ** 34  # DO, Line 90, in-shore
+        flg += 2 ** 34  # DO
 
     else:
         flg = sys.argv[1]
