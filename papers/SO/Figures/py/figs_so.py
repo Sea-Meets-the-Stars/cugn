@@ -1,7 +1,5 @@
 # imports
-from importlib import reload
-import os
-import xarray
+import os, sys
 
 import numpy as np
 from scipy import stats
@@ -25,13 +23,20 @@ from siosandbox import plot_utils
 from cugn import grid_utils
 from cugn import utils as cugn_utils
 from cugn import io as cugn_io
-from cugn import defs
+from cugn import defs as cugn_defs
+
+lines = cugn_defs.lines
+line_colors = cugn_defs.line_colors
+line_cmaps = cugn_defs.line_cmaps
 
 from gsw import conversions, density
 import gsw
 
-from IPython import embed
+# Local
+sys.path.append(os.path.abspath("../Analysis/py"))
+import so_analysis
 
+from IPython import embed
 
 def gen_cb(img, lbl, csz = 17.):
     cbaxes = plt.colorbar(img, pad=0., fraction=0.030)
@@ -1475,6 +1480,94 @@ def fig_upwell_search(line:str, gextrem:str='high',
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
+def fig_do_anomalies(line:str, zmax:int=9, dmax:float=100.):
+
+    outfile = f'fig_do_anomalies_{line}.png' 
+    iline = lines.index(line)
+    clr = line_colors[iline]
+
+    # Load
+    grid = so_analysis.load_annual(line)
+
+    # Calculate
+    grid['doxya'] = grid.doxy - grid.ann_doxy
+
+
+    # Histogram me
+    fig = plt.figure(figsize=(12,10))
+    gs = gridspec.GridSpec(2,2)
+    plt.clf()
+
+    bins = np.linspace(-150.,150.,50)
+    for ss in range(4):
+        ax = plt.subplot(gs[ss])
+
+        # Cut down on season
+        if ss == 0: # Winter
+            in_season = (grid.time.dt.month >= 12) | (grid.time.dt.month <= 2)
+            lbl = 'Winter'
+        elif ss == 1: # Spring
+            in_season = (grid.time.dt.month >= 3) & (grid.time.dt.month <= 5)
+            lbl = 'Spring'
+        elif ss == 2: # Summer
+            in_season = (grid.time.dt.month >= 6) & (grid.time.dt.month <= 8)
+            lbl = 'Summer'
+        elif ss == 3: # Fall
+            in_season = (grid.time.dt.month >= 9) & (grid.time.dt.month <= 11)
+            lbl = 'Fall'
+        
+
+        ax.hist(grid.doxya[in_season], bins=bins, color=clr, 
+                 fill=True, edgecolor=clr, label=lbl) 
+                 #log_scale=(False,True))#, label='Extrema')
+
+        # Add a cDF in an inset
+        axin = ax.inset_axes([0.65, 0.6, 0.3, 0.3])
+
+        sorted_data = np.sort(grid.doxya[in_season])
+
+        # Calculate the proportional values of samples
+        y = np.arange(len(sorted_data)) / float(len(sorted_data) - 1)
+
+        # Gaussian
+        mean = np.mean(grid.doxya[in_season])
+        std = np.std(grid.doxya[in_season])
+
+        # Create the CDF plot
+        axin.plot(sorted_data, y, color=clr)
+
+        # Overplot the Gaussian
+        x = np.linspace(-5*std, 5*std, 10000)
+        y = stats.norm.cdf(x/std)
+        axin.plot(x, y, 'k:')
+
+        axin.set_xlabel('Value')
+        axin.set_ylabel('CDF')
+
+        #ax.plot(x, y*len(grid.doxya)*std/50, 'k-', lw=2)                
+
+        ax.set_xlabel(short_lbl['doxy'].replace('DO', 'DO Anomaly'))
+        ax.set_ylabel('Count')
+
+        # Describe
+        #if ss == 0:
+        ax.text(0.05, 0.90, lbl, transform=ax.transAxes, 
+                fontsize=18., ha='left', color='k')
+
+        fsz = 19.
+        plot_utils.set_fontsize(ax, fsz)
+
+        #ax.legend(fontsize=fsz)
+
+    # Title
+    fig.suptitle(f'Line={line}, zmax={10*(zmax+1)}m, dmax={dmax}km', 
+                 fontsize=29)
+
+
+    plt.tight_layout()
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
 def main(flg):
     if flg== 'all':
         flg= np.sum(np.array([2 ** ii for ii in range(25)]))
@@ -1674,6 +1767,10 @@ def main(flg):
         line = '90.0'
         fig_upwell_search(line, gextrem='high')
 
+    # Upwelling search
+    if flg & (2**34):
+        line = '90.0'
+        fig_do_anomalies(line)
 
 # Command line execution
 if __name__ == '__main__':
@@ -1707,7 +1804,11 @@ if __name__ == '__main__':
 
         #flg += 2 ** 31  # Pivot event figure
         #flg += 2 ** 32  # Pivot percentile
-        flg += 2 ** 33  # Search for upwelling
+        #flg += 2 ** 33  # Search for upwelling
+
+        # Anamolies
+        flg += 2 ** 34  # DO, Line 90, in-shore
+
     else:
         flg = sys.argv[1]
 

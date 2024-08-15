@@ -6,6 +6,8 @@ import pandas
 
 from cugn import io as cugn_io
 from cugn import defs
+from cugn import utils as cugn_utils
+from cugn import annualcycle
 
 from IPython import embed
 
@@ -101,6 +103,28 @@ def count_profiles():
     #
     print(f"Total number of profiles = {nprofs}")
 
+def load_annual(line:str, zmax:int=9, dmax:float=100.):
+
+    # Load up
+    items = cugn_io.load_up(line)#, skip_dist=True)
+    grid_tbl = items[3]
+
+    # Distance
+    dist, _ = cugn_utils.calc_dist_offset(
+        line, grid_tbl.lon.values, grid_tbl.lat.values)
+    grid_tbl['dist'] = dist 
+    times = pandas.to_datetime(grid_tbl.time.values)
+    grid_tbl['doy'] = times.dayofyear
+
+    # Cut down
+    grid_tbl = grid_tbl[grid_tbl.depth <= zmax]
+    grid_tbl = grid_tbl[grid_tbl.dist <= dmax]
+
+    # Calculate <DO> at every location
+    DO_annual = annualcycle.calc_for_grid(grid_tbl, line, 'oxumolkg')
+    grid_tbl['ann_doxy'] = DO_annual
+
+    return grid_tbl  
 
 # Command line execution
 if __name__ == '__main__':
@@ -119,4 +143,7 @@ if __name__ == '__main__':
     #
     '''
 
-    count_profiles()
+    #count_profiles()
+
+    # Anamolies
+    anamolies('90.0')

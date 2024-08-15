@@ -49,6 +49,21 @@ def load_line(line:str, use_full:bool=False):
 
 
 def load_up(line:str, gextrem:str='high', use_full:bool=False):
+    """
+    Load data and perform various operations on it.
+
+    Args:
+        line (str): The line to load data for.
+        gextrem (str, optional): The type of extremum to consider. Defaults to 'high'.
+        use_full (bool, optional): Whether to use the full data or not. Defaults to False.
+
+    Returns:
+        tuple: A tuple containing the following:
+            - grid_extrem (pandas.DataFrame): DataFrame containing the extreme values.
+            - ds (xarray.Dataset): The loaded dataset.
+            - times (pandas.DatetimeIndex): Datetime index of the extreme values.
+            - grid_tbl (pandas.DataFrame): DataFrame containing the loaded data.
+    """
     # Load
     items = load_line(line, use_full=use_full)
     grid_tbl = items['grid_tbl']
