@@ -122,7 +122,9 @@ def load_annual(line:str, zmax:int=9, dmax:float=100.):
 
     # Calculate <DO> at every location
     DO_annual = annualcycle.calc_for_grid(grid_tbl, line, 'oxumolkg')
+    SO_annual = annualcycle.calc_for_grid(grid_tbl, line, 'ox')
     grid_tbl['ann_doxy'] = DO_annual
+    grid_tbl['ann_SO'] = SO_annual
 
     return grid_tbl  
 

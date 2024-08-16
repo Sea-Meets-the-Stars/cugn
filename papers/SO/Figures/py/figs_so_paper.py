@@ -5,9 +5,7 @@ Other figures are in figs_so.py
 """
 
 # imports
-from importlib import reload
-import os
-import xarray
+import os, sys
 
 import numpy as np
 from scipy import stats
@@ -33,6 +31,9 @@ from cugn import io as cugn_io
 from siosandbox import plot_utils
 from cugn import annualcycle
 
+# Local
+sys.path.append(os.path.abspath("../Analysis/py"))
+import so_analysis
 
 from IPython import embed
 
@@ -49,6 +50,16 @@ labels = dict(
     DO='Dissolved Oxygen '+r'$(\mu$'+'mol/kg)',
 )
 labels['doxy'] = labels['DO']
+
+short_lbl = {'doxy': 'DO ('+r'$\mu$'+'mol/kg)', 
+                 'T': 'T (deg C)',
+                 'CT': 'T (deg C)',
+                 'SA': 'SA (g/kg)',
+                 'SO': 'SO',
+                 'N': 'N (cycles/hr)',
+                 'dist': 'Distance from shore (km)',
+                 'chla': 'Chl-a (mg/m'+r'$^3$'+')'}
+
 
 def gen_cb(img, lbl, csz = 17.):
     cbaxes = plt.colorbar(img, pad=0., fraction=0.030)
@@ -940,6 +951,130 @@ def fig_multi_scatter_event(outfile:str, line:str,
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
+
+def fig_SOa_pdfs(line:str, zmax:int=4, 
+                 dmax:float=50.,
+                 variable:str='SO'):
+    """
+    Generate a figure showing the anomalies of a given variable (default: 'doxy') for a specific line.
+    Parameters:
+        line (str): The line for which the figure is generated.
+        zmax (int): The maximum depth for the figure in meters (default: 9).
+        dmax (float): The maximum distance for the figure in kilometers (default: 100.0).
+        variable (str): The variable to plot the anomalies for (default: 'doxy').
+    Returns:
+        None
+    """
+
+    outfile = f'fig_{variable}a_{line}_{int(dmax)}_z{10*(zmax+1)}.png' 
+    iline = lines.index(line)
+    clr = line_colors[iline]
+
+    # Load
+    grid = so_analysis.load_annual(line)
+
+    # Calculate
+    grid['doxya'] = grid.doxy - grid.ann_doxy
+    grid['SOa'] = grid.SO - grid.ann_SO
+
+
+    # Histogram me
+    fig = plt.figure(figsize=(12,10))
+    gs = gridspec.GridSpec(2,2)
+    plt.clf()
+
+    if variable == 'doxy':
+        bins = np.linspace(-150.,150.,50)
+    elif variable == 'SO':
+        bins = np.linspace(-0.5, 0.5, 50)
+
+    for ss in range(4):
+        ax = plt.subplot(gs[ss])
+
+        # Cut down on season
+        if ss == 0: # Winter
+            in_season = (grid.time.dt.month >= 12) | (grid.time.dt.month <= 2)
+            lbl = 'Winter'
+        elif ss == 1: # Spring
+            in_season = (grid.time.dt.month >= 3) & (grid.time.dt.month <= 5)
+            lbl = 'Spring'
+        elif ss == 2: # Summer
+            in_season = (grid.time.dt.month >= 6) & (grid.time.dt.month <= 8)
+            lbl = 'Summer'
+        elif ss == 3: # Fall
+            in_season = (grid.time.dt.month >= 9) & (grid.time.dt.month <= 11)
+            lbl = 'Fall'
+
+        if variable == 'doxy':
+            anom = grid.doxya[in_season]
+        elif variable == 'SO':
+            anom = grid.SOa[in_season]
+        
+
+        ax.hist(anom, bins=bins, color=clr, 
+                 fill=True, edgecolor=clr, label=lbl) 
+                 #log_scale=(False,True))#, label='Extrema')
+
+        # Gaussian
+        mean = np.mean(anom)
+        std = np.std(anom)
+        skew = stats.skew(anom)
+
+        '''
+        # Add a cDF in an inset
+        axin = ax.inset_axes([0.67, 0.6, 0.3, 0.3])
+
+        sorted_data = np.sort(anom)
+
+        # Calculate the proportional values of samples
+        y = np.arange(len(sorted_data)) / float(len(sorted_data) - 1)
+
+
+        # Create the CDF plot
+        axin.plot(sorted_data, y, color=clr)
+
+        # Overplot the Gaussian
+        x = np.linspace(-5*std, 5*std, 10000)
+        y = stats.norm.cdf(x/std)
+        axin.plot(x, y, 'k:')
+
+        axin.set_xlabel('Value')
+        axin.set_ylabel('CDF')
+        axin.set_xlim(-0.5, 0.5)
+        '''
+
+        #ax.plot(x, y*len(grid.doxya)*std/50, 'k-', lw=2)                
+
+        xlbl = short_lbl[variable]
+        if variable == 'doxy':
+            xlbl = xlbl.replace('DO','DOa')
+        elif variable == 'SO':
+            xlbl = xlbl.replace('SO','SOa')
+        ax.set_xlabel(xlbl)
+        ax.set_ylabel('Count')
+
+        # Describe
+        #if ss == 0:
+        ax.text(0.05, 0.90, 
+                lbl+'\n\n'+f'N={len(anom)}\n'+f'$\mu$={mean:.2f}\n$\sigma$={std:.2f}\nskew={skew:.2f}',
+                transform=ax.transAxes, 
+                fontsize=18., ha='left', color='k',
+                va='top')
+
+        fsz = 19.
+        plot_utils.set_fontsize(ax, fsz)
+
+        #ax.legend(fontsize=fsz)
+
+    # Title
+    fig.suptitle(f'Line={line}, '+r'$z \leq $'+f'{10*(zmax+1)}m, '+r'$d \leq $'+f'{int(dmax)}km', 
+                 fontsize=29)
+
+
+    plt.tight_layout()
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
 def main(flg):
     if flg== 'all':
         flg= np.sum(np.array([2 ** ii for ii in range(25)]))
@@ -1007,16 +1142,16 @@ def main(flg):
     if flg & (2**8):
         fig_dist_doy_low()
 
+    # Figure 9 -- doy, distance for the low extrema
+    if flg & (2**9):
+        for line in ['90.0', '56.0']:
+            fig_SOa_pdfs(line)
 
     # Figure 2 -- average DO, SO 
     if flg & (2**10):
         line = '90'
         fig_mean_DO_SO(line)
 
-    # Figure 2 -- T vs. DO
-    if flg & (2**11):
-        line = '90'
-        fig_mean_DO_SO(line)
 
     # Extrema CDFs
     if flg & (2**18):
@@ -1046,9 +1181,10 @@ if __name__ == '__main__':
         #flg += 2 ** 4  # 16 -- Figure 5: DOY vs. offshore distance
         #flg += 2 ** 4  # 16 -- Figure 5: DOY vs. offshore distance
         #flg += 2 ** 4  # 16 -- Figure 5: DOY vs. offshore distance
-        flg += 2 ** 7  # 16 -- Figure 5: DOY vs. offshore distance
+        #flg += 2 ** 7  # 16 -- Figure 5: DOY vs. offshore distance
 
         #flg += 2 ** 8  # 256 -- Figure 9: DOY vs. offshore distance for low
+        flg += 2 ** 9  # SOa PDFs
 
         #flg += 2 ** 11  
         #flg += 2 ** 12  # Low histograms

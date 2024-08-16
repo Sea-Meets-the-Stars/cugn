@@ -30,7 +30,9 @@ def evaluate(Aarray:np.ndarray, variable:str, level:int, time:np.ndarray, dist:n
 
     Args:
         Aarray (np.ndarray): MATLAB array of values
-        variable (str): allowed values are 't' (temperature)
+        variable (str): allowed values are 
+            't' (temperature)
+            's' (salinity)
         level (int): depth level; 0 = 10m
         time (np.ndarray): Unix time, i.e. seconds since 1970-01-01
         dist (np.ndarray): Distance from the shore in km
@@ -42,6 +44,7 @@ def evaluate(Aarray:np.ndarray, variable:str, level:int, time:np.ndarray, dist:n
                 's': 13,
                 'fl': 14,
                 'oxumolkg': 16,
+                'ox': 17,  # Saturated oxygen
                 }
     idx = var_dict[variable]
 

@@ -1481,9 +1481,21 @@ def fig_upwell_search(line:str, gextrem:str='high',
     print(f"Saved: {outfile}")
 
 
-def fig_do_anomalies(line:str, zmax:int=9, dmax:float=100.):
+def fig_sodo_anomalies(line:str, zmax:int=9, 
+                       dmax:float=100.,
+                       variable:str='doxy'):
+    """
+    Generate a figure showing the anomalies of a given variable (default: 'doxy') for a specific line.
+    Parameters:
+        line (str): The line for which the figure is generated.
+        zmax (int): The maximum depth for the figure in meters (default: 9).
+        dmax (float): The maximum distance for the figure in kilometers (default: 100.0).
+        variable (str): The variable to plot the anomalies for (default: 'doxy').
+    Returns:
+        None
+    """
 
-    outfile = f'fig_do_anomalies_{line}_{int(dmax)}.png' 
+    outfile = f'fig_{variable}_anomalies_{line}_{int(dmax)}_z{10*(zmax+1)}.png' 
     iline = lines.index(line)
     clr = line_colors[iline]
 
@@ -1492,6 +1504,7 @@ def fig_do_anomalies(line:str, zmax:int=9, dmax:float=100.):
 
     # Calculate
     grid['doxya'] = grid.doxy - grid.ann_doxy
+    grid['SOa'] = grid.SO - grid.ann_SO
 
 
     # Histogram me
@@ -1499,7 +1512,11 @@ def fig_do_anomalies(line:str, zmax:int=9, dmax:float=100.):
     gs = gridspec.GridSpec(2,2)
     plt.clf()
 
-    bins = np.linspace(-150.,150.,50)
+    if variable == 'doxy':
+        bins = np.linspace(-150.,150.,50)
+    elif variable == 'SO':
+        bins = np.linspace(-0.5, 0.5, 50)
+
     for ss in range(4):
         ax = plt.subplot(gs[ss])
 
@@ -1516,23 +1533,29 @@ def fig_do_anomalies(line:str, zmax:int=9, dmax:float=100.):
         elif ss == 3: # Fall
             in_season = (grid.time.dt.month >= 9) & (grid.time.dt.month <= 11)
             lbl = 'Fall'
+
+        if variable == 'doxy':
+            anom = grid.doxya[in_season]
+        elif variable == 'SO':
+            anom = grid.SOa[in_season]
         
 
-        ax.hist(grid.doxya[in_season], bins=bins, color=clr, 
+        ax.hist(anom, bins=bins, color=clr, 
                  fill=True, edgecolor=clr, label=lbl) 
                  #log_scale=(False,True))#, label='Extrema')
 
         # Add a cDF in an inset
         axin = ax.inset_axes([0.65, 0.6, 0.3, 0.3])
 
-        sorted_data = np.sort(grid.doxya[in_season])
+        sorted_data = np.sort(anom)
 
         # Calculate the proportional values of samples
         y = np.arange(len(sorted_data)) / float(len(sorted_data) - 1)
 
         # Gaussian
-        mean = np.mean(grid.doxya[in_season])
-        std = np.std(grid.doxya[in_season])
+        mean = np.mean(anom)
+        std = np.std(anom)
+        skew = stats.skew(anom)
 
         # Create the CDF plot
         axin.plot(sorted_data, y, color=clr)
@@ -1547,13 +1570,21 @@ def fig_do_anomalies(line:str, zmax:int=9, dmax:float=100.):
 
         #ax.plot(x, y*len(grid.doxya)*std/50, 'k-', lw=2)                
 
-        ax.set_xlabel(short_lbl['doxy'].replace('DO', 'DO Anomaly'))
+        xlbl = short_lbl[variable]
+        if variable == 'doxy':
+            xlbl = xlbl.replace('DO','DOa')
+        elif variable == 'SO':
+            xlbl = xlbl.replace('SO','SOa')
+        ax.set_xlabel(xlbl)
         ax.set_ylabel('Count')
 
         # Describe
         #if ss == 0:
-        ax.text(0.05, 0.90, lbl, transform=ax.transAxes, 
-                fontsize=18., ha='left', color='k')
+        ax.text(0.05, 0.90, 
+                lbl+'\n\n'+f'N={len(anom)}\n'+f'$\mu$={mean:.1f}\n$\sigma$={std:.1f}\nskew={skew:.2f}',
+                transform=ax.transAxes, 
+                fontsize=18., ha='left', color='k',
+                va='top')
 
         fsz = 19.
         plot_utils.set_fontsize(ax, fsz)
@@ -1770,8 +1801,12 @@ def main(flg):
 
     # Upwelling search
     if flg & (2**34):
-        for line in lines:
-            fig_do_anomalies(line, dmax=50.)
+        for zmax in [4, 9]:
+            for variable in ['SO', 'doxy']:
+                for line in lines:
+                    fig_sodo_anomalies(
+                        line, dmax=50., variable=variable,
+                        zmax=zmax)
 
 # Command line execution
 if __name__ == '__main__':
