@@ -1,8 +1,4 @@
-""" Final figures for the paper 
-
-Other figures are in figs_so.py
-
-"""
+""" Figures for the UG2 poseter """
 
 # imports
 import os, sys
@@ -16,6 +12,9 @@ import matplotlib as mpl
 import matplotlib.gridspec as gridspec
 import matplotlib.dates as mdates
 from matplotlib.ticker import MultipleLocator 
+from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
+import cartopy.crs as ccrs
+import cartopy
 
 mpl.rcParams['font.family'] = 'stixgeneral'
 
@@ -30,6 +29,9 @@ from cugn import defs as cugn_defs
 from cugn import io as cugn_io
 from siosandbox import plot_utils
 from cugn import annualcycle
+
+tformM = ccrs.Mollweide()
+tformP = ccrs.PlateCarree()  
 
 # Local
 sys.path.append(os.path.abspath("../Analysis/py"))
@@ -47,8 +49,8 @@ labels = dict(
     CT='Conservative Temperature (deg C)',
     SO='Oxygen Saturation',
     N='Buoyancy (cycles/hour)',
-    DO='Dissolved Oxygen '+r'$(\mu$'+'mol/kg)',
     chla='Chl-a (mg/m'+r'$^3$'+')',
+    DO='Dissolved Oxygen '+r'$(\mu$'+'mol/kg)',
 )
 labels['doxy'] = labels['DO']
 
@@ -67,6 +69,86 @@ def gen_cb(img, lbl, csz = 17.):
     cbaxes.set_label(lbl, fontsize=csz)
     cbaxes.ax.tick_params(labelsize=csz)
 
+def fig_cugn(outfile:str='fig_cugn.png', debug:bool=False,
+             use_density:bool=False, use_DO:bool=False):
+
+    # Start the figure
+    fig = plt.figure(figsize=(7,8))
+    plt.clf()
+    ax = plt.subplot(projection=tformM)
+
+    for ss, cmap, line in zip(range(4), line_cmaps, lines):
+        if ss > 0 and debug:
+            continue
+        # Load
+        items = cugn_io.load_up(line, use_full=True)
+        grid_extrem = items[0]
+        ds = items[1]
+        times = items[2]
+        grid_tbl = items[3]
+        #ds = items['ds']
+        #grid_tbl = items['grid_tbl']
+
+        #embed(header='83 of figs')
+
+        img = plt.scatter(x=grid_tbl.lon.values,
+            y=grid_tbl.lat.values, color=line_colors[ss],# cmap=cmap,
+                #vmin=0.,
+                #vmax=vmax, 
+            s=1,
+            transform=tformP, label=f'Line {line}')
+
+        # Color bar
+        #cbaxes = plt.colorbar(img, pad=0., fraction=0.030, orientation='horizontal') #location='left')
+        #cbaxes.set_label(param, fontsize=17.)
+        #cbaxes.ax.tick_params(labelsize=15)
+
+    # Coast lines
+    ax.coastlines(zorder=10)
+    ax.add_feature(cartopy.feature.LAND, 
+            facecolor='lightgray', edgecolor='black')
+        #ax.set_global()
+
+    gl = ax.gridlines(crs=ccrs.PlateCarree(), linewidth=1, 
+        color='black', alpha=0.5, linestyle=':', draw_labels=True)
+    gl.xlabels_top = False
+    gl.ylabels_left = True
+    gl.ylabels_right=False
+    gl.xlines = True
+    gl.xformatter = LONGITUDE_FORMATTER
+    gl.yformatter = LATITUDE_FORMATTER
+    gl.xlabel_style = {'color': 'black'}# 'weight': 'bold'}
+    gl.ylabel_style = {'color': 'black'}# 'weight': 'bold'}
+
+    # Define cities
+    cities = [
+        ('Los Angeles', -118.2437, 34.0522),
+        ('San Francisco', -122.4194, 37.7749),
+        ('Santa Barbara', -119.6982, 34.4208),
+        ('San Diego', -117.1611, 32.7157),
+        ('Santa Cruz', -122.0308, 36.9741),
+        #('Sacramento', -121.4944, 38.5816)
+    ]
+
+    # Add cities to the map
+    for city, lon, lat in cities:
+        ax.plot(lon, lat, 'ko', markersize=5, transform=ccrs.PlateCarree())
+        ax.text(lon, lat, city, fontsize=15, ha='left', va='bottom', transform=ccrs.PlateCarree())
+
+
+    # Label the axes
+    #ax.set_title('UG2', fontsize=17.)
+    #ax.set_extent([-100, -30, -70, 50])
+    ax.set_xlabel('Longitude')
+    ax.set_ylabel('Latitude')
+
+    #lon_min, lon_max, lat_min, lat_max = -100, 30, -70, 50
+    #ax.set_extent([lon_min, lon_max, lat_min, lat_max])
+
+
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
 
 def fig_joint_pdfs(use_density:bool=False, use_DO:bool=False):
 
@@ -658,8 +740,7 @@ def fig_joint_pdf_NSO(line:str, max_depth:int=30):
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
-def fig_extrema_cdfs(outfile:str='fig_N_cdfs.png', metric:str='N',
-                     xyLine:tuple=(0.05, 0.90),
+def fig_extrema_cdfs(outfile:str='fig_poster_cdfs.png', 
                      leg_loc:str='lower right'):
 
     # CDFs
@@ -667,44 +748,56 @@ def fig_extrema_cdfs(outfile:str='fig_N_cdfs.png', metric:str='N',
     plt.clf()
     gs = gridspec.GridSpec(2,2)
 
-    for ss, line in enumerate(cugn_defs.lines):
-        # Load
-        items = cugn_io.load_up(line)
-        grid_extrem = items[0]
-        ds = items[1]
-        times = items[2]
-        grid_tbl = items[3]
+    cnt = 0
+    for metric in ['N', 'chla']:
+        if metric == 'N':
+            xyLine=(0.05, 0.90)
+            xmnx = [0., 25.]
+        else:
+            xyLine=(0.7, 0.80)
+            xmnx = [0., 13.]
+        for tt, line in enumerate(['56.0', '90.0']):
+            ss = 0 if tt == 0 else 3
+            # Load
+            items = cugn_io.load_up(line)
+            grid_extrem = items[0]
+            ds = items[1]
+            times = items[2]
+            grid_tbl = items[3]
 
-        cut_grid = (grid_tbl.depth <= 5) & np.isfinite(grid_tbl[metric])
+            cut_grid = (grid_tbl.depth <= 5) & np.isfinite(grid_tbl[metric])
 
-        ctrl = grid_utils.grab_control_values(grid_extrem, grid_tbl[cut_grid], metric, boost=5)
-
-
-        ax = plt.subplot(gs[ss])
-
-        sns.ecdfplot(x=grid_extrem[metric], ax=ax, label='Extrema', 
-                     color=cugn_defs.line_colors[ss])
-        sns.ecdfplot(x=ctrl, ax=ax, label='Control', color='k', ls='--')
+            ctrl = grid_utils.grab_control_values(grid_extrem, grid_tbl[cut_grid], metric, boost=5)
 
 
-        # Finish
-        #ax.axvline(1., color='black', linestyle='--')
-        #ax.axvline(1.1, color='black', linestyle=':')
-        lsz = 12.
-        ax.legend(fontsize=lsz, loc=leg_loc)
+            ax = plt.subplot(gs[cnt])
 
-        #ax.set_xlim(0.5, 1.4)
-        ax.set_xlabel(labels[metric])
-        ax.set_ylabel('CDF')
-        ax.text(xyLine[0], xyLine[1], f'Line: {line}', 
-                transform=ax.transAxes,
-                fontsize=lsz, ha='left', color='k')
-        plot_utils.set_fontsize(ax, 13)
+            sns.ecdfplot(x=grid_extrem[metric], ax=ax, label='Extrema', 
+                        color=cugn_defs.line_colors[ss])
+            sns.ecdfplot(x=ctrl, ax=ax, label='Control', color='k', ls='--')
 
-        # Stats
-        # Percentile of the extrema
-        val = np.nanpercentile(grid_extrem[metric], (10,90))
-        print(f'Line: {line} -- percentiles={val}')
+
+            # Finish
+            #ax.axvline(1., color='black', linestyle='--')
+            #ax.axvline(1.1, color='black', linestyle=':')
+            lsz = 12.
+            ax.legend(fontsize=lsz, loc=leg_loc)
+
+            #ax.set_xlim(0.5, 1.4)
+            ax.set_xlabel(labels[metric])
+            ax.set_ylabel('CDF')
+            ax.text(xyLine[0], xyLine[1], f'Line: {line}', 
+                    transform=ax.transAxes,
+                    fontsize=lsz, ha='left', color='k')
+            plot_utils.set_fontsize(ax, 13)
+
+            ax.set_xlim(xmnx[0], xmnx[1])
+            # Stats
+            # Percentile of the extrema
+            val = np.nanpercentile(grid_extrem[metric], (10,90))
+            print(f'Line: {line} -- percentiles={val}')
+            #
+            cnt += 1
 
     plt.tight_layout(pad=0.8)#, w_pad=2.0)#, w_pad=0.8)
     plt.savefig(outfile, dpi=300)
@@ -1083,91 +1176,13 @@ def main(flg):
         flg= int(flg)
 
 
-    # Figure 1 -- Joint PDFs
-    if flg & (2**0):
-        #fig_joint_pdfs()
-        #fig_joint_pdfs(use_density=True)
-        fig_joint_pdfs(use_DO=True)
+    # Figure 1 -- CUGN
+    if flg == 1:
+        fig_cugn()
 
-    # Figure 3 -- Joint PDF: T, DO on Line 90
-    if flg & (2**2):
-        fig_joint_line90()
-
-    # Figure 3  Joint PDF: T, DO on Line 90
-    if flg & (2**3):
-        line = '90'
-        fig_joint_pdf_NSO(line)
-
-    # Figure 4 -- SO CDFs
-    if flg & (2**4):
-        fig_SO_cdf('fig_SO_cdf.png', use_full=True)
-
-
-    # Figure 5 -- DOY vs Offshore distance
-    if flg & (2**5):
-        for line, clr in zip(lines, line_colors):
-            # Skip for now
-            #if line == '56':
-            #    continue
-            if line == '56.0':
-                show_legend = True
-            else:
-                show_legend = False
-            # High
-            fig_dist_doy(f'fig_dist_doy_{line}.png', 
-                         line, clr, show_legend=show_legend,
-                         clr_by_depth=True)
-            # Low
-            #fig_dist_doy(f'fig_dist_doy_low_{line}.png', 
-            #             line, clr, 
-            #             gextrem='low_noperc',
-            #             show_legend=show_legend,
-            #             clr_by_depth=True)
-
-    # Figure ? -- SO vs. N
-    if flg & (2**6):
-        fig_SO_vs_N_zoom()
-
-    # Figure 7 -- multi-scatter
-    if flg & (2**7):
-        line = '90.0'
-        eventA = ('2020-09-01', '10D') # Sub-surface
-
-        event, t_off = eventA
-        fig_multi_scatter_event(
-            f'fig_multi_scatter_event_{line}_{event}.png', 
-            line, event, t_off)#, gextrem='hi_noperc')
-        
-
-    # Figure 9 -- doy, distance for the low extrema
-    if flg & (2**8):
-        fig_dist_doy_low()
-
-    # Figure 9 -- doy, distance for the low extrema
-    if flg & (2**9):
-        for line in ['90.0', '56.0']:
-            fig_SOa_pdfs(line)
-
-    # Figure 2 -- average DO, SO 
-    if flg & (2**10):
-        line = '90'
-        fig_mean_DO_SO(line)
-
-
-    # Extrema CDFs
-    if flg & (2**18):
-        # N
-        #fig_extrema_cdfs()
-        # Chla
-        #fig_extrema_cdfs('fig_chla_cdfs.png', metric='chla',
-        #                 xyLine=(0.7, 0.4))
-        # DO
-        fig_extrema_cdfs('fig_doxy_cdfs.png', metric='doxy',
-                         xyLine=(0.7, 0.4), leg_loc='upper left')
-
-    # Annual cycle
-    if flg & (2**19):
-        fig_annual('fig_annual_TDO.png', line='90.0', metric='T')
+    # Figure 2 -- Extrema CDFs
+    if flg == 2:
+        fig_extrema_cdfs()
 
 # Command line execution
 if __name__ == '__main__':
@@ -1178,20 +1193,6 @@ if __name__ == '__main__':
         #flg += 2 ** 0  # 1 -- Joint PDFs of all 4 lines
         #flg += 2 ** 1  # 2 -- Joint PDF, T vs DO
         #flg += 2 ** 2  # 4 -- Joint PDF, N vs SO
-        #flg += 2 ** 3  # 8 -- SO CDFs
-        #flg += 2 ** 4  # 16 -- Figure 5: DOY vs. offshore distance
-        #flg += 2 ** 4  # 16 -- Figure 5: DOY vs. offshore distance
-        #flg += 2 ** 4  # 16 -- Figure 5: DOY vs. offshore distance
-        #flg += 2 ** 7  # 16 -- Figure 5: DOY vs. offshore distance
-
-        #flg += 2 ** 8  # 256 -- Figure 9: DOY vs. offshore distance for low
-        flg += 2 ** 9  # SOa PDFs
-
-        #flg += 2 ** 11  
-        #flg += 2 ** 12  # Low histograms
-
-        #flg += 2 ** 18  # # Extreme CDFs
-        #flg += 2 ** 19  # T anomaly vs. DO
     else:
         flg = sys.argv[1]
 
