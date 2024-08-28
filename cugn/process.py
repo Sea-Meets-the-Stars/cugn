@@ -113,35 +113,47 @@ def add_gsw():
         ds.to_netcdf(new_spray_file)
         print(f"Wrote: {new_spray_file}")
 
-def build_ds_grid(line_file:str, gridtbl_outfile:str, edges_outfile:str,
-               min_counts:int=50, debug:bool=False):
+def build_ds_grid(line:str, line_file:str, gridtbl_outfile:str, 
+                  edges_outfile:str, min_counts:int=50, 
+                  debug:bool=False,
+                  max_offset:float=90.):
     """ Grid up density and salinity for a line
     to generate a table of grid indices and values
 
     Args:
-        line_file (str): Identify the line ['90', '67']
+        line (str): Line name ['90.0', '67.0']
+        line_file (str): line file
         gridtbl_outfile (str): name of the output table
         edges_outfile (str): name of the output grid edges
         min_counts (int, optional): Minimum counts on the
             grid to be included in the analysis. Defaults to 50.
         debug (bool, optional): Debug. Defaults to False.
+        max_offset (float, optional): Maximum offset from the line. Defaults to 90 km
     """
     # Dataset
     ds = xarray.load_dataset(line_file)
+
+    # Cut on offset
+    dist, offset = cugn_utils.calc_dist_offset(
+            line, ds.lon.values, ds.lat.values)
+    ok_off = (np.abs(offset) < max_offset) & np.isfinite(offset)
+    ds = ds.isel(profile=ok_off)
 
     # Generate the grid
     mean_oxyT, SA_edges, sigma_edges, countsT, \
         grid_indices, gd_oxy, da_gd = grid_utils.gen_grid(ds, stat='mean')
 
     # Table me
-    depth, profile = np.where(da_gd)
+    gd_depth, gd_profile = np.where(da_gd)
     grid_tbl = pandas.DataFrame()
 
-    grid_tbl['depth'] = depth
-    grid_tbl['profile'] = profile
+    grid_tbl['depth'] = gd_depth
+    grid_tbl['profile'] = ds.profile[gd_profile].values
     grid_tbl['row'] = grid_indices[0,:] - 1
     grid_tbl['col'] = grid_indices[1,:] - 1
     grid_tbl['doxy'] = gd_oxy
+
+    
 
     # Cut on counts
     gd_rows, gd_cols = np.where(countsT > min_counts)
@@ -193,13 +205,14 @@ if __name__ == '__main__':
         line_files = cugn_io.line_files(line)
 
         # Control
-        build_ds_grid(line_files['datafile'],
+        build_ds_grid(line, line_files['datafile'],
             line_files['gridtbl_file_control'], 
             line_files['edges_file'],
             min_counts=50)
 
         # Full
-        build_ds_grid(line_files['datafile'],
+        build_ds_grid(line, line_files['datafile'],
             line_files['gridtbl_file_full'], 
             None,
-            min_counts=0)
+            min_counts=0,
+            max_offset=90.)

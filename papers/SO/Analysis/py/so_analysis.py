@@ -89,6 +89,10 @@ def count_clusters(line:str):
     return uni_cluster.size - 1
     
 def count_profiles():
+    """
+    Counts the total number of profiles in the given dataset.
+
+    """
 
     # Load
     nprofs = 0

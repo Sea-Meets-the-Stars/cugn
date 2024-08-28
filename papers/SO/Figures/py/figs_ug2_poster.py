@@ -24,10 +24,12 @@ import seaborn as sns
 from gsw import conversions, density
 import gsw
 
+from ocpy.utils import plotting
+
 from cugn import grid_utils
+from cugn import utils as cugn_utils
 from cugn import defs as cugn_defs
 from cugn import io as cugn_io
-from siosandbox import plot_utils
 from cugn import annualcycle
 
 tformM = ccrs.Mollweide()
@@ -73,21 +75,32 @@ def fig_cugn(outfile:str='fig_cugn.png', debug:bool=False,
              use_density:bool=False, use_DO:bool=False):
 
     # Start the figure
-    fig = plt.figure(figsize=(7,8))
+    fig = plt.figure(figsize=(7,6))
     plt.clf()
-    ax = plt.subplot(projection=tformM)
+    ax = plt.subplot(projection=tformP)
 
     for ss, cmap, line in zip(range(4), line_cmaps, lines):
         if ss > 0 and debug:
             continue
         # Load
         items = cugn_io.load_up(line, use_full=True)
-        grid_extrem = items[0]
-        ds = items[1]
-        times = items[2]
+        #grid_extrem = items[0]
+        #ds = items[1]
+        #times = items[2]
         grid_tbl = items[3]
         #ds = items['ds']
         #grid_tbl = items['grid_tbl']
+
+        # Trim (remove this)
+        dist, offset = cugn_utils.calc_dist_offset(
+            line, grid_tbl.lon.values, grid_tbl.lat.values)
+        grid_tbl['dist'] = dist
+        ok_off = np.abs(offset) < 90.
+        if np.any(~ok_off):
+            embed(header='100 of figs')
+            raise ValueError("Bad offset")
+
+        grid_tbl = grid_tbl[ok_off]
 
         #embed(header='83 of figs')
 
@@ -117,8 +130,8 @@ def fig_cugn(outfile:str='fig_cugn.png', debug:bool=False,
     gl.xlines = True
     gl.xformatter = LONGITUDE_FORMATTER
     gl.yformatter = LATITUDE_FORMATTER
-    gl.xlabel_style = {'color': 'black'}# 'weight': 'bold'}
-    gl.ylabel_style = {'color': 'black'}# 'weight': 'bold'}
+    gl.xlabel_style = {'color': 'black', 'weight': 'bold'}
+    gl.ylabel_style = {'color': 'black', 'weight': 'bold'}
 
     # Define cities
     cities = [
@@ -145,6 +158,7 @@ def fig_cugn(outfile:str='fig_cugn.png', debug:bool=False,
     #lon_min, lon_max, lat_min, lat_max = -100, 30, -70, 50
     #ax.set_extent([lon_min, lon_max, lat_min, lat_max])
 
+    plotting.set_fontsize(ax, 17)
 
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
@@ -188,7 +202,7 @@ def fig_joint_pdfs(use_density:bool=False, use_DO:bool=False):
     for ss, cmap, line in zip(range(4), line_cmaps, lines):
 
         # Load
-        items = cugn_io.load_line(line)
+        items = cugn_io.load_line(line, use_full=True)
         ds = items['ds']
 
         # Oxygen
@@ -218,7 +232,7 @@ def fig_joint_pdfs(use_density:bool=False, use_DO:bool=False):
         # Set x-axis interval to 0.5
         ax.xaxis.set_major_locator(MultipleLocator(0.5))
         # 
-        plot_utils.set_fontsize(ax, fsz)
+        plotting.set_fontsize(ax, fsz)
         ax.text(0.05, ypos, f'Line={line}',
                 transform=ax.transAxes,
                 fontsize=fsz, ha='left', color='k')
@@ -298,7 +312,7 @@ def fig_mean_DO_SO(line, outfile:str=None):
     # 
     fsz = 17.
     for ax in axes:
-        plot_utils.set_fontsize(ax, fsz)
+        plotting.set_fontsize(ax, fsz)
     
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
@@ -358,7 +372,7 @@ def fig_SO_cdf(outfile:str, use_full:bool=False):
         ax.text(0.95, 0.05, f'z={(depth+1)*10}m',
                 transform=ax.transAxes,
                 fontsize=lsz, ha='right', color='k')
-        plot_utils.set_fontsize(ax, lsz)
+        plotting.set_fontsize(ax, lsz)
 
     ax = plt.subplot(gs[0])
     ax.legend(fontsize=15., loc='upper left')
@@ -449,7 +463,7 @@ def fig_dist_doy(outfile:str, line:str, color:str,
     jg.ax_joint.text(0.95, 0.95, f'Line {line}',
                 transform=jg.ax_joint.transAxes,
                 fontsize=fsz, ha='right', color='k')
-    plot_utils.set_fontsize(jg.ax_joint, 19)
+    plotting.set_fontsize(jg.ax_joint, 19)
     if show_legend:
         jg.ax_joint.legend(fontsize=13., loc='lower right')
 
@@ -490,7 +504,7 @@ def fig_dist_doy_low(outfile:str='fig_dist_doy_low.png',
             ax_doy.set_xticklabels([])
         else:
             ax_doy.set_xlabel('DOY')
-        plot_utils.set_fontsize(ax_doy, 17)
+        plotting.set_fontsize(ax_doy, 17)
         ax_doy.set_ylabel('Count')
 
         # Stats
@@ -509,7 +523,7 @@ def fig_dist_doy_low(outfile:str='fig_dist_doy_low.png',
             ax_doff.set_xticklabels([])
         else:
             ax_doff.set_xlabel('Distance Offshore (km)')
-        plot_utils.set_fontsize(ax_doff, 17)
+        plotting.set_fontsize(ax_doff, 17)
         ax_doff.set_ylabel('Count')
 
         # Stats
@@ -596,7 +610,7 @@ def fig_SO_vs_N_zoom():
     # Set x-axis interval to 0.5
     #ax.xaxis.set_major_locator(MultipleLocator(0.5))
     # 
-    plot_utils.set_fontsize(ax, fsz)
+    plotting.set_fontsize(ax, fsz)
 
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
@@ -656,7 +670,7 @@ def fig_joint_line90(outfile:str='fig_joint_TDO_line90.png',
                                         bins=100)) 
 
     # Axes                                 
-    plot_utils.set_fontsize(jg.ax_joint, 14)
+    plotting.set_fontsize(jg.ax_joint, 14)
 
     # SO
     if metric == 'CT':
@@ -734,7 +748,7 @@ def fig_joint_pdf_NSO(line:str, max_depth:int=30):
     #ax.xaxis.set_major_locator(MultipleLocator(0.5))
     # 
     fsz = 27.
-    plot_utils.set_fontsize(ax, fsz)
+    plotting.set_fontsize(ax, fsz)
     
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
@@ -789,7 +803,7 @@ def fig_extrema_cdfs(outfile:str='fig_poster_cdfs.png',
             ax.text(xyLine[0], xyLine[1], f'Line: {line}', 
                     transform=ax.transAxes,
                     fontsize=lsz, ha='left', color='k')
-            plot_utils.set_fontsize(ax, 13)
+            plotting.set_fontsize(ax, 13)
 
             ax.set_xlim(xmnx[0], xmnx[1])
             # Stats
@@ -854,7 +868,7 @@ def fig_annual(outfile:str, line:str, metric='N',
     # Axes                                 
     jg.ax_joint.set_ylabel(ylbl)
     jg.ax_joint.set_xlabel(labels['doxy'])
-    plot_utils.set_fontsize(jg.ax_joint, 14)
+    plotting.set_fontsize(jg.ax_joint, 14)
 
     # Extrema
     ex_clr = 'gray'
@@ -1021,7 +1035,7 @@ def fig_multi_scatter_event(outfile:str, line:str,
 
             # Axes
             ax.set_ylabel(short_lbl[metric])
-            plot_utils.set_fontsize(ax, 14.)
+            plotting.set_fontsize(ax, 14.)
             #if z < 20 or ii < 3:
             if ii < (nsub-1):
                 ax.set_xticklabels([])
@@ -1156,7 +1170,7 @@ def fig_SOa_pdfs(line:str, zmax:int=4,
                 va='top')
 
         fsz = 19.
-        plot_utils.set_fontsize(ax, fsz)
+        plotting.set_fontsize(ax, fsz)
 
         #ax.legend(fontsize=fsz)
 
@@ -1178,7 +1192,7 @@ def main(flg):
 
     # Figure 1 -- CUGN
     if flg == 1:
-        fig_cugn()
+        fig_cugn()#debug=True)
 
     # Figure 2 -- Extrema CDFs
     if flg == 2:
@@ -1190,9 +1204,8 @@ if __name__ == '__main__':
 
     if len(sys.argv) == 1:
         flg = 0
-        #flg += 2 ** 0  # 1 -- Joint PDFs of all 4 lines
-        #flg += 2 ** 1  # 2 -- Joint PDF, T vs DO
-        #flg += 2 ** 2  # 4 -- Joint PDF, N vs SO
+        #flg += 2 ** 0  # 1 -- CUGN figure
+        #flg += 2 ** 1  # 2 -- Extrema CDFS
     else:
         flg = sys.argv[1]
 

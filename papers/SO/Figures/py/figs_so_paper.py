@@ -1093,7 +1093,7 @@ def main(flg):
     if flg & (2**2):
         fig_joint_line90()
 
-    # Figure 3  Joint PDF: T, DO on Line 90
+    # 
     if flg & (2**3):
         line = '90'
         fig_joint_pdf_NSO(line)
@@ -1175,17 +1175,17 @@ if __name__ == '__main__':
 
     if len(sys.argv) == 1:
         flg = 0
-        #flg += 2 ** 0  # 1 -- Joint PDFs of all 4 lines
-        #flg += 2 ** 1  # 2 -- Joint PDF, T vs DO
-        #flg += 2 ** 2  # 4 -- Joint PDF, N vs SO
-        #flg += 2 ** 3  # 8 -- SO CDFs
-        #flg += 2 ** 4  # 16 -- Figure 5: DOY vs. offshore distance
-        #flg += 2 ** 4  # 16 -- Figure 5: DOY vs. offshore distance
+        flg += 2 ** 0  # 1 -- Joint PDFs of all 4 lines
+        #flg += 2 ** 1  # 2 ??
+        #flg += 2 ** 2  # 4 Joint PDF T, DO on Line 90
+        #flg += 2 ** 3  # N vs. SO
+        flg += 2 ** 4  # Figure 4: SO CDFs
+        flg += 2 ** 5  # Figure 5: DOY vs. offshore distance
         #flg += 2 ** 4  # 16 -- Figure 5: DOY vs. offshore distance
         #flg += 2 ** 7  # 16 -- Figure 5: DOY vs. offshore distance
 
         #flg += 2 ** 8  # 256 -- Figure 9: DOY vs. offshore distance for low
-        flg += 2 ** 9  # SOa PDFs
+        #flg += 2 ** 9  # SOa PDFs
 
         #flg += 2 ** 11  
         #flg += 2 ** 12  # Low histograms
