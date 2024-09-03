@@ -194,12 +194,18 @@ def fig_joint_pdfs(use_density:bool=False, use_DO:bool=False):
         ypos = 0.1
 
 
-    fig = plt.figure(figsize=(12,10))
+    fig = plt.figure(figsize=(12,5))
     plt.clf()
-    gs = gridspec.GridSpec(2,2)
+    gs = gridspec.GridSpec(1,2)
 
     all_ax = []
     for ss, cmap, line in zip(range(4), line_cmaps, lines):
+        tt = ss
+        if ss in [1,2]:
+            continue
+        elif ss == 3:
+            tt = 1
+
 
         # Load
         items = cugn_io.load_line(line, use_full=True)
@@ -218,14 +224,17 @@ def fig_joint_pdfs(use_density:bool=False, use_DO:bool=False):
 
         # #####################################################
         # PDF
-        ax_pdf = plt.subplot(gs[ss])
+        ax_pdf = plt.subplot(gs[tt])
         img = ax_pdf.pcolormesh(xedges, yedges, np.log10(consv_pdf.T),
                                 cmap=cmap)
         gen_cb(img, lbl)
         all_ax.append(ax_pdf)
 
+    cnt = 0
     for ss, line in enumerate(lines):
-        ax = all_ax[ss]
+        if ss in [1,2]:
+            continue
+        ax = all_ax[cnt]
         fsz = 17.
         ax.set_xlabel(xlbl)
         ax.set_ylabel(ylbl)
@@ -238,6 +247,7 @@ def fig_joint_pdfs(use_density:bool=False, use_DO:bool=False):
                 fontsize=fsz, ha='left', color='k')
         # Grid lines
         ax.grid()
+        cnt += 1
     
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
@@ -382,7 +392,7 @@ def fig_SO_cdf(outfile:str, use_full:bool=False):
     print(f"Saved: {outfile}")
 
 
-def fig_dist_doy(outfile:str, line:str, color:str,
+def fig_geo_temporal(outfile:str, line:str, color:str,
                  gextrem:str='hi_noperc',
                  show_legend:bool=False, 
                  clr_by_depth:bool=False):
@@ -1198,6 +1208,11 @@ def main(flg):
     if flg == 2:
         fig_extrema_cdfs()
 
+    # Joint PDFs
+    if flg == 3:
+        fig_joint_pdfs(use_DO=True)
+
+
 # Command line execution
 if __name__ == '__main__':
     import sys
@@ -1206,6 +1221,7 @@ if __name__ == '__main__':
         flg = 0
         #flg += 2 ** 0  # 1 -- CUGN figure
         #flg += 2 ** 1  # 2 -- Extrema CDFS
+        #flg += 2 ** 1  # 2 -- Jonit PDFs
     else:
         flg = sys.argv[1]
 

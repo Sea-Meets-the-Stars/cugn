@@ -8,8 +8,6 @@ from cugn import grid_utils
 from cugn import clusters
 from cugn import utils as cugn_utils
 
-from siosandbox import cat_utils
-
 from IPython import embed
 
 data_path = os.getenv('CUGN')

@@ -19,6 +19,7 @@ from matplotlib.ticker import MultipleLocator
 
 mpl.rcParams['font.family'] = 'stixgeneral'
 
+from ocpy.utils import plotting
 
 import seaborn as sns
 
@@ -28,7 +29,6 @@ import gsw
 from cugn import grid_utils
 from cugn import defs as cugn_defs
 from cugn import io as cugn_io
-from siosandbox import plot_utils
 from cugn import annualcycle
 
 # Local
@@ -136,7 +136,7 @@ def fig_joint_pdfs(use_density:bool=False, use_DO:bool=False):
         # Set x-axis interval to 0.5
         ax.xaxis.set_major_locator(MultipleLocator(0.5))
         # 
-        plot_utils.set_fontsize(ax, fsz)
+        plotting.set_fontsize(ax, fsz)
         ax.text(0.05, ypos, f'Line={line}',
                 transform=ax.transAxes,
                 fontsize=fsz, ha='left', color='k')
@@ -216,7 +216,7 @@ def fig_mean_DO_SO(line, outfile:str=None):
     # 
     fsz = 17.
     for ax in axes:
-        plot_utils.set_fontsize(ax, fsz)
+        plotting.set_fontsize(ax, fsz)
     
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
@@ -276,7 +276,7 @@ def fig_SO_cdf(outfile:str, use_full:bool=False):
         ax.text(0.95, 0.05, f'z={(depth+1)*10}m',
                 transform=ax.transAxes,
                 fontsize=lsz, ha='right', color='k')
-        plot_utils.set_fontsize(ax, lsz)
+        plotting.set_fontsize(ax, lsz)
 
     ax = plt.subplot(gs[0])
     ax.legend(fontsize=15., loc='upper left')
@@ -367,7 +367,7 @@ def fig_dist_doy(outfile:str, line:str, color:str,
     jg.ax_joint.text(0.95, 0.95, f'Line {line}',
                 transform=jg.ax_joint.transAxes,
                 fontsize=fsz, ha='right', color='k')
-    plot_utils.set_fontsize(jg.ax_joint, 19)
+    plotting.set_fontsize(jg.ax_joint, 19)
     if show_legend:
         jg.ax_joint.legend(fontsize=13., loc='lower right')
 
@@ -408,7 +408,7 @@ def fig_dist_doy_low(outfile:str='fig_dist_doy_low.png',
             ax_doy.set_xticklabels([])
         else:
             ax_doy.set_xlabel('DOY')
-        plot_utils.set_fontsize(ax_doy, 17)
+        plotting.set_fontsize(ax_doy, 17)
         ax_doy.set_ylabel('Count')
 
         # Stats
@@ -427,7 +427,7 @@ def fig_dist_doy_low(outfile:str='fig_dist_doy_low.png',
             ax_doff.set_xticklabels([])
         else:
             ax_doff.set_xlabel('Distance Offshore (km)')
-        plot_utils.set_fontsize(ax_doff, 17)
+        plotting.set_fontsize(ax_doff, 17)
         ax_doff.set_ylabel('Count')
 
         # Stats
@@ -514,7 +514,7 @@ def fig_SO_vs_N_zoom():
     # Set x-axis interval to 0.5
     #ax.xaxis.set_major_locator(MultipleLocator(0.5))
     # 
-    plot_utils.set_fontsize(ax, fsz)
+    plotting.set_fontsize(ax, fsz)
 
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
@@ -574,7 +574,7 @@ def fig_joint_line90(outfile:str='fig_joint_TDO_line90.png',
                                         bins=100)) 
 
     # Axes                                 
-    plot_utils.set_fontsize(jg.ax_joint, 14)
+    plotting.set_fontsize(jg.ax_joint, 14)
 
     # SO
     if metric == 'CT':
@@ -652,7 +652,7 @@ def fig_joint_pdf_NSO(line:str, max_depth:int=30):
     #ax.xaxis.set_major_locator(MultipleLocator(0.5))
     # 
     fsz = 27.
-    plot_utils.set_fontsize(ax, fsz)
+    plotting.set_fontsize(ax, fsz)
     
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
@@ -699,7 +699,7 @@ def fig_extrema_cdfs(outfile:str='fig_N_cdfs.png', metric:str='N',
         ax.text(xyLine[0], xyLine[1], f'Line: {line}', 
                 transform=ax.transAxes,
                 fontsize=lsz, ha='left', color='k')
-        plot_utils.set_fontsize(ax, 13)
+        plotting.set_fontsize(ax, 13)
 
         # Stats
         # Percentile of the extrema
@@ -761,7 +761,7 @@ def fig_annual(outfile:str, line:str, metric='N',
     # Axes                                 
     jg.ax_joint.set_ylabel(ylbl)
     jg.ax_joint.set_xlabel(labels['doxy'])
-    plot_utils.set_fontsize(jg.ax_joint, 14)
+    plotting.set_fontsize(jg.ax_joint, 14)
 
     # Extrema
     ex_clr = 'gray'
@@ -928,7 +928,7 @@ def fig_multi_scatter_event(outfile:str, line:str,
 
             # Axes
             ax.set_ylabel(short_lbl[metric])
-            plot_utils.set_fontsize(ax, 14.)
+            plotting.set_fontsize(ax, 14.)
             #if z < 20 or ii < 3:
             if ii < (nsub-1):
                 ax.set_xticklabels([])
@@ -1063,7 +1063,7 @@ def fig_SOa_pdfs(line:str, zmax:int=4,
                 va='top')
 
         fsz = 19.
-        plot_utils.set_fontsize(ax, fsz)
+        plotting.set_fontsize(ax, fsz)
 
         #ax.legend(fontsize=fsz)
 

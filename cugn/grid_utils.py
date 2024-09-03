@@ -8,7 +8,7 @@ from scipy import stats
 
 import pandas
 
-from siosandbox import cat_utils
+#from siosandbox import cat_utils
 from cugn import io as cugn_io
 
 from IPython import embed
