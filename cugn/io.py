@@ -144,6 +144,19 @@ def load_up(line:str, gextrem:str='high', use_full:bool=False):
     return grid_extrem, ds, times, grid_tbl
 
 def gpair_filename(dataset:str, iz:int, same_glider:bool):
+    """
+    Generate a filename for a glider pair dataset.
+
+    Parameters:
+        dataset (str): The name of the dataset.
+        iz (int): The depth level of the dataset.
+        same_glider (bool): Indicates whether the glider pair is the same glider or not.
+
+    Returns:
+        str: The generated filename for the glider pair dataset.
+    """
+
+
 
     same_lbl = 'self' if same_glider else 'other'
 

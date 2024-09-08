@@ -34,6 +34,8 @@ Sn_lbls = dict(
     S3=r'$<\delta u_L^3> \;\; \rm [m/s]^3$',
 )
 Sn_lbls['S2_dS**2'] = r'$<\delta S^2> \;\; \rm [m/s]^2$'
+Sn_lbls['S2_duL**2'] = Sn_lbls['S2']
+Sn_lbls['S3_duLduLduL'] = Sn_lbls['S3']
 Sn_lbls['S3_duLdSdS'] = r'$<\delta u_L \delta S^2> \;\; \rm [m/s]^2$'
 
 def fig_separations(dataset:str, outroot='fig_sep', max_time:float=10.):
@@ -192,7 +194,8 @@ def fig_structure(dataset:str, outroot='fig_structure',
     outfile = f'{outroot}_z{(iz+1)*10}_{dataset}_{variables}.png'
 
     # Load
-    gpair_file = cugn_io.gpair_filename(dataset, iz)
+    gpair_file = cugn_io.gpair_filename(
+        dataset, iz, not avoid_same_glider)
     gpair_file = os.path.join('..', 'Analysis', 'Outputs', gpair_file)
 
     Sn_dict = gliderpairs.load_Sndict(gpair_file)
@@ -209,7 +212,7 @@ def fig_structure(dataset:str, outroot='fig_structure',
 
     # Generate the keys
     if variables == 'duLduLduL':
-        Skeys = ['S1', 'S2', 'S3']
+        Skeys = ['S1_duL', 'S2_duL**2', 'S3_'+variables]
     elif variables == 'duLdSdS':
         Skeys = ['S1_duL', 'S2_dS**2', 'S3_'+variables]
     elif variables == 'duLdTdT':
