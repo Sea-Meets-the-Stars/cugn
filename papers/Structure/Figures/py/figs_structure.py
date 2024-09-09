@@ -24,19 +24,11 @@ from cugn import gliderdata
 from cugn import gliderpairs
 from cugn import io as cugn_io
 from cugn import utils as cugn_utils
+from cugn import plotting as cugn_plotting
 
 from IPython import embed
 
-Sn_lbls = dict(
-    S1=r'$<\delta u_L> \;\; \rm [m/s]$',
-    S1_duL=r'$<\delta u_L> \;\; \rm [m/s]$',
-    S2=r'$<\delta u_L^2> \;\; \rm [m/s]^2$',
-    S3=r'$<\delta u_L^3> \;\; \rm [m/s]^3$',
-)
-Sn_lbls['S2_dS**2'] = r'$<\delta S^2> \;\; \rm [m/s]^2$'
-Sn_lbls['S2_duL**2'] = Sn_lbls['S2']
-Sn_lbls['S3_duLduLduL'] = Sn_lbls['S3']
-Sn_lbls['S3_duLdSdS'] = r'$<\delta u_L \delta S^2> \;\; \rm [m/s]^2$'
+Sn_lbls = cugn_plotting.Sn_lbls
 
 def fig_separations(dataset:str, outroot='fig_sep', max_time:float=10.):
     outfile = f'{outroot}_{dataset}.png'
@@ -186,7 +178,7 @@ def fig_dus(dataset:str, outroot='fig_du', max_time:float=10., iz:int=4):
     print(f"Saved: {outfile}")
 
 def fig_structure(dataset:str, outroot='fig_structure', 
-    variables = 'duLduLduL',
+                  variables = 'duLduLduL',
                   iz:int=5, 
                   minN:int=10, avoid_same_glider:bool=True):
 

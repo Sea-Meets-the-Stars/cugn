@@ -9,6 +9,16 @@ from cugn import utils as cugn_utils
 from IPython import embed
 
 def load_Sndict(filename:str):
+    """
+    Load Sn_dict from a JSON file.
+
+    Parameters:
+        filename (str): The path to the JSON file.
+
+    Returns:
+        dict: The loaded Sn_dict.
+    """
+
     Sn_dict = cugn_utils.loadjson(filename)
     # Convert lists to numpy arrays
     for key in Sn_dict.keys():
@@ -156,6 +166,23 @@ class GliderPairs:
             assert not np.any(self.data('missid', 0) == self.data('missid', 1))
 
     def data(self, key:str, ipair:int, iz:int=None):
+        """
+        Retrieve data from the glider pairs.
+
+        Parameters:
+            key (str): The key of the data to retrieve.
+            ipair (int): The index of the pair.
+                0: First glider
+                1: Second glider
+                2: Both gliders
+            iz (int, optional): The index of the depth level. Defaults to None.
+
+        Returns:
+            ndarray: The retrieved data.
+
+        Raises:
+            ValueError: If ipair is not 0, 1, or 2.
+        """
         if ipair == 2:
             idx = np.unique(np.concatenate((self.idx0, self.idx1)))
         elif ipair in [0,1]:
@@ -328,6 +355,13 @@ class GliderPairs:
         return out_dict
 
     def calc_corr_Sn(self, Sn_dict:dict):
+        """
+        Calculate the corrected values of S2 and S3 in the given Sn_dict.
+
+        Parameters:
+            Sn_dict (dict): A dictionary containing the values of S1, S2, S3, and r.
+
+        """
 
         # Init
         Sn_dict['S2corr_'+f'{self.dlbls[1]}'] = Sn_dict['S2_'+f'{self.dlbls[1]}'].copy()
