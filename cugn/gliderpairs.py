@@ -72,6 +72,7 @@ class GliderPairs:
         self.du = None
         self.dv = None
         self.duL = None
+        self.duT = None
 
         # Other variables
         self.dS = None
@@ -242,6 +243,7 @@ class GliderPairs:
         self.dv = v1-v0
 
         self.duL = self.rxN*self.du + self.ryN*self.dv
+        self.duT = self.ryN*self.du + self.rxN*self.dv
 
         # Other
         if 'dS' in variables:
@@ -275,6 +277,11 @@ class GliderPairs:
             self.S2 = self.dT**2
             self.S3 = self.duL*self.dT*self.dT
             self.dlbls = ['duL', 'dT**2', variables]
+        elif variables == 'duLduTduT':
+            self.S1 = self.duL
+            self.S2 = self.duT**2
+            self.S3 = self.duL*self.duT*self.duT
+            self.dlbls = ['duL', 'duT**2', variables]
         else: 
             raise ValueError("Bad variables")
 

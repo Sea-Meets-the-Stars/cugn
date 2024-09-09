@@ -209,6 +209,8 @@ def fig_structure(dataset:str, outroot='fig_structure',
         Skeys = ['S1_duL', 'S2_dS**2', 'S3_'+variables]
     elif variables == 'duLdTdT':
         Skeys = ['S1_duL', 'S2_dT**2', 'S3_'+variables]
+    elif variables == 'duLduTduT':
+        Skeys = ['S1_duL', 'S2_duT**2', 'S3_'+variables]
 
 
     for n, clr in enumerate('krb'):
