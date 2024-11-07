@@ -27,7 +27,8 @@ def circle_sep(used:int, xy_rand:np.ndarray, npoints:int):
 
 def wedding_cake(ngliders:tuple=(4,4), 
                  outer:float=50., inner:float=20,
-                 ndives=500, check:bool=True):
+                 ndives=500, check:bool=True,
+                 outfile:str=None):
 
     ntot = np.sum(ngliders)
 
@@ -71,6 +72,9 @@ def wedding_cake(ngliders:tuple=(4,4),
     all_seps = np.concatenate([outer_sep,inter_sep,inner_sep])
 
     # Figure time
+    if outfile is None:
+        return
+        
     fig = plt.figure(figsize=(10,6))
     plt.clf()
     gs = gridspec.GridSpec(1,2)
@@ -90,14 +94,18 @@ def wedding_cake(ngliders:tuple=(4,4),
         plotting.set_fontsize(ax, 18)
 
 
-    outfile = 'fig_wedding.png'
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
-    embed(header='33 of wedding')
-    
-
 
 if __name__ == '__main__':
-    wedding_cake()
+
+    # Defaults
+    #wedding_cake(outfile='fig_wedding.png')
+
+    # Smaller inner
+    #wedding_cake(inner=10.,
+    #             outfile='fig_wedding_10km.png')
+    wedding_cake(inner=15.,
+                 outfile='fig_wedding_15km.png')
