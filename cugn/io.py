@@ -8,7 +8,7 @@ from cugn import grid_utils
 from cugn import clusters
 from cugn import utils as cugn_utils
 
-from siosandbox import cat_utils
+from cugn import utils
 
 from IPython import embed
 
@@ -122,7 +122,7 @@ def load_up(line:str, gextrem:str='high', use_full:bool=False):
 
     dp_gt = grid_tbl.depth*100000 + grid_tbl.profile
     dp_ge = grid_extrem.depth*100000 + grid_extrem.profile
-    ids = cat_utils.match_ids(dp_ge, dp_gt, require_in_match=True)
+    ids = utils.match_ids(dp_ge, dp_gt, require_in_match=True)
     assert len(np.unique(ids)) == len(ids)
 
     grid_extrem['N_p'] = grid_tbl.N_p.values[ids]

@@ -8,9 +8,6 @@ from importlib import resources
 
 import numpy as np
 
-import torch
-import corner
-import xarray
 
 from matplotlib import pyplot as plt
 import matplotlib as mpl
@@ -18,7 +15,7 @@ import matplotlib.gridspec as gridspec
 
 import seaborn as sns
 
-from ocpy.utils import plotting
+from oceancolor.utils import plotting
 
 from cugn import gliderdata
 from cugn import gliderpairs
@@ -199,7 +196,7 @@ def fig_structure(dataset:str, outroot='fig_structure',
     plt.clf()
     gs = gridspec.GridSpec(1,3)
 
-    goodN = Sn_dict['N'] > minN
+    goodN = np.array(Sn_dict['config']['N']) > minN
     
 
     # Generate the keys
@@ -211,6 +208,8 @@ def fig_structure(dataset:str, outroot='fig_structure',
         Skeys = ['S1_duL', 'S2_dT**2', 'S3_'+variables]
     elif variables == 'duLduTduT':
         Skeys = ['S1_duL', 'S2_duT**2', 'S3_'+variables]
+    else:
+        raise IOError("Bad variables")
 
 
     for n, clr in enumerate('krb'):
@@ -243,7 +242,7 @@ def fig_structure(dataset:str, outroot='fig_structure',
         if n == 2:
             same_glider = 'True' if avoid_same_glider else 'False'
             ax.text(0.1, 0.8, 
-                    f'{dataset}\n depth = {(iz+1)*10} m\nAvoid same glider? {same_glider}\n {variables}', 
+                    f'{dataset}\n depth = {(iz+1)*10} m, t<{int(Sn_dict['config']['max_time'])} hr\nAvoid same glider? {same_glider}\n {variables}', 
                 transform=ax.transAxes, fontsize=16, ha='left')
         # 0 line
         ax.axhline(0., color='red', linestyle='--')
@@ -380,14 +379,17 @@ def main(flg):
         #fig_structure('Calypso2022', variables='duLdSdS')
         fig_structure('Calypso2022', variables='duLdTdT', iz=3)
 
-    # Calypso 2022
+    # Full run on a daatset
     if flg == 5:
-        dataset = 'Calypso2022'
+        #dataset = 'Calypso2019'
+        #dataset = 'Calypso2022'
+        dataset = 'ARCTERX'
+        avoid_same_glider = True
         fig_separations(dataset)
         fig_dtimes(dataset)
         fig_dus(dataset)
-        fig_structure(dataset, avoid_same_glider=False)
-        fig_structure(dataset, avoid_same_glider=False, iz=10)
+        fig_structure(dataset, avoid_same_glider=avoid_same_glider)
+        #fig_structure(dataset, avoid_same_glider=avoid_same_glider, iz=10)
 
     # Sn with depth
     if flg == 6:
