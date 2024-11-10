@@ -348,6 +348,84 @@ def fig_Sn_depth(dataset:str, outroot='fig_Sn_depth',
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
     
+def fig_neg_mean_spatial(max_time=10., avoid_same_glider=True, nbins=20, 
+                 iz = 5, dataset = 'ARCTERX', minN:int=10,
+                 variables = 'duLduLduL', connect_dots:bool=False,
+                 show_zero:bool=False,
+                 outfile='fig_ARCTERX_negmean_spatial.png'):
+
+    # ARCTERX
+    rbins = 10**np.linspace(0., np.log10(400), nbins) # km
+
+    # Load dataset
+    gData = gliderdata.load_dataset(dataset)
+
+    # Cut on valid velocity data 
+    gData = gData.cut_on_good_velocity()
+
+    # Generate pairs
+    gPairs = gliderpairs.GliderPairs(
+        gData, max_time=max_time, 
+        avoid_same_glider=avoid_same_glider)
+    gPairs.calc_delta(iz, variables)
+    gPairs.calc_Sn(variables)
+
+    Sn_dict = gPairs.calc_Sn_vs_r(rbins, nboot=10000)
+    gPairs.calc_corr_Sn(Sn_dict) 
+
+    goodN = Sn_dict['config']['N'] > minN
+
+    # Grab them
+    neg_idx = np.arange(11,15)
+
+    # Maybe loop over these?
+
+
+
+
+    fig = plt.figure(figsize=(7,6))
+    plt.clf()
+    ax_ll = plt.gca()
+
+    # 
+    for ridx in [0,1,2]:
+        ss = neg_idx[ridx]
+        if show_zero:
+            ss = neg_idx[0]-1
+            if ridx > 0:
+                break
+        print(f"rbin: {rbins[ss],rbins[ss+1]}, Stat: {Sn_dict['S1_duL'][ss]}")
+
+        in_r = (gPairs.r > rbins[ss]) & (gPairs.r <= rbins[ss+1])
+        for tt in [0,1]:
+            m = 'o' if tt == 0 else 's'
+            scatter = ax_ll.scatter(gPairs.data('lon', tt)[in_r],  
+                    gPairs.data('lat', tt)[in_r], 
+                    c=gPairs.S1[in_r],
+                                    marker=m,
+                    cmap='seismic',
+                    vmin=-1., vmax=1.,
+                    s=5)#, label=f'MID={mid}')
+
+        # Connect with a line
+        if connect_dots:
+            for tt in np.where(in_r)[0]:
+                ax_ll.plot(
+                    [gPairs.data('lon', 0)[tt], gPairs.data('lon', 1)[tt]],  
+                    [gPairs.data('lat', 0)[tt], gPairs.data('lat', 1)[tt]],
+                    color='gray', ls='--', zorder=10)  
+
+    # Color
+    cb = plt.colorbar(scatter, pad=0., fraction=0.030)
+    cb.set_label('duL', fontsize=14)
+
+    ax_ll.set_xlabel('Longitude [deg]')
+    ax_ll.set_ylabel('Latitude [deg]')
+    
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+    
 
 def main(flg):
     if flg== 'all':
@@ -394,6 +472,13 @@ def main(flg):
     # Sn with depth
     if flg == 6:
         fig_Sn_depth('Calypso2022')
+
+    # Explore negative mean
+    if flg == 7:
+        fig_neg_mean_spatial()#connect_dots=True)
+        #fig_neg_mean_spatial(outfile='fig_ARCTERX_zeromean_spatial.png',
+        #                     show_zero=True)#, connect_dots=True)
+
 
 # Command line execution
 if __name__ == '__main__':
