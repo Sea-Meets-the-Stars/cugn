@@ -175,3 +175,29 @@ class CTDData(GliderData):
 
             # Return
             return gData
+
+        def cut_on_reltime(self, timecut:tuple):
+            """
+            Cuts the glider data based on good velocity values.
+
+            Variables:
+                timecut (tuple): range of times to include 0 to 1
+
+            Returns:
+                gData (GliderData): A subset of the original GliderData object containing only the profiles with good velocity values.
+            """
+
+            # Relative time
+            min_time = self.time.min()
+            max_time = self.time.max()
+
+            reltime = (self.time - min_time) / (max_time - min_time)
+
+            # Cut on time
+            keep = (reltime > timecut[0]) & (reltime <= timecut[1])
+
+            # Cut
+            gData = self.profile_subset(np.where(keep)[0])
+
+            # Return
+            return gData

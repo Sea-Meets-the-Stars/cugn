@@ -176,7 +176,7 @@ def fig_dus(dataset:str, outroot='fig_du', max_time:float=10., iz:int=4):
 
 def fig_structure(dataset:str, outroot='fig_structure', 
                   variables = 'duLduLduL',
-                  iz:int=5, 
+                  iz:int=5, tcut:tuple=None,
                   minN:int=10, avoid_same_glider:bool=True):
 
     # Outfile
@@ -187,7 +187,29 @@ def fig_structure(dataset:str, outroot='fig_structure',
         dataset, iz, not avoid_same_glider)
     gpair_file = os.path.join('..', 'Analysis', 'Outputs', gpair_file)
 
-    Sn_dict = gliderpairs.load_Sndict(gpair_file)
+    if tcut is None:
+        Sn_dict = gliderpairs.load_Sndict(gpair_file)
+    else:
+        if variables != 'duLduLduL':
+            raise NotImplementedError('Not ready for these variablaes')
+        # Cut on valid velocity data 
+        nbins = 20
+        rbins = 10**np.linspace(0., np.log10(400), nbins) # km
+        # Load dataset
+        gData = gliderdata.load_dataset(dataset)
+        gData = gData.cut_on_good_velocity()
+        gData = gData.cut_on_reltime(tcut)
+
+        # Generate pairs
+        gPairs = gliderpairs.GliderPairs(
+            gData, max_time=10., 
+            avoid_same_glider=avoid_same_glider)
+        gPairs.calc_delta(iz, variables)
+        gPairs.calc_Sn(variables)
+
+        Sn_dict = gPairs.calc_Sn_vs_r(rbins, nboot=10000)
+        gPairs.calc_corr_Sn(Sn_dict) 
+        gPairs.add_meta(Sn_dict)
 
     #embed(header='fig_structure: 215')
 
@@ -388,7 +410,7 @@ def fig_neg_mean_spatial(max_time=10., avoid_same_glider=True, nbins=20,
     ax_ll = plt.gca()
 
     # 
-    for ridx in [0,1,2]:
+    for ridx in [1]:#,1,2]:
         ss = neg_idx[ridx]
         if show_zero:
             ss = neg_idx[0]-1
@@ -475,9 +497,15 @@ def main(flg):
 
     # Explore negative mean
     if flg == 7:
+        dataset = 'ARCTERX'
+        avoid_same_glider = True
         fig_neg_mean_spatial()#connect_dots=True)
         #fig_neg_mean_spatial(outfile='fig_ARCTERX_zeromean_spatial.png',
         #                     show_zero=True)#, connect_dots=True)
+
+        #fig_structure(dataset, avoid_same_glider=avoid_same_glider,
+        #              tcut=(0.5,1.0), outroot='fig_structre_tcut51')
+                      #tcut=(0.,0.5), outroot='fig_structre_tcut05')
 
 
 # Command line execution
