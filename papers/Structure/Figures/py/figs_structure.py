@@ -174,7 +174,7 @@ def fig_dus(dataset:str, outroot='fig_du', max_time:float=10., iz:int=4):
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
-def fig_structure(dataset:str, outroot='fig_structure', 
+def fig_structure(dataset:str, outroot='fig_structure',
                   variables = 'duLduLduL',
                   iz:int=5, tcut:tuple=None,
                   minN:int=10, avoid_same_glider:bool=True):
@@ -189,6 +189,7 @@ def fig_structure(dataset:str, outroot='fig_structure',
 
     if tcut is None:
         Sn_dict = gliderpairs.load_Sndict(gpair_file)
+        print(f'Loaded: {gpair_file}')
     else:
         if variables != 'duLduLduL':
             raise NotImplementedError('Not ready for these variablaes')
@@ -224,6 +225,8 @@ def fig_structure(dataset:str, outroot='fig_structure',
     # Generate the keys
     if variables == 'duLduLduL':
         Skeys = ['S1_duL', 'S2_duL**2', 'S3_'+variables]
+    elif variables == 'duTduTduT':
+        Skeys = ['S1_duT', 'S2_duT**2', 'S3_'+variables]
     elif variables == 'duLdSdS':
         Skeys = ['S1_duL', 'S2_dS**2', 'S3_'+variables]
     elif variables == 'duLdTdT':
@@ -447,6 +450,89 @@ def fig_neg_mean_spatial(max_time=10., avoid_same_glider=True, nbins=20,
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
+
+
+def fig_Sn_distribution(dataset:str, outfile:str,
+    variables:str, Sn:str, rval:float,
+    minN:int=10, iz:int=5, tcut=None,
+    avoid_same_glider=True):
+
+    #outfile = f'{outroot}_{dataset}_{variables}'
+    #varlbl = variables
+    
+    # Cut on valid velocity data 
+    nbins = 20
+    rbins = 10**np.linspace(0., np.log10(400), nbins) # km
+
+    # Pick out the radial bin
+    rbool = (rbins < rval) & (np.roll(rbins,1) > rval)
+    ir = np.where(rbool)[0][0]
+    embed(header='470 of figs')
+
+    # Load dataset
+    gData = gliderdata.load_dataset(dataset)
+    gData = gData.cut_on_good_velocity()
+    gData = gData.cut_on_reltime(tcut)
+
+    # Generate pairs
+    gPairs = gliderpairs.GliderPairs(
+        gData, max_time=10., 
+        avoid_same_glider=avoid_same_glider)
+    gPairs.calc_delta(iz, variables)
+    gPairs.calc_Sn(variables)
+
+    Sn_dict = gPairs.calc_Sn_vs_r(rbins, nboot=10000)
+    gPairs.calc_corr_Sn(Sn_dict) 
+    gPairs.add_meta(Sn_dict)
+
+    
+    # Start the figure
+    fig = plt.figure(figsize=(19,6))
+    plt.clf()
+    gs = gridspec.GridSpec(1,3)
+
+    for n, clr in enumerate(['g','r','b']):
+        ax = plt.subplot(gs[n])
+        Skey = f'S{n+1}'
+        if n == 0:
+            Sn = all_S1
+            medSn = med_S1
+        elif n == 1:
+            Sn = all_S2
+            medSn = med_S2
+        else:
+            Sn = all_S3
+            medSn = med_S3
+
+        for iz in range(nz):
+            #a = 0.9 - 0.8*iz/nz
+            a = 0.1 + 0.8*iz/nz
+            ax.plot(r[goodN], Sn[iz][goodN], color=clr, alpha=a)
+
+        # Median
+        ax.plot(r[goodN], medSn[goodN], color='k')
+
+        ax.set_xscale('log')
+        ax.set_xlabel('Separation (km)')
+        ax.set_ylabel(r'$S_'+str(n+1)+r'$ Corrected')
+        # 0 line
+        ax.axhline(0., color='k', linestyle='--')
+
+        plotting.set_fontsize(ax, 19) 
+        ax.grid()
+
+        ax.set_xlim(1., 100.)
+        ax.minorticks_on()
+
+        # Label time separation
+        if n == 2:
+            ax.text(0.9, 0.1, f'{dataset}\n  {varlbl}', 
+                transform=ax.transAxes, fontsize=18, ha='right')
+        
+
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
     
 
 def main(flg):
@@ -488,7 +574,9 @@ def main(flg):
         fig_separations(dataset)
         fig_dtimes(dataset)
         fig_dus(dataset)
-        fig_structure(dataset, avoid_same_glider=avoid_same_glider)
+        #fig_structure(dataset, avoid_same_glider=avoid_same_glider)
+        fig_structure(dataset, avoid_same_glider=avoid_same_glider,
+                      variables='duTduTduT')#, iz=5)
         #fig_structure(dataset, avoid_same_glider=avoid_same_glider, iz=10)
 
     # Sn with depth

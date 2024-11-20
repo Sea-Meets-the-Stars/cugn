@@ -41,7 +41,8 @@ def run(dataset:str, iz:int,
 
 
     all_dicts = []
-    for variables in ['duLduLduL', 'duLdSdS', 'duLdTdT', 'duLduTduT']:
+    for variables in ['duLduLduL', 'duLdSdS', 'duLdTdT', 'duLduTduT',
+                      'duTduTduT']:
         # Velocity
         gPairs.calc_delta(iz, variables)
         gPairs.calc_Sn(variables)
@@ -72,5 +73,5 @@ if __name__ == '__main__':
             if iz != 5:
                 continue
             #run('Calypso2022', iz, 'duLduLduL])
-            run(dataset, iz)
+            run(dataset, iz, clobber=True)
             run(dataset, iz, avoid_same_glider=False)
