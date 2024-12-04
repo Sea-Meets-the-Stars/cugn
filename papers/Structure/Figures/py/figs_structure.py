@@ -15,7 +15,7 @@ import matplotlib.gridspec as gridspec
 
 import seaborn as sns
 
-from oceancolor.utils import plotting
+from ocpy.utils import plotting
 
 from cugn import gliderdata
 from cugn import gliderpairs
@@ -177,7 +177,8 @@ def fig_dus(dataset:str, outroot='fig_du', max_time:float=10., iz:int=4):
 def fig_structure(dataset:str, outroot='fig_structure',
                   variables = 'duLduLduL',
                   iz:int=5, tcut:tuple=None,
-                  minN:int=10, avoid_same_glider:bool=True):
+                  minN:int=10, avoid_same_glider:bool=True,
+                  show_correct:bool=True):
 
     # Outfile
     outfile = f'{outroot}_z{(iz+1)*10}_{dataset}_{variables}.png'
@@ -227,6 +228,8 @@ def fig_structure(dataset:str, outroot='fig_structure',
         Skeys = ['S1_duL', 'S2_duL**2', 'S3_'+variables]
     elif variables == 'duTduTduT':
         Skeys = ['S1_duT', 'S2_duT**2', 'S3_'+variables]
+    elif variables == 'duLTduLTduLT':
+        Skeys = ['S1_duLT', 'S2_duLT**2', 'S3_'+variables]
     elif variables == 'duLdSdS':
         Skeys = ['S1_duL', 'S2_dS**2', 'S3_'+variables]
     elif variables == 'duLdTdT':
@@ -247,7 +250,7 @@ def fig_structure(dataset:str, outroot='fig_structure',
                     fmt='o', capsize=5)  # fmt defines marker style, capsize sets error bar cap length
 
         # Corrected
-        if n > 0:
+        if n > 0 and show_correct:
             corr_key = Skey[0:2]+'corr'+Skey[2:]
             ax.plot(Sn_dict['r'][goodN], 
                     Sn_dict[corr_key][goodN],  
@@ -382,6 +385,7 @@ def fig_neg_mean_spatial(max_time=10., avoid_same_glider=True, nbins=20,
     # ARCTERX
     rbins = 10**np.linspace(0., np.log10(400), nbins) # km
 
+    
     # Load dataset
     gData = gliderdata.load_dataset(dataset)
 
@@ -395,10 +399,13 @@ def fig_neg_mean_spatial(max_time=10., avoid_same_glider=True, nbins=20,
     gPairs.calc_delta(iz, variables)
     gPairs.calc_Sn(variables)
 
-    Sn_dict = gPairs.calc_Sn_vs_r(rbins, nboot=10000)
-    gPairs.calc_corr_Sn(Sn_dict) 
+    #embed(header='fig_neg_mean_spatial: 366')    
 
-    goodN = Sn_dict['config']['N'] > minN
+    #Sn_dict = gPairs.calc_Sn_vs_r(rbins, nboot=10000)
+    #gPairs.calc_corr_Sn(Sn_dict) 
+    
+
+    #goodN = Sn_dict['config']['N'] > minN
 
     # Grab them
     neg_idx = np.arange(11,15)
@@ -419,15 +426,17 @@ def fig_neg_mean_spatial(max_time=10., avoid_same_glider=True, nbins=20,
             ss = neg_idx[0]-1
             if ridx > 0:
                 break
-        print(f"rbin: {rbins[ss],rbins[ss+1]}, Stat: {Sn_dict['S1_duL'][ss]}")
+        #print(f"rbin: {rbins[ss],rbins[ss+1]}, Stat: {Sn_dict['S1_duL'][ss]}")
 
         in_r = (gPairs.r > rbins[ss]) & (gPairs.r <= rbins[ss+1])
         for tt in [0,1]:
             m = 'o' if tt == 0 else 's'
+            ec = None #'k' if tt == 0 else None
             scatter = ax_ll.scatter(gPairs.data('lon', tt)[in_r],  
                     gPairs.data('lat', tt)[in_r], 
                     c=gPairs.S1[in_r],
                                     marker=m,
+                    edgecolor=ec,
                     cmap='seismic',
                     vmin=-1., vmax=1.,
                     s=5)#, label=f'MID={mid}')
@@ -438,11 +447,15 @@ def fig_neg_mean_spatial(max_time=10., avoid_same_glider=True, nbins=20,
                 ax_ll.plot(
                     [gPairs.data('lon', 0)[tt], gPairs.data('lon', 1)[tt]],  
                     [gPairs.data('lat', 0)[tt], gPairs.data('lat', 1)[tt]],
-                    color='gray', ls='--', zorder=10)  
+                    color='gray', ls=':', zorder=10, lw=0.3)  
+        # Add text
+        ax_ll.text(0.1, 0.2, f'{dataset}\n depth = {(iz+1)*10} m \n r={int(np.round(rbins[ss])),int(np.round(rbins[ss+1]))} km',
+                transform=ax_ll.transAxes, fontsize=16, ha='left')
 
     # Color
     cb = plt.colorbar(scatter, pad=0., fraction=0.030)
-    cb.set_label('duL', fontsize=14)
+    cb.set_label(r'$\delta u_L$ (m/s)', fontsize=14)
+
 
     ax_ll.set_xlabel('Longitude [deg]')
     ax_ll.set_ylabel('Latitude [deg]')
@@ -454,7 +467,7 @@ def fig_neg_mean_spatial(max_time=10., avoid_same_glider=True, nbins=20,
 
 def fig_Sn_distribution(dataset:str, outfile:str,
     variables:str, Sn:str, rval:float,
-    minN:int=10, iz:int=5, tcut=None,
+    iz:int=5, tcut=None,
     avoid_same_glider=True):
 
     #outfile = f'{outroot}_{dataset}_{variables}'
@@ -465,14 +478,14 @@ def fig_Sn_distribution(dataset:str, outfile:str,
     rbins = 10**np.linspace(0., np.log10(400), nbins) # km
 
     # Pick out the radial bin
-    rbool = (rbins < rval) & (np.roll(rbins,1) > rval)
+    rbool = (rval> rbins) & (rval < np.roll(rbins,-1))
     ir = np.where(rbool)[0][0]
-    embed(header='470 of figs')
 
     # Load dataset
     gData = gliderdata.load_dataset(dataset)
     gData = gData.cut_on_good_velocity()
-    gData = gData.cut_on_reltime(tcut)
+    if tcut is not None:
+        gData = gData.cut_on_reltime(tcut)
 
     # Generate pairs
     gPairs = gliderpairs.GliderPairs(
@@ -485,50 +498,51 @@ def fig_Sn_distribution(dataset:str, outfile:str,
     gPairs.calc_corr_Sn(Sn_dict) 
     gPairs.add_meta(Sn_dict)
 
+    all_vals = getattr(gPairs, Sn)
+    in_r = (gPairs.r > rbins[ir]) & (gPairs.r <= rbins[ir+1])
+    vals = all_vals[in_r]
+
+    # Normalize by the error
+    err_key = 'err_'+Sn+f'_{variables}'
+    vals = vals/(Sn_dict[err_key][ir]*np.sqrt(np.sum(in_r)))
+    #embed(header='fig_Sn_distribution: 493')
     
     # Start the figure
-    fig = plt.figure(figsize=(19,6))
+    fig = plt.figure(figsize=(12,6))
     plt.clf()
-    gs = gridspec.GridSpec(1,3)
+    gs = gridspec.GridSpec(1,1)
 
-    for n, clr in enumerate(['g','r','b']):
-        ax = plt.subplot(gs[n])
-        Skey = f'S{n+1}'
-        if n == 0:
-            Sn = all_S1
-            medSn = med_S1
-        elif n == 1:
-            Sn = all_S2
-            medSn = med_S2
-        else:
-            Sn = all_S3
-            medSn = med_S3
+    ax = plt.subplot(gs[0])
 
-        for iz in range(nz):
-            #a = 0.9 - 0.8*iz/nz
-            a = 0.1 + 0.8*iz/nz
-            ax.plot(r[goodN], Sn[iz][goodN], color=clr, alpha=a)
+    hist, bins = np.histogram(vals, bins=100)#, density=True)
+    # Plot
+    ax.hist(vals, bins=bins, color='green')
+    #sns.histplot(vals, bins=100, ax=ax, color='green')
+                 #log_scale=(False,True))
 
-        # Median
-        ax.plot(r[goodN], medSn[goodN], color='k')
+    ax.set_xlabel(Sn+r'/$\sigma('+f'{Sn}'+r')$')
+    #ax.set_ylabel(r'$S_'+str(n+1)+r'$ Corrected')
+    # 0 line
+    #ax.axhline(0., color='k', linestyle='--')
 
-        ax.set_xscale('log')
-        ax.set_xlabel('Separation (km)')
-        ax.set_ylabel(r'$S_'+str(n+1)+r'$ Corrected')
-        # 0 line
-        ax.axhline(0., color='k', linestyle='--')
+    # Overlay a Gaussian
+    area = np.sum(hist)*(bins[1]-bins[0])
 
-        plotting.set_fontsize(ax, 19) 
-        ax.grid()
+    #embed(header='fig_Sn_distribution: 513')
 
-        ax.set_xlim(1., 100.)
-        ax.minorticks_on()
+    x = np.linspace(-5., 5., 100)
+    y = np.exp(-0.5*x**2)/np.sqrt(2*np.pi)
+    a_y = np.sum(y)*(x[1]-x[0])
+    ax.plot(x, y*area/a_y, color='red', linestyle='--')
 
-        # Label time separation
-        if n == 2:
-            ax.text(0.9, 0.1, f'{dataset}\n  {varlbl}', 
-                transform=ax.transAxes, fontsize=18, ha='right')
-        
+    plotting.set_fontsize(ax, 19) 
+    ax.grid()
+
+    ax.text(0.1, 0.8, f'{dataset}\n depth = {(iz+1)*10} m, \nr={int(np.round(rbins[ir])),int(np.round(rbins[ir+1]))} km',
+                transform=ax.transAxes, fontsize=16, ha='left')
+
+    #ax.set_xlim(1., 100.)
+    ax.minorticks_on()
 
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
@@ -571,12 +585,17 @@ def main(flg):
         #dataset = 'Calypso2022'
         dataset = 'ARCTERX'
         avoid_same_glider = True
+        '''
         fig_separations(dataset)
         fig_dtimes(dataset)
         fig_dus(dataset)
+        '''
+
         #fig_structure(dataset, avoid_same_glider=avoid_same_glider)
+        #fig_structure(dataset, avoid_same_glider=avoid_same_glider,
+        #              variables='duTduTduT')#, iz=5)
         fig_structure(dataset, avoid_same_glider=avoid_same_glider,
-                      variables='duTduTduT')#, iz=5)
+                      variables='duLTduLTduLT', show_correct=False)#, iz=5)
         #fig_structure(dataset, avoid_same_glider=avoid_same_glider, iz=10)
 
     # Sn with depth
@@ -587,7 +606,7 @@ def main(flg):
     if flg == 7:
         dataset = 'ARCTERX'
         avoid_same_glider = True
-        fig_neg_mean_spatial()#connect_dots=True)
+        fig_neg_mean_spatial(connect_dots=True)
         #fig_neg_mean_spatial(outfile='fig_ARCTERX_zeromean_spatial.png',
         #                     show_zero=True)#, connect_dots=True)
 
@@ -595,6 +614,10 @@ def main(flg):
         #              tcut=(0.5,1.0), outroot='fig_structre_tcut51')
                       #tcut=(0.,0.5), outroot='fig_structre_tcut05')
 
+    # Sn Distributions
+    if flg == 8:
+        fig_Sn_distribution('ARCTERX', 'fig_Sn_distrib_ARCTERX.png',
+            'duLduLduL', 'S3', rval=70., iz=5)
 
 # Command line execution
 if __name__ == '__main__':

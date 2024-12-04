@@ -272,6 +272,11 @@ class GliderPairs:
             self.S2 = self.duT**2
             self.S3 = self.duT**3
             self.dlbls = ['duT', 'duT**2', variables]
+        elif variables == 'duLTduLTduLT':
+            self.S1 = self.duL + self.duT
+            self.S2 = self.duL**2 + self.duT**2
+            self.S3 = self.duL*(self.S2)
+            self.dlbls = ['duLT', 'duLT**2', variables]
         elif variables == 'duLdSdS':
             self.S1 = self.duL
             self.S2 = self.dS**2
