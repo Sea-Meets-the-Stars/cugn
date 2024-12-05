@@ -8,13 +8,21 @@ from cugn import grid_utils
 from cugn import clusters
 from cugn import utils as cugn_utils
 
-from siosandbox import cat_utils
-
 from IPython import embed
 
 data_path = os.getenv('CUGN')
 
 def line_files(line:str):
+    """
+    Generate a dictionary of file paths based on the given line.
+
+    Parameters:
+        line (str): The line number.
+
+    Returns:
+        dict: A dictionary containing the file paths for the datafile, gridtbl_file_full, gridtbl_file_control, and edges_file.
+    """
+
 
     datafile = os.path.join(data_path, f'CUGN_potential_line_{line[0:2]}.nc')
     gridtbl_file_full = os.path.join(data_path, f'full_grid_line{line[0:2]}.parquet')
@@ -30,13 +38,26 @@ def line_files(line:str):
     return lfiles
     
 def load_line(line:str, use_full:bool=False):
+    """
+    Load data from files associated with a given line.
+
+    Parameters:
+        line (str): The line to load data for.
+        use_full (bool, optional): Whether to use the full grid table file or the control grid table file. Defaults to False.
+
+    Returns:
+        dict: A dictionary containing the loaded data, including the dataset, grid table, and edges.
+    """
     # Files
     lfiles = line_files(line)
 
+
     if use_full:
-        grid_tbl = pandas.read_parquet(lfiles['gridtbl_file_full'])
+        grid_file = lfiles['gridtbl_file_full']
     else:   
-        grid_tbl = pandas.read_parquet(lfiles['gridtbl_file_control'])
+        grid_file = lfiles['gridtbl_file_control']
+    print(f"Loading: {os.path.basename(grid_file)}")
+    grid_tbl = pandas.read_parquet(grid_file)
     ds = xarray.load_dataset(lfiles['datafile'])
     edges = np.load(lfiles['edges_file'])
 
@@ -126,10 +147,11 @@ def load_up(line:str, gextrem:str='high', use_full:bool=False):
     grid_extrem['year'] = times.year
     grid_extrem['doy'] = times.dayofyear
 
-    # Add distance from shore
-    dist, _ = cugn_utils.calc_dist_offset(
+    # Add distance from shore and offset from line
+    dist, offset = cugn_utils.calc_dist_offset(
         line, grid_extrem.lon.values, grid_extrem.lat.values)
     grid_extrem['dist'] = dist
+    grid_extrem['offset'] = offset
 
     # Cluster me
     clusters.generate_clusters(grid_extrem)

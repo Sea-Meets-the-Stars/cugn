@@ -6,8 +6,6 @@ import pandas
 
 from sklearn.cluster import AgglomerativeClustering, DBSCAN
 
-from siosandbox.cugn import grid_utils
-
 from IPython import embed
 
 def generate_clusters(grid_outliers:pandas.DataFrame,

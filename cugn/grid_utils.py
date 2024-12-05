@@ -8,7 +8,7 @@ from scipy import stats
 
 import pandas
 
-from siosandbox import cat_utils
+#from siosandbox import cat_utils
 from cugn import io as cugn_io
 
 from IPython import embed
@@ -24,6 +24,25 @@ default_bins = dict(SA=np.linspace(32.1, 34.8, 50),
 def gen_grid(ds:xarray.Dataset, axes:tuple=('SA', 'sigma0'),
             stat:str='median', bins:dict=None,
             variable:str='doxy', max_depth:int=None):
+    """
+    Generate a gridded representation of a variable in a dataset.
+
+    Parameters:
+        - ds (xarray.Dataset): The dataset containing the variables.
+        - axes (tuple, optional): The axes to use for gridding. Default is ('SA', 'sigma0').
+        - stat (str, optional): The statistic to compute for each grid cell. Default is 'median'.
+        - bins (dict, optional): The binning scheme for each axis. Default is None.
+        - variable (str, optional): The variable to grid. Default is 'doxy'.
+        - max_depth (int, optional): The maximum depth to consider for gridding. Default is None.
+    Returns:
+        - measure: The computed statistic for each grid cell.
+        - xedges: The bin edges along the x-axis.
+        - yedges: The bin edges along the y-axis.
+        - counts: The number of data points in each grid cell.
+        - grid_indices: The indices of the grid cells for each data point.
+        - doxy_data: The values of the 'doxy' variable for each data point.
+        - gd: A boolean mask indicating which data points were used for gridding.
+    """
 
     # Default bins -- Line 90
     if bins is None:
@@ -60,7 +79,8 @@ def gen_grid(ds:xarray.Dataset, axes:tuple=('SA', 'sigma0'),
                 bins=[bins[xkey], bins[ykey]])
 
     # Return
-    return measure, xedges, yedges, counts, grid_indices, ds.doxy.data[gd], gd
+    return measure, xedges, yedges, counts, \
+        grid_indices, ds.doxy.data[gd], gd
 
 def chk_grid_gaussianity(values:np.ndarray, mean_grid:np.ndarray,
                          rms_grid:np.ndarray, indices:np.ndarray,
@@ -145,6 +165,14 @@ def gen_outliers(line:str, pcut:float):
     return grid_outliers, grid_tbl, ds
 
 def fill_in_grid(grid, ds):
+    """
+    Fills in the grid with data from the given dataset.
+
+    Parameters:
+        grid (pandas.DataFrame): The grid to be filled in.
+        ds (xarray.Dataset): The dataset containing the data.
+
+    """
 
     # Decorate items
     grid['time'] = pandas.to_datetime(ds.time[grid.profile.values].values)
