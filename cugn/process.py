@@ -24,10 +24,10 @@ def add_gsw():
     """ Add physical quantities to the Spray CUGN data
     using the TEOS-10 GSW package
     """
-    data_path = os.getenv('CUGN') 
 
     # Spray files
-    spray_files = glob(os.path.join(data_path, 'CUGN_line_*.nc'))
+    spray_files = glob(os.path.join(
+        cugn_defs.data_path, 'CUGN_line_*.nc'))
 
     for spray_file in spray_files:
 
@@ -50,6 +50,7 @@ def add_gsw():
         SA = np.ones_like(ds.temperature.data) * np.nan
         OC = np.ones_like(ds.temperature.data) * np.nan
         SO = np.ones_like(ds.temperature.data) * np.nan
+        AOU = np.ones_like(ds.temperature.data) * np.nan
 
         # Loop on depths
         for zz, z in enumerate(ds.depth.data):
@@ -69,6 +70,7 @@ def add_gsw():
             # Oxygen
             OC[zz,:] = gsw.O2sol(iSA, iCT, p, lon, lat)
             SO[zz,:] = ds.doxy[zz,:] / OC[zz,:] 
+            AOU[zz,:] = ds.doxy[zz,:] - OC[zz,:] 
 
         # sigma0 
         sigma0 = density.sigma0(SA, CT)
@@ -82,6 +84,8 @@ def add_gsw():
         ds.SA.attrs = dict(units='g/kg', long_name='Absolute Salinity')
         ds['SO'] = (('depth', 'profile'), SO)
         ds.SO.attrs = dict(long_name='Oxygen Saturation')
+        ds['AOU'] = (('depth', 'profile'), SO)
+        ds.AOU.attrs = dict(long_name='Apparent Oxygen Utilization')
 
         # Buoyancy
         dsigmadz, _ = np.gradient(ds.sigma0.data, 

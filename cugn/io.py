@@ -7,10 +7,11 @@ import pandas
 from cugn import grid_utils
 from cugn import clusters
 from cugn import utils as cugn_utils
+from cugn import defs as cugn_defs
 
 from IPython import embed
 
-data_path = os.getenv('CUGN')
+data_path = cugn_defs.data_path
 
 def line_files(line:str):
     """
