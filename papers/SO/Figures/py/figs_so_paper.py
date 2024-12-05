@@ -14,7 +14,6 @@ from scipy.interpolate import interp1d
 from matplotlib import pyplot as plt
 import matplotlib as mpl
 import matplotlib.gridspec as gridspec
-import matplotlib.dates as mdates
 from matplotlib.ticker import MultipleLocator 
 
 mpl.rcParams['font.family'] = 'stixgeneral'

@@ -8,7 +8,7 @@ from scipy import stats
 
 import pandas
 
-#from siosandbox import cat_utils
+from cugn import utils
 from cugn import io as cugn_io
 
 from IPython import embed
@@ -317,7 +317,7 @@ def find_perc(grid_tbl:pandas.DataFrame, metric:str='doxy'):
         vals = grid_tbl[metric].values[in_cell]
 
         srt = np.argsort(vals)
-        in_srt = cat_utils.match_ids(np.arange(len(vals)), srt)
+        in_srt = utils.match_ids(np.arange(len(vals)), srt)
         perc = np.arange(len(vals))/len(vals-1)*100.
 
         # Save

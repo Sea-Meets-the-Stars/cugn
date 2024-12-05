@@ -9,22 +9,26 @@ from cugn import clusters
 from cugn import utils as cugn_utils
 from cugn import defs as cugn_defs
 
+from cugn import utils
+
 from IPython import embed
 
 data_path = cugn_defs.data_path
 
 def line_files(line:str):
     """
-    Generate a dictionary of file paths based on the given line.
+    Returns a dictionary containing file paths for various data files related to the given line.
 
     Parameters:
-        line (str): The line number.
+    line (str): The line identifier.
 
     Returns:
-        dict: A dictionary containing the file paths for the datafile, gridtbl_file_full, gridtbl_file_control, and edges_file.
+    dict: A dictionary containing the following file paths:
+        - datafile: The path to the data file for the given line.
+        - gridtbl_file_full: The path to the full grid table file for the given line.
+        - gridtbl_file_control: The path to the control grid table file for the given line.
+        - edges_file: The path to the edges file for the given line.
     """
-
-
     datafile = os.path.join(data_path, f'CUGN_potential_line_{line[0:2]}.nc')
     gridtbl_file_full = os.path.join(data_path, f'full_grid_line{line[0:2]}.parquet')
     gridtbl_file_control = os.path.join(data_path, f'doxy_grid_line{line[0:2]}.parquet')
@@ -40,10 +44,10 @@ def line_files(line:str):
     
 def load_line(line:str, use_full:bool=False):
     """
-    Load data from files associated with a given line.
+    Load data for a given line.
 
     Parameters:
-        line (str): The line to load data for.
+        line (str): The line identifier.
         use_full (bool, optional): Whether to use the full grid table file or the control grid table file. Defaults to False.
 
     Returns:
@@ -61,7 +65,6 @@ def load_line(line:str, use_full:bool=False):
     grid_tbl = pandas.read_parquet(grid_file)
     ds = xarray.load_dataset(lfiles['datafile'])
     edges = np.load(lfiles['edges_file'])
-
 
     # dict em
     items = dict(ds=ds, grid_tbl=grid_tbl, edges=edges)
@@ -138,7 +141,7 @@ def load_up(line:str, gextrem:str='high', use_full:bool=False):
 
     dp_gt = grid_tbl.depth*100000 + grid_tbl.profile
     dp_ge = grid_extrem.depth*100000 + grid_extrem.profile
-    ids = cat_utils.match_ids(dp_ge, dp_gt, require_in_match=True)
+    ids = utils.match_ids(dp_ge, dp_gt, require_in_match=True)
     assert len(np.unique(ids)) == len(ids)
 
     grid_extrem['N_p'] = grid_tbl.N_p.values[ids]
@@ -159,3 +162,26 @@ def load_up(line:str, gextrem:str='high', use_full:bool=False):
     cluster_stats = clusters.cluster_stats(grid_extrem)
 
     return grid_extrem, ds, times, grid_tbl
+
+def gpair_filename(dataset:str, iz:int, same_glider:bool):
+    """
+    Generate a filename for a glider pair dataset.
+
+    Parameters:
+        dataset (str): The name of the dataset.
+        iz (int): The depth level of the dataset.
+        same_glider (bool): Indicates whether the glider pair is the same glider or not.
+
+    Returns:
+        str: The generated filename for the glider pair dataset.
+    """
+
+
+
+    same_lbl = 'self' if same_glider else 'other'
+
+    # Generate a filename
+    outfile = f'gpair_{dataset}_z{iz:02d}_{same_lbl}'
+    outfile += '.json'
+
+    return outfile
