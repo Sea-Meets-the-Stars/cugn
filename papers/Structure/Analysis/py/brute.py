@@ -62,6 +62,26 @@ def run(dataset:str, iz:int,
     cugn_utils.savejson(outfile, jdict, easy_to_read=True, overwrite=clobber)
     print(f'Wrote: {outfile}')
 
+def measure_duration(dataset:str, nbins:int=20, max_time=10.,
+                     avoid_same_glider:bool=True):
+    rbins = 10**np.linspace(0., np.log10(400), nbins) # km
+
+    # Load dataset
+    gData = gliderdata.load_dataset(dataset)
+    
+    # Cut on valid velocity data 
+    gData = gData.cut_on_good_velocity()
+
+    # Generate pairs
+    gPairs = gliderpairs.GliderPairs(
+        gData, max_time=max_time, 
+        avoid_same_glider=avoid_same_glider)
+
+    # Ndays
+    ndays = (gPairs.data('time',0).max()-gPairs.data('time',0).min())/3600/24
+    print(f'{dataset}: {ndays} days')
+
+
 if __name__ == '__main__':
 
     # Test
@@ -69,9 +89,13 @@ if __name__ == '__main__':
 
     # Calypso 2022
     for dataset in ['Calypso2019', 'Calypso2022', 'ARCTERX']:
+        measure_duration(dataset)
+
+        '''
         for iz in range(50):
             if iz != 5:
                 continue
             #run('Calypso2022', iz, 'duLduLduL])
             run(dataset, iz, clobber=True)
             run(dataset, iz, avoid_same_glider=False)
+        '''
