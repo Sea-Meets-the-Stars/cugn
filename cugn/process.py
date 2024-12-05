@@ -84,7 +84,7 @@ def add_gsw():
         ds.SA.attrs = dict(units='g/kg', long_name='Absolute Salinity')
         ds['SO'] = (('depth', 'profile'), SO)
         ds.SO.attrs = dict(long_name='Oxygen Saturation')
-        ds['AOU'] = (('depth', 'profile'), SO)
+        ds['AOU'] = (('depth', 'profile'), AOU)
         ds.AOU.attrs = dict(long_name='Apparent Oxygen Utilization')
 
         # Buoyancy
@@ -97,7 +97,7 @@ def add_gsw():
 
         # Wipe out the 2020 trip to San Diego
         dskeys =  ['temperature', 'salinity', 'chlorophyll_a', 'u', 'v', 
-                   'acoustic_backscatter', 'doxy', 'CT', 'sigma0', 'SA', 'SO', 'N']
+                   'acoustic_backscatter', 'doxy', 'CT', 'sigma0', 'SA', 'SO', 'N', 'AOU']
         if 'line_80' in spray_file:
             dist, _ = cugn_utils.calc_dist_offset(
                 '80.0', ds.lon.values, ds.lat.values)
@@ -200,7 +200,7 @@ def build_ds_grid(line:str, line_file:str, gridtbl_outfile:str,
 if __name__ == '__main__':
 
     # Add potential density and salinity to the CUGN files
-    #add_gsw()
+    add_gsw()
 
     # Grids
     for line in cugn_defs.lines:

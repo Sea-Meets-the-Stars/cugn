@@ -1,6 +1,7 @@
 """ Final figures for the paper 
 
 Other figures are in figs_so.py
+  and figs_so_aou.py
 
 """
 
@@ -45,7 +46,7 @@ labels = dict(
     sigma0='Potential Density (kg/m$^3$)',
     CT='Conservative Temperature (deg C)',
     SO='Oxygen Saturation',
-    N='Buoyancy (cycles/hour)',
+    N='Buoyancy Frequency (cycles/hour)',
     DO='Dissolved Oxygen '+r'$(\mu$'+'mol/kg)',
     chla='Chl-a (mg/m'+r'$^3$'+')',
 )
@@ -1177,8 +1178,8 @@ if __name__ == '__main__':
         flg += 2 ** 0  # 1 -- Joint PDFs of all 4 lines
         #flg += 2 ** 1  # 2 ??
         #flg += 2 ** 2  # 4 Joint PDF T, DO on Line 90
-        #flg += 2 ** 3  # N vs. SO
-        flg += 2 ** 4  # Figure 4: SO CDFs
+        #flg += 2 ** 3  # Figure 4: N vs. SO
+        flg += 2 ** 4  # Figure 5: SO CDFs
         flg += 2 ** 5  # Figure 5: DOY vs. offshore distance
         #flg += 2 ** 4  # 16 -- Figure 5: DOY vs. offshore distance
         #flg += 2 ** 7  # 16 -- Figure 5: DOY vs. offshore distance

@@ -16,6 +16,7 @@ from IPython import embed
 default_bins = dict(SA=np.linspace(32.1, 34.8, 50),
                 sigma0=np.linspace(22.8, 27.2, 50),
                 SO=np.linspace(0., 1.5, 100),
+                AOU=np.linspace(-100., 100, 100),
                 doxy=np.linspace(0., 380, 100),
                 z=np.linspace(0., 500, 50),
                 N=np.linspace(0., 25, 100),
@@ -51,6 +52,7 @@ def gen_grid(ds:xarray.Dataset, axes:tuple=('SA', 'sigma0'),
     # Cut on good data
     xkey, ykey = axes
     
+    #embed(header='cugn/grid_utils.py: 55')
     gd = np.isfinite(ds[xkey]) & np.isfinite(ds[ykey]) & np.isfinite(ds[variable])
     if max_depth is not None:
         depths = np.outer(ds.depth.data, np.ones_like(ds.profile))
@@ -185,6 +187,7 @@ def fill_in_grid(grid, ds):
     grid['SA'] = ds.SA.data[(grid.depth.values, grid.profile.values)]
     grid['sigma0'] = ds.sigma0.data[(grid.depth.values, grid.profile.values)]
     grid['SO'] = ds.SO.data[(grid.depth.values, grid.profile.values)]
+    grid['AOU'] = ds.AOU.data[(grid.depth.values, grid.profile.values)]
     # Buyoancy                            
     grid['N'] = ds.N.data[(grid.depth.values, grid.profile.values)]
 

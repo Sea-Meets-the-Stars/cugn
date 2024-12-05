@@ -98,7 +98,7 @@ def load_up(line:str, gextrem:str='high', use_full:bool=False):
     grid_utils.fill_in_grid(grid_tbl, ds)
 
     # Extrema
-    if gextrem == 'high':
+    if gextrem in ['high', 'highAOU']:
         perc = 80.  # Low enough to grab them all
     elif gextrem == 'low':
         perc = 49.  # High enough to grab them all (Line 56.0)
@@ -122,6 +122,8 @@ def load_up(line:str, gextrem:str='high', use_full:bool=False):
     elif gextrem == 'hi_noperc':
         grid_outliers = grid_tbl.copy()
         extrem = grid_outliers.SO > 1.1 
+    elif gextrem == 'highAOU':
+        extrem = grid_outliers.AOU > cugn_defs.AOU_hyper
     else:
         raise IOError("Bad gextrem input")
     grid_extrem = grid_outliers[extrem].copy()
