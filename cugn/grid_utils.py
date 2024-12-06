@@ -196,6 +196,12 @@ def fill_in_grid(grid, ds):
     grid['chla'] = ds.chlorophyll_a.data[(grid.depth.values, grid.profile.values)]
     grid['T'] = ds.temperature.data[(grid.depth.values, grid.profile.values)]
 
+    # Velocities
+    grid['u'] = ds.u.data[(grid.depth.values, grid.profile.values)]
+    grid['v'] = ds.v.data[(grid.depth.values, grid.profile.values)]
+    grid['vel'] = np.sqrt(ds.u.data[(grid.depth.values, grid.profile.values)]**2 +
+                            ds.v.data[(grid.depth.values, grid.profile.values)]**2)
+
 
 def grab_control_values(outliers:pandas.DataFrame,
                         grid_tbl:pandas.DataFrame,

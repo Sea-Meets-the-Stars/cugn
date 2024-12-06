@@ -209,7 +209,8 @@ def fig_extrema_cdfs(outfile:str='fig_N_AOU_cdfs.png', metric:str='N',
 
         cut_grid = (grid_tbl.depth <= 5) & np.isfinite(grid_tbl[metric])
 
-        ctrl = grid_utils.grab_control_values(grid_extrem, grid_tbl[cut_grid], metric, boost=5)
+        ctrl = grid_utils.grab_control_values(
+            grid_extrem, grid_tbl[cut_grid], metric, boost=5)
 
 
         ax = plt.subplot(gs[ss])

@@ -47,6 +47,9 @@ labels = dict(
     CT='Conservative Temperature (deg C)',
     SO='Oxygen Saturation',
     N='Buoyancy Frequency (cycles/hour)',
+    u='Eastward Velocity (m/s)',
+    v='Northward Velocity (m/s)',
+    vel='Total Velocity (m/s)',
     DO='Dissolved Oxygen '+r'$(\mu$'+'mol/kg)',
     chla='Chl-a (mg/m'+r'$^3$'+')',
 )
@@ -1169,18 +1172,29 @@ def main(flg):
     if flg & (2**19):
         fig_annual('fig_annual_TDO.png', line='90.0', metric='T')
 
+    # Velocities
+    if flg & (2**25):
+        # Total velocity
+        fig_extrema_cdfs('fig_vel_cdfs.png', metric='vel',
+                         xyLine=(0.7, 0.4), leg_loc='upper left')
+        # U, V
+        fig_extrema_cdfs('fig_u_cdfs.png', metric='u',
+                         xyLine=(0.7, 0.4), leg_loc='upper left')
+        fig_extrema_cdfs('fig_v_cdfs.png', metric='v',
+                         xyLine=(0.7, 0.4), leg_loc='upper left')
+
 # Command line execution
 if __name__ == '__main__':
     import sys
 
     if len(sys.argv) == 1:
         flg = 0
-        flg += 2 ** 0  # 1 -- Joint PDFs of all 4 lines
+        #flg += 2 ** 0  # 1 -- Joint PDFs of all 4 lines
         #flg += 2 ** 1  # 2 ??
         #flg += 2 ** 2  # 4 Joint PDF T, DO on Line 90
         #flg += 2 ** 3  # Figure 4: N vs. SO
-        flg += 2 ** 4  # Figure 5: SO CDFs
-        flg += 2 ** 5  # Figure 5: DOY vs. offshore distance
+        #flg += 2 ** 4  # Figure 5: SO CDFs
+        #flg += 2 ** 5  # Figure 5: DOY vs. offshore distance
         #flg += 2 ** 4  # 16 -- Figure 5: DOY vs. offshore distance
         #flg += 2 ** 7  # 16 -- Figure 5: DOY vs. offshore distance
 
@@ -1192,6 +1206,8 @@ if __name__ == '__main__':
 
         #flg += 2 ** 18  # # Extreme CDFs
         #flg += 2 ** 19  # T anomaly vs. DO
+
+        flg += 2 ** 25  # T anomaly vs. DO
     else:
         flg = sys.argv[1]
 
