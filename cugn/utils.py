@@ -234,3 +234,13 @@ def match_ids(IDs, match_IDs, require_in_match=True):
     indices = xsorted[ypos]
     rows[in_match] = indices
     return rows
+
+def round_to_day(dt):
+    # Convert to unix timestamp in nanoseconds
+    ts = dt.astype('datetime64[ns]').astype('int64')
+    # Get number of nanoseconds in a day
+    day_ns = 24 * 60 * 60 * 1_000_000_000
+    # Round to nearest day
+    rounded_ts = ((ts + day_ns//2) // day_ns) * day_ns
+    # Convert back to datetime64
+    return np.array(rounded_ts, dtype='datetime64[ns]')

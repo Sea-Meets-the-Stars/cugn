@@ -50,6 +50,8 @@ labels = dict(
     u='Eastward Velocity (m/s)',
     v='Northward Velocity (m/s)',
     vel='Total Velocity (m/s)',
+    cuti='CUTI',
+    beuti='BEUTI',
     DO='Dissolved Oxygen '+r'$(\mu$'+'mol/kg)',
     chla='Chl-a (mg/m'+r'$^3$'+')',
 )
@@ -696,7 +698,7 @@ def fig_extrema_cdfs(outfile:str='fig_N_cdfs.png', metric:str='N',
         lsz = 12.
         ax.legend(fontsize=lsz, loc=leg_loc)
 
-        #ax.set_xlim(0.5, 1.4)
+        #ax.set_xlim(-20, 100.)
         ax.set_xlabel(labels[metric])
         ax.set_ylabel('CDF')
         ax.text(xyLine[0], xyLine[1], f'Line: {line}', 
@@ -708,6 +710,11 @@ def fig_extrema_cdfs(outfile:str='fig_N_cdfs.png', metric:str='N',
         # Percentile of the extrema
         val = np.nanpercentile(grid_extrem[metric], (10,90))
         print(f'Line: {line} -- percentiles={val}')
+
+        # KS tests
+        ks_eval = stats.ks_2samp(grid_extrem[metric], ctrl)
+        #embed(header='716 of figs')
+        print(f'KS test: {ks_eval.statistic:.3f}, {ks_eval.pvalue:.3f}, {ks_eval.statistic_location}')
 
     plt.tight_layout(pad=0.8)#, w_pad=2.0)#, w_pad=0.8)
     plt.savefig(outfile, dpi=300)
@@ -1183,6 +1190,15 @@ def main(flg):
         fig_extrema_cdfs('fig_v_cdfs.png', metric='v',
                          xyLine=(0.7, 0.4), leg_loc='upper left')
 
+    # Upwelling
+    if flg & (2**26):
+        # CUTI
+        fig_extrema_cdfs('fig_cuti_cdfs.png', metric='cuti',
+                         xyLine=(0.7, 0.4), leg_loc='upper left')
+        # BEUTI
+        fig_extrema_cdfs('fig_beuti_cdfs.png', metric='beuti',
+                         xyLine=(0.7, 0.4), leg_loc='lower right')
+
 # Command line execution
 if __name__ == '__main__':
     import sys
@@ -1207,7 +1223,8 @@ if __name__ == '__main__':
         #flg += 2 ** 18  # # Extreme CDFs
         #flg += 2 ** 19  # T anomaly vs. DO
 
-        flg += 2 ** 25  # T anomaly vs. DO
+        #flg += 2 ** 25  # 
+        flg += 2 ** 26  # Upwelling
     else:
         flg = sys.argv[1]
 

@@ -191,7 +191,6 @@ def fill_in_grid(grid, ds):
     # Buyoancy                            
     grid['N'] = ds.N.data[(grid.depth.values, grid.profile.values)]
 
-
     # Others                            
     grid['chla'] = ds.chlorophyll_a.data[(grid.depth.values, grid.profile.values)]
     grid['T'] = ds.temperature.data[(grid.depth.values, grid.profile.values)]
@@ -201,6 +200,23 @@ def fill_in_grid(grid, ds):
     grid['v'] = ds.v.data[(grid.depth.values, grid.profile.values)]
     grid['vel'] = np.sqrt(ds.u.data[(grid.depth.values, grid.profile.values)]**2 +
                             ds.v.data[(grid.depth.values, grid.profile.values)]**2)
+
+    # Upwelling
+    cuti, beuti = cugn_io.load_upwelling()
+
+    # Days
+    ds_days = utils.round_to_day(ds.time[grid.profile.values].values)
+    itimes = np.digitize(ds_days.astype(float), 
+                         cuti.time.data.astype(float)) - 1
+    # Latitutdes
+    ilats = np.digitize(grid['lat'], cuti.latitude.data) - 1
+
+
+    # Finish
+    grid['cuti'] = cuti.CUTI.data[itimes, ilats]
+    assert np.all(beuti.time == cuti.time)
+    assert np.all(beuti.latitude == cuti.latitude)
+    grid['beuti'] = beuti.BEUTI.data[itimes, ilats]
 
 
 def grab_control_values(outliers:pandas.DataFrame,

@@ -72,7 +72,6 @@ def load_line(line:str, use_full:bool=False):
     return items
 
 
-
 def load_up(line:str, gextrem:str='high', use_full:bool=False):
     """
     Load data and perform various operations on it.
@@ -164,6 +163,18 @@ def load_up(line:str, gextrem:str='high', use_full:bool=False):
     cluster_stats = clusters.cluster_stats(grid_extrem)
 
     return grid_extrem, ds, times, grid_tbl
+
+def load_upwelling():
+    # CUTI
+    cuti_file = os.path.join(os.getenv('OS_CCS'), 'Upwelling',
+                             'CUTI_daily.nc')
+    cuti = xarray.open_dataset(cuti_file)
+    # 
+    beuti_file = os.path.join(os.getenv('OS_CCS'), 'Upwelling',
+                             'BEUTI_daily.nc')
+    beuti = xarray.open_dataset(beuti_file)
+    # Return
+    return cuti, beuti
 
 def gpair_filename(dataset:str, iz:int, same_glider:bool):
     """
