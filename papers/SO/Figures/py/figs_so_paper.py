@@ -1216,7 +1216,7 @@ if __name__ == '__main__':
         #flg += 2 ** 2  # 4 Joint PDF T, DO on Line 90
         #flg += 2 ** 3  # Figure 4: N vs. SO
         #flg += 2 ** 4  # Figure 5: SO CDFs
-        #flg += 2 ** 5  # Figure 5: DOY vs. offshore distance
+        #flg += 2 ** 5  # Figure 6: DOY vs. offshore distance
         #flg += 2 ** 4  # 16 -- Figure 5: DOY vs. offshore distance
         #flg += 2 ** 7  # 16 -- Figure 5: DOY vs. offshore distance
 

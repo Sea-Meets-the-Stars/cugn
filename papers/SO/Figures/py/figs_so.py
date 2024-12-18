@@ -18,12 +18,13 @@ import seaborn as sns
 
 import pandas
 
-from siosandbox import plot_utils
+from ocpy.utils import plotting
 
 from cugn import grid_utils
 from cugn import utils as cugn_utils
 from cugn import io as cugn_io
 from cugn import defs as cugn_defs
+from cugn import clusters
 
 lines = cugn_defs.lines
 line_colors = cugn_defs.line_colors
@@ -1600,6 +1601,77 @@ def fig_sodo_anomalies(line:str, zmax:int=9,
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
+
+def fig_cluster_char(outfile='fig_cluster_char.png', use_full:bool=False):
+
+    day_ns = 24 * 60 * 60 * 1_000_000_000
+    
+    # Figure
+    fig = plt.figure(figsize=(6,6))
+    plt.clf()
+    gs = gridspec.GridSpec(4,2)
+
+    for tt, clr, line in zip(np.arange(4), line_colors, lines):
+
+        # Load
+        items = cugn_io.load_up(line, use_full=use_full)#, skip_dist=True)
+        grid_extrem = items[0]
+        ds = items[1]
+        times = items[2]
+        grid_tbl = items[3]
+
+        cluster_stats = clusters.cluster_stats(grid_extrem)
+        dur_days = cluster_stats.Dtime.values.astype('float') / day_ns
+        #embed(header='fig_cluster_char 1622')
+
+        # Duration, size
+        for ss in range(2):
+            ax = plt.subplot(gs[tt,ss])
+
+            # Duration
+            if ss == 0:
+                sns.histplot(dur_days, ax=ax, color=clr,
+                             binrange=[0.,15.],
+                             binwidth=1.)
+            else: # size
+                sns.histplot(cluster_stats['Ddist'].values, ax=ax, color=clr,
+                             binrange=[0.,150.],
+                             binwidth=10.)
+                             #binrange=[0.,15.],
+                             #binwidth=1.)
+            
+            if tt < 3:
+                ax.set_xticklabels([])
+                ax.tick_params(bottom=False)
+            else:
+                ax.set_xlabel(['Duration (days)', 'Size (km)'][ss])
+            # Font size
+            plotting.set_fontsize(ax, 15.)
+    '''
+    # Finish
+    lsz = 17.
+    for ss, depth in enumerate([0,1]):
+        ax = plt.subplot(gs[ss])
+        ax.axvline(1., color='black', linestyle='-')
+        ax.axvline(1.1, color='black', linestyle=':')
+
+        ax.set_xlim(0.5, 1.4)
+        ax.set_xlabel('Oxygen Saturation')
+        ax.set_ylabel('CDF')
+                 #label=f'SO > {SO_cut}', log_scale=log_scale)
+        ax.text(0.95, 0.05, f'z={(depth+1)*10}m',
+                transform=ax.transAxes,
+                fontsize=lsz, ha='right', color='k')
+        plotting.set_fontsize(ax, lsz)
+
+    ax = plt.subplot(gs[0])
+    ax.legend(fontsize=15., loc='upper left')
+    '''
+
+    plt.tight_layout(pad=0.5)#, h_pad=0.1, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
 def main(flg):
     if flg== 'all':
         flg= np.sum(np.array([2 ** ii for ii in range(25)]))
@@ -1808,6 +1880,10 @@ def main(flg):
                         line, dmax=50., variable=variable,
                         zmax=zmax)
 
+    # Cluster char
+    if flg & (2**35):
+        fig_cluster_char()
+
 # Command line execution
 if __name__ == '__main__':
     import sys
@@ -1843,7 +1919,10 @@ if __name__ == '__main__':
         #flg += 2 ** 33  # Search for upwelling
 
         # Anamolies
-        flg += 2 ** 34  # DO
+        #flg += 2 ** 34  # DO
+
+        # Clusters
+        flg += 2 ** 35  # DO
 
     else:
         flg = sys.argv[1]

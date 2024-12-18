@@ -83,16 +83,18 @@ def cluster_stats(grid_outliers:pandas.DataFrame):
     # Loop on clusters
     stats = {}
     mean_keys = ['z', 'lon','doxy', 'time', 'SA', 'CT', 
-                 'sigma0', 'SO', 'chla']
+                 'sigma0', 'SO', 'chla', 'dist']
     for key in mean_keys:
         stats[key] = []
-    max_keys = ['doxy', 'SO', 'chla']
+    max_keys = ['doxy', 'SO', 'chla', 'dist']
     for key in max_keys:
         stats['max_'+key] = []
         stats['min_'+key] = []
     # A few others
-    stats['N'] = []
+    for key in ['N', 'Dtime', 'Ddist']:
+        stats[key] = []
 
+    # Loop on clusters
     for cluster_ID in cluster_IDs:
         # Grab em
         in_cluster = grid_outliers.cluster.values == cluster_ID
@@ -106,6 +108,12 @@ def cluster_stats(grid_outliers:pandas.DataFrame):
         for key in max_keys:
             stats['max_'+key].append(grid_outliers[in_cluster][key].max())
             stats['min_'+key].append(grid_outliers[in_cluster][key].min())
+
+        # Duration
+        stats['Dtime'].append(grid_outliers[in_cluster].time.max() - grid_outliers[in_cluster].time.min())
+
+        # Distance
+        stats['Ddist'].append(stats['max_dist'][-1] - stats['min_dist'][-1])
 
     # Package
     stats_tbl = pandas.DataFrame(stats)
