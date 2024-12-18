@@ -52,6 +52,7 @@ labels = dict(
     vel='Total Velocity (m/s)',
     cuti='CUTI',
     beuti='BEUTI',
+    MLD='Mixed Layer Depth (m)',
     DO='Dissolved Oxygen '+r'$(\mu$'+'mol/kg)',
     chla='Chl-a (mg/m'+r'$^3$'+')',
 )
@@ -1167,10 +1168,10 @@ def main(flg):
     # Extrema CDFs
     if flg & (2**18):
         # N
-        #fig_extrema_cdfs()
+        fig_extrema_cdfs()
         # Chla
-        #fig_extrema_cdfs('fig_chla_cdfs.png', metric='chla',
-        #                 xyLine=(0.7, 0.4))
+        fig_extrema_cdfs('fig_chla_cdfs.png', metric='chla',
+                         xyLine=(0.7, 0.4))
         # DO
         fig_extrema_cdfs('fig_doxy_cdfs.png', metric='doxy',
                          xyLine=(0.7, 0.4), leg_loc='upper left')
@@ -1199,6 +1200,11 @@ def main(flg):
         fig_extrema_cdfs('fig_beuti_cdfs.png', metric='beuti',
                          xyLine=(0.7, 0.4), leg_loc='lower right')
 
+    # MLD
+    if flg & (2**27):
+        fig_extrema_cdfs('fig_mld_cdfs.png', metric='MLD',
+                         xyLine=(0.7, 0.4), leg_loc='lower right')
+
 # Command line execution
 if __name__ == '__main__':
     import sys
@@ -1220,11 +1226,12 @@ if __name__ == '__main__':
         #flg += 2 ** 11  
         #flg += 2 ** 12  # Low histograms
 
-        #flg += 2 ** 18  # # Extreme CDFs
+        flg += 2 ** 18  # # Extreme CDFs
         #flg += 2 ** 19  # T anomaly vs. DO
 
         #flg += 2 ** 25  # 
-        flg += 2 ** 26  # Upwelling
+        #flg += 2 ** 26  # Upwelling
+        #flg += 2 ** 27  # MLD
     else:
         flg = sys.argv[1]
 

@@ -6,6 +6,7 @@ import xarray
 from glob import glob
 
 import numpy as np
+from scipy.interpolate import interp1d
 
 import pandas
 
@@ -24,6 +25,7 @@ def add_gsw():
     """ Add physical quantities to the Spray CUGN data
     using the TEOS-10 GSW package
     """
+    MLD_sigma0 = 0.125
 
     # Spray files
     spray_files = glob(os.path.join(
@@ -94,6 +96,14 @@ def add_gsw():
         buoyfreq = np.sqrt(9.8/1025*dsigmadz)/(2*np.pi)*3600
         ds['N'] = (('depth', 'profile'), buoyfreq)
         ds.N.attrs = dict(long_name='Buoyancy Frequency', units='cycles/hour')
+
+        # MLD
+        MLDs = []
+        for iprofile in ds.profile.data:
+            f = interp1d(ds.sigma0.data[:,iprofile], ds.depth.data-5.)
+            MLD = f(ds.sigma0.data[0,iprofile]+MLD_sigma0)
+            MLDs.append(MLD)
+        ds['MLD'] = (('profile'), MLDs)
 
         # Wipe out the 2020 trip to San Diego
         dskeys =  ['temperature', 'salinity', 'chlorophyll_a', 'u', 'v', 

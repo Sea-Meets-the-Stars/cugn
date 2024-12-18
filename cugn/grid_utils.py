@@ -211,8 +211,10 @@ def fill_in_grid(grid, ds):
     # Latitutdes
     ilats = np.digitize(grid['lat'], cuti.latitude.data) - 1
 
+    # MLD
+    grid['MLD'] = ds.MLD[grid.profile.values].values
 
-    # Finish
+    # Upwelling
     grid['cuti'] = cuti.CUTI.data[itimes, ilats]
     assert np.all(beuti.time == cuti.time)
     assert np.all(beuti.latitude == cuti.latitude)
