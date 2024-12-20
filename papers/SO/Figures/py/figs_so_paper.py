@@ -409,7 +409,8 @@ def fig_SO_cdf(outfile:str, use_full:bool=False):
 def fig_dist_doy(outfile:str, line:str, color:str,
                  gextrem:str='hi_noperc',
                  show_legend:bool=False, 
-                 clr_by_depth:bool=False):
+                 clr_by_depth:bool=False,
+                 cluster_only:bool=False):
 
     # Figure
     #sns.set()
@@ -440,7 +441,12 @@ def fig_dist_doy(outfile:str, line:str, color:str,
             clr = clrs[depth]
         else:
             clr = color
-        at_depth = grid_extrem.depth == depth
+        #
+        show_these = grid_extrem.depth == depth
+        if cluster_only:
+            in_cluster = grid_extrem.cluster >= 0
+            show_these &= in_cluster
+
         # Scatter plot
         if show_legend:
             label=f'z={(depth+1)*10}m'
@@ -451,8 +457,8 @@ def fig_dist_doy(outfile:str, line:str, color:str,
         else:
             fc = clr
         jg.ax_joint.scatter(
-            grid_extrem[at_depth].dist, 
-            grid_extrem[at_depth].doy, 
+            grid_extrem[show_these].dist, 
+            grid_extrem[show_these].doy, 
             marker=markers[depth], label=label, 
             facecolors=fc,
             s=15., 
@@ -643,9 +649,9 @@ def fig_SO_vs_N_zoom():
 
 
 def fig_joint_line90(outfile:str='fig_joint_TDO_line90.png', 
-                     line:str='90.0', metric='CT',
-                     xmetric:str='doxy',
-                     max_depth:int=30):
+                     line:str='90.0', xmetric='CT',
+                     metric:str='doxy',
+                     max_depth:int=20):
     # Figure
     #sns.set()
     fig = plt.figure(figsize=(12,12))
@@ -655,7 +661,7 @@ def fig_joint_line90(outfile:str='fig_joint_TDO_line90.png',
         cmap = 'Blues'
     elif metric == 'chla':
         cmap = 'Greens'
-    elif metric == 'CT':
+    elif metric in ['CT', 'doxy']:
         cmap = 'Oranges'
     elif metric == 'SA':
         cmap = 'Greys'
@@ -690,6 +696,7 @@ def fig_joint_line90(outfile:str='fig_joint_TDO_line90.png',
                     kind='hex', bins='log', # gridsize=250, #xscale='log',
                     # mincnt=1,
                     cmap=cmap,
+                    marginal_ticks=True,
                     marginal_kws=dict(fill=False, color='black', 
                                         bins=100)) 
 
@@ -699,6 +706,8 @@ def fig_joint_line90(outfile:str='fig_joint_TDO_line90.png',
     # SO
     if metric == 'CT':
         jg.ax_joint.plot(OCs, CTs, 'k:', lw=1)
+    elif xmetric == 'CT' and metric == 'doxy':
+        jg.ax_joint.plot(CTs, OCs, 'k:', lw=1)
 
 
     # Labels
@@ -709,13 +718,20 @@ def fig_joint_line90(outfile:str='fig_joint_TDO_line90.png',
     jg.ax_joint.text(0.05, 0.95, f'Line: {line}',
                 transform=jg.ax_joint.transAxes,
                 fontsize=14., ha='left', color='k')
-    jg.ax_joint.set_xlabel(labels['DO'])
+    jg.ax_joint.set_xlabel(labels[xmetric])
     jg.ax_joint.set_ylabel(labels[metric])
 
+    # y-axis of the marginal plots
+    #embed(header='716 of figs')
+    #for tick in jg.ax_marg_x.get_yticklabels():
+    #    tick.set_visible(True)
+    #jg.ax_marg_x.yaxis.set_visible(True)
+
+    plt.tight_layout()
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
-def fig_joint_pdf_NSO(line:str, max_depth:int=30):
+def fig_joint_pdf_NSO(line:str, max_depth:int=20):
 
     def gen_cb(img, lbl, csz = 17.):
         cbaxes = plt.colorbar(img, pad=0., fraction=0.030)
@@ -773,6 +789,9 @@ def fig_joint_pdf_NSO(line:str, max_depth:int=30):
     # 
     fsz = 27.
     plotting.set_fontsize(ax, fsz)
+
+    # Vertical line at hyperoxic
+    ax.axvline(1.2, color='black', linestyle=':')
     
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
@@ -1244,7 +1263,8 @@ def main(flg):
             # High
             fig_dist_doy(f'fig_dist_doy_{line}.png', 
                          line, clr, show_legend=show_legend,
-                         clr_by_depth=True)
+                         clr_by_depth=True,
+                         cluster_only=True)
             # Low
             #fig_dist_doy(f'fig_dist_doy_low_{line}.png', 
             #             line, clr, 
@@ -1328,13 +1348,13 @@ if __name__ == '__main__':
 
     if len(sys.argv) == 1:
         flg = 0
-        flg += 2 ** 30  # Figure 1 -- CUGN 
+        #flg += 2 ** 30  # Figure 1 -- CUGN 
         #flg += 2 ** 0  # 1 -- Joint PDFs of all 4 lines
         #flg += 2 ** 1  # 2 ??
-        #flg += 2 ** 2  # 4 Joint PDF T, DO on Line 90
-        #flg += 2 ** 3  # Figure 4: N vs. SO
-        #flg += 2 ** 4  # Figure 5: SO CDFs
-        #flg += 2 ** 5  # Figure 6: DOY vs. offshore distance
+        #flg += 2 ** 2  # 4 Figure 4 DO vs. T on Line 90 
+        #flg += 2 ** 3  # Figure 5: N vs. SO
+        #flg += 2 ** 4  # Figure 6: SO CDFs
+        flg += 2 ** 5  # Figure 7: DOY vs. offshore distance
         #flg += 2 ** 6  # 
         #flg += 2 ** 7  # 
 

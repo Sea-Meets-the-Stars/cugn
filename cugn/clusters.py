@@ -9,9 +9,9 @@ from sklearn.cluster import AgglomerativeClustering, DBSCAN
 from IPython import embed
 
 def generate_clusters(grid_outliers:pandas.DataFrame,
-                      time_scl:float=3.,
-                      #doff_scl:float=10./3,
-                      doff_scl:float=10.,
+                      time_scl:float=5.,
+                      doff_scl:float=20./3,
+                      #doff_scl:float=10.,
                       z_scl:float=5.,
                       min_samples:int=10):
     """ Generate clusters of outliers for a given line
@@ -82,6 +82,7 @@ def cluster_stats(grid_outliers:pandas.DataFrame):
 
     # Loop on clusters
     stats = {}
+    stats['ID'] = []
     mean_keys = ['z', 'lon','doxy', 'time', 'SA', 'CT', 
                  'sigma0', 'SO', 'chla', 'dist']
     for key in mean_keys:
@@ -98,6 +99,7 @@ def cluster_stats(grid_outliers:pandas.DataFrame):
     for cluster_ID in cluster_IDs:
         # Grab em
         in_cluster = grid_outliers.cluster.values == cluster_ID
+        stats['ID'].append(cluster_ID)
         stats['N'].append(in_cluster.sum())
 
         # Means

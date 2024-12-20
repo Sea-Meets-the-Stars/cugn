@@ -1648,30 +1648,56 @@ def fig_cluster_char(outfile='fig_cluster_char.png', use_full:bool=False):
                 ax.set_xlabel(['Duration (days)', 'Size (km)'][ss])
             # Font size
             plotting.set_fontsize(ax, 15.)
-    '''
-    # Finish
-    lsz = 17.
-    for ss, depth in enumerate([0,1]):
-        ax = plt.subplot(gs[ss])
-        ax.axvline(1., color='black', linestyle='-')
-        ax.axvline(1.1, color='black', linestyle=':')
-
-        ax.set_xlim(0.5, 1.4)
-        ax.set_xlabel('Oxygen Saturation')
-        ax.set_ylabel('CDF')
-                 #label=f'SO > {SO_cut}', log_scale=log_scale)
-        ax.text(0.95, 0.05, f'z={(depth+1)*10}m',
-                transform=ax.transAxes,
-                fontsize=lsz, ha='right', color='k')
-        plotting.set_fontsize(ax, lsz)
-
-    ax = plt.subplot(gs[0])
-    ax.legend(fontsize=15., loc='upper left')
-    '''
-
+    
     plt.tight_layout(pad=0.5)#, h_pad=0.1, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
+
+
+def fig_cluster_size_vs_age(outfile='fig_cluster_size_vs_age.png', use_full:bool=False):
+
+    day_ns = 24 * 60 * 60 * 1_000_000_000
+    
+    # Figure
+    fig = plt.figure(figsize=(6,6))
+    plt.clf()
+    gs = gridspec.GridSpec(1,1)
+    ax = plt.subplot(gs[0])
+
+    markers = ['o', 's', 'd', '^']
+    for tt, clr, line in zip(np.arange(4), line_colors, lines):
+
+        # Load
+        items = cugn_io.load_up(line, use_full=use_full)#, skip_dist=True)
+        grid_extrem = items[0]
+        ds = items[1]
+        times = items[2]
+        grid_tbl = items[3]
+
+        cluster_stats = clusters.cluster_stats(grid_extrem)
+        dur_days = cluster_stats.Dtime.values.astype('float') / day_ns
+        #embed(header='fig_cluster_char 1622')
+
+        # Duration, size
+        #embed(header='1689 of figs')
+        ax.scatter(dur_days, cluster_stats['Ddist'].values, 
+                marker=markers[tt], edgecolor=clr, 
+                facecolor='None',
+                s=cluster_stats['N'].values/2., 
+                label=f'Line {line}')
+
+    plotting.set_fontsize(ax, 17.)
+    ax.legend(fontsize=15.)
+
+    # Labels
+    ax.set_xlabel('Duration (days)')
+    ax.set_ylabel('Size (km)')
+    
+    plt.tight_layout(pad=0.5)#, h_pad=0.1, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+
 
 def main(flg):
     if flg== 'all':
@@ -1885,6 +1911,10 @@ def main(flg):
     if flg & (2**35):
         fig_cluster_char()
 
+    # Cluster char
+    if flg & (2**36):
+        fig_cluster_size_vs_age()
+
 # Command line execution
 if __name__ == '__main__':
     import sys
@@ -1923,7 +1953,8 @@ if __name__ == '__main__':
         #flg += 2 ** 34  # DO
 
         # Clusters
-        flg += 2 ** 35  # DO
+        #flg += 2 ** 35  # clusters
+        flg += 2 ** 36  # clusters
 
     else:
         flg = sys.argv[1]
