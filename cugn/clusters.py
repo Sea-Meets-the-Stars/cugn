@@ -10,7 +10,8 @@ from IPython import embed
 
 def generate_clusters(grid_outliers:pandas.DataFrame,
                       time_scl:float=3.,
-                      doff_scl:float=10./3,
+                      #doff_scl:float=10./3,
+                      doff_scl:float=10.,
                       z_scl:float=5.,
                       min_samples:int=10):
     """ Generate clusters of outliers for a given line
@@ -60,7 +61,6 @@ def generate_clusters(grid_outliers:pandas.DataFrame,
     print(f"Found {len(np.unique(dbscan.labels_))} unique clusters")
 
     grid_outliers['cluster'] = dbscan.labels_
-
 
 def cluster_stats(grid_outliers:pandas.DataFrame):
     """
@@ -118,5 +118,6 @@ def cluster_stats(grid_outliers:pandas.DataFrame):
     # Package
     stats_tbl = pandas.DataFrame(stats)
     stats_tbl['cluster'] = cluster_IDs
+    #embed(header='118 of clusters')
 
     return stats_tbl

@@ -17,6 +17,10 @@ import matplotlib as mpl
 import matplotlib.gridspec as gridspec
 from matplotlib.ticker import MultipleLocator 
 
+import cartopy.crs as ccrs
+import cartopy
+from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
+
 mpl.rcParams['font.family'] = 'stixgeneral'
 
 from ocpy.utils import plotting
@@ -30,12 +34,16 @@ from cugn import grid_utils
 from cugn import defs as cugn_defs
 from cugn import io as cugn_io
 from cugn import annualcycle
+from cugn import utils as cugn_utils
 
 # Local
 sys.path.append(os.path.abspath("../Analysis/py"))
 import so_analysis
 
 from IPython import embed
+
+tformM = ccrs.Mollweide()
+tformP = ccrs.PlateCarree()  
 
 lines = cugn_defs.lines
 line_colors = cugn_defs.line_colors
@@ -73,6 +81,112 @@ def gen_cb(img, lbl, csz = 17.):
     cbaxes.set_label(lbl, fontsize=csz)
     cbaxes.ax.tick_params(labelsize=csz)
 
+
+def fig_cugn(outfile:str='fig_cugn.png', debug:bool=False,
+             use_density:bool=False, use_DO:bool=False):
+
+    # Labels
+    lon_lbl = [-125.9, -125.5, -123.5, -121.8]
+    lat_lbl = [36.3, 34.55, 32.0, 31.0]
+
+    # Start the figure
+    fig = plt.figure(figsize=(7,6))
+    plt.clf()
+    ax = plt.subplot(projection=tformP)
+
+    for ss, cmap, line in zip(range(4), line_cmaps, lines):
+        if ss > 0 and debug:
+            continue
+        # Load
+        items = cugn_io.load_up(line, use_full=True)
+        #grid_extrem = items[0]
+        #ds = items[1]
+        #times = items[2]
+        grid_tbl = items[3]
+
+        #ds = items['ds']
+        #grid_tbl = items['grid_tbl']
+
+        # Trim (remove this)
+        dist, offset = cugn_utils.calc_dist_offset(
+            line, grid_tbl.lon.values, grid_tbl.lat.values)
+        grid_tbl['dist'] = dist
+        ok_off = np.abs(offset) < 90.
+        if np.any(~ok_off):
+            embed(header='100 of figs')
+            raise ValueError("Bad offset")
+
+        grid_tbl = grid_tbl[ok_off]
+
+        #embed(header='83 of figs')
+
+        img = plt.scatter(x=grid_tbl.lon.values,
+            y=grid_tbl.lat.values, color=line_colors[ss],# cmap=cmap,
+                #vmin=0.,
+                #vmax=vmax, 
+            s=1,
+            transform=tformP, label=f'Line {line}')
+
+        # Color bar
+        #cbaxes = plt.colorbar(img, pad=0., fraction=0.030, orientation='horizontal') #location='left')
+        #cbaxes.set_label(param, fontsize=17.)
+        #cbaxes.ax.tick_params(labelsize=15)
+
+        # Label
+        lat_off = 0.2
+
+        ax.text(lon_lbl[ss], lat_lbl[ss],
+                f'Line {line}', fontsize=15, 
+                ha='left', va='bottom', 
+                transform=ccrs.PlateCarree(),
+                color=line_colors[ss])
+    # Coast lines
+    ax.coastlines(zorder=10)
+    ax.add_feature(cartopy.feature.LAND, 
+            facecolor='lightgray', edgecolor='black')
+        #ax.set_global()
+
+    gl = ax.gridlines(crs=ccrs.PlateCarree(), linewidth=1, 
+        color='black', alpha=0.5, linestyle=':', draw_labels=True)
+    gl.xlabels_top = False
+    gl.ylabels_left = True
+    gl.ylabels_right=False
+    gl.xlines = True
+    gl.xformatter = LONGITUDE_FORMATTER
+    gl.yformatter = LATITUDE_FORMATTER
+    gl.xlabel_style = {'color': 'black', 'weight': 'bold'}
+    gl.ylabel_style = {'color': 'black', 'weight': 'bold'}
+
+    # Define cities
+    cities = [
+        ('Los Angeles', -118.2437, 34.0522),
+        ('San Francisco', -122.4194, 37.7749),
+        ('Santa Barbara', -119.6982, 34.4208),
+        ('San Diego', -117.1611, 32.7157),
+        ('Santa Cruz', -122.0308, 36.9741),
+        #('Sacramento', -121.4944, 38.5816)
+    ]
+
+    # Add cities to the map
+    for city, lon, lat in cities:
+        ax.plot(lon, lat, 'ko', markersize=5, transform=ccrs.PlateCarree())
+        ax.text(lon, lat, city, fontsize=15, ha='left', va='bottom', transform=ccrs.PlateCarree())
+
+
+    # Label the axes
+    #ax.set_title('UG2', fontsize=17.)
+    #ax.set_extent([-100, -30, -70, 50])
+    ax.set_xlabel('Longitude')
+    ax.set_ylabel('Latitude')
+
+    #lon_min, lon_max, lat_min, lat_max = -100, 30, -70, 50
+    #ax.set_extent([lon_min, lon_max, lat_min, lat_max])
+
+    plotting.set_fontsize(ax, 17)
+
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
 
 def fig_joint_pdfs(use_density:bool=False, use_DO:bool=False):
 
@@ -1093,6 +1207,9 @@ def main(flg):
     else:
         flg= int(flg)
 
+    # MLD
+    if flg & (2**30):
+        fig_cugn()
 
     # Figure 1 -- Joint PDFs
     if flg & (2**0):
@@ -1211,14 +1328,15 @@ if __name__ == '__main__':
 
     if len(sys.argv) == 1:
         flg = 0
+        flg += 2 ** 30  # Figure 1 -- CUGN 
         #flg += 2 ** 0  # 1 -- Joint PDFs of all 4 lines
         #flg += 2 ** 1  # 2 ??
         #flg += 2 ** 2  # 4 Joint PDF T, DO on Line 90
         #flg += 2 ** 3  # Figure 4: N vs. SO
         #flg += 2 ** 4  # Figure 5: SO CDFs
         #flg += 2 ** 5  # Figure 6: DOY vs. offshore distance
-        #flg += 2 ** 4  # 16 -- Figure 5: DOY vs. offshore distance
-        #flg += 2 ** 7  # 16 -- Figure 5: DOY vs. offshore distance
+        #flg += 2 ** 6  # 
+        #flg += 2 ** 7  # 
 
         #flg += 2 ** 8  # 256 -- Figure 9: DOY vs. offshore distance for low
         #flg += 2 ** 9  # SOa PDFs
@@ -1226,7 +1344,7 @@ if __name__ == '__main__':
         #flg += 2 ** 11  
         #flg += 2 ** 12  # Low histograms
 
-        flg += 2 ** 18  # # Extreme CDFs
+        #flg += 2 ** 18  # # Extreme CDFs
         #flg += 2 ** 19  # T anomaly vs. DO
 
         #flg += 2 ** 25  # 

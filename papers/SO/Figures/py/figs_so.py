@@ -1639,6 +1639,7 @@ def fig_cluster_char(outfile='fig_cluster_char.png', use_full:bool=False):
                              binwidth=10.)
                              #binrange=[0.,15.],
                              #binwidth=1.)
+                print(f'Line={line}, max={cluster_stats.Ddist.max()}')
             
             if tt < 3:
                 ax.set_xticklabels([])
