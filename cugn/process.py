@@ -204,11 +204,13 @@ def build_ds_grid(line:str, line_file:str, gridtbl_outfile:str,
 
         MLDs, Ns = cugn_highres.calc_mld_N(gfiles[0], mprofiles,
                                            max_depth=(iz+1)*10)
-        # Fill in
+        # Fill in (this is slow)
         for mprofile, MLD, N in zip(mprofiles, MLDs, Ns):
             in_mission = (grid_tbl.mission == mission) & (
                 grid_tbl.mission_profile == mprofile)
+            # MLD
             grid_tbl.loc[in_mission, 'MLD'] = MLD
+            # N
             these_N = [N[ii] for ii in grid_tbl[in_mission].depth.values]
             grid_tbl.loc[in_mission, 'N'] = these_N
 
@@ -247,8 +249,8 @@ if __name__ == '__main__':
 
     # Grids
     for line in cugn_defs.lines:
-        if line != '90.0':
-            continue
+        #if line != '90.0':
+        #    continue
         line_files = cugn_io.line_files(line)
 
         # Control

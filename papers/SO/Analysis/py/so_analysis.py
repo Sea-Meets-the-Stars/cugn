@@ -228,7 +228,7 @@ def check_mld_and_N(line:str, mission_name:str, mission_profile:int=None,
     fig = plt.figure(figsize=(18, 16))
     ax = plt.gca()
 
-    ax.plot(gMLDs, MLDs, 'o')
+    ax.plot(gMLDs+5, MLDs, 'o')
     # 1-1 line
     ax.plot([0, np.max([gMLDs.max(),MLDs.max()])], 
              [0, np.max([gMLDs.max(),MLDs.max()])], 'k--')
