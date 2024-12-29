@@ -791,7 +791,7 @@ def fig_joint_pdf_NSO(line:str, max_depth:int=20):
     plotting.set_fontsize(ax, fsz)
 
     # Vertical line at hyperoxic
-    ax.axvline(1.2, color='black', linestyle=':')
+    ax.axvline(1.1, color='black', linestyle=':')
     
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
@@ -1352,9 +1352,9 @@ if __name__ == '__main__':
         #flg += 2 ** 0  # 1 -- Joint PDFs of all 4 lines
         #flg += 2 ** 1  # 2 ??
         #flg += 2 ** 2  # 4 Figure 4 DO vs. T on Line 90 
-        #flg += 2 ** 3  # Figure 5: N vs. SO
+        flg += 2 ** 3  # Figure 5: N vs. SO
         #flg += 2 ** 4  # Figure 6: SO CDFs
-        flg += 2 ** 5  # Figure 7: DOY vs. offshore distance
+        #flg += 2 ** 5  # Figure 7: DOY vs. offshore distance
         #flg += 2 ** 6  # 
         #flg += 2 ** 7  # 
 

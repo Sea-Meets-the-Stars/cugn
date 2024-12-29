@@ -20,6 +20,7 @@ default_bins = dict(SA=np.linspace(32.1, 34.8, 50),
                 doxy=np.linspace(0., 380, 100),
                 z=np.linspace(0., 500, 50),
                 N=np.linspace(0., 25, 100),
+                MLD=np.linspace(0., 100, 50),
                 CT=np.linspace(4, 22.5, 50))
 
 def gen_grid(ds:xarray.Dataset, axes:tuple=('SA', 'sigma0'),
@@ -201,6 +202,9 @@ def fill_in_grid(grid, ds):
     grid['vel'] = np.sqrt(ds.u.data[(grid.depth.values, grid.profile.values)]**2 +
                             ds.v.data[(grid.depth.values, grid.profile.values)]**2)
 
+    # MLD
+    grid['MLD'] = ds.MLD[grid.profile.values].values
+
     # Upwelling
     cuti, beuti = cugn_io.load_upwelling()
 
@@ -210,9 +214,6 @@ def fill_in_grid(grid, ds):
                          cuti.time.data.astype(float)) - 1
     # Latitutdes
     ilats = np.digitize(grid['lat'], cuti.latitude.data) - 1
-
-    # MLD
-    grid['MLD'] = ds.MLD[grid.profile.values].values
 
     # Upwelling
     grid['cuti'] = cuti.CUTI.data[itimes, ilats]

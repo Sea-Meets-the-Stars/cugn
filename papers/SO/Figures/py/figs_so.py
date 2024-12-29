@@ -49,8 +49,10 @@ ylbl_dict = {'doxy': 'DO ('+r'$\mu$'+'mol/kg)',
                  'T': 'Temperature (deg C)',
                  'CT': 'Temperature (deg C)',
                  'SA': 'Salinity (g/kg)',
-                 'N': 'Buoyancy frequency (cycles/hr)',
-                 'dist': 'Distance from shore (km)',
+                 'N': 'Buoyancy frequency (cycles/hr)', 
+                 'SO':'Oxygen Saturation', 
+                 'dist': 'Distance from shore (km)', 
+                 'MLD': 'Mixed Layer Depth (m)',
                  'chla': 'Chl-a (mg/m'+r'$^3$'+')'}
 
 short_lbl = {'doxy': 'DO ('+r'$\mu$'+'mol/kg)', 
@@ -1759,6 +1761,79 @@ def fig_cluster_date_vs_loc(outfile='fig_cluster_date_vs_loc.png',
     print(f"Saved: {outfile}")
 
 
+def fig_joint_pdf_MLDSO(line:str, iz:int=0):
+
+    def gen_cb(img, lbl, csz = 17.):
+        cbaxes = plt.colorbar(img, pad=0., fraction=0.030)
+        cbaxes.set_label(lbl, fontsize=csz)
+        cbaxes.ax.tick_params(labelsize=csz)
+
+    xvar = 'SO'
+    yvar = 'MLD'
+    outfile = f'fig_jointPDF_{line}_SO_MLD.png'
+
+    # Load
+    items = cugn_io.load_line(line)
+    ds = items['ds']
+
+    #
+    bins_SO = np.linspace(0.8, 1.3, 50)
+    bins_MLD = np.linspace(0, 100, 50)
+
+    gd = np.isfinite(ds.SO.data[iz,:]) & np.isfinite(ds.MLD.data)
+
+    # Counts
+    counts, xedges, yedges = np.histogram2d(
+                ds.SO.data[iz,gd], 
+                ds.MLD.data[gd],
+                bins=[bins_SO, bins_MLD])
+
+    # PDF
+    dx = xedges[1] - xedges[0]
+    dy = yedges[1] - yedges[0]
+
+    p_norm = np.sum(counts) * (dx * dy)
+    consv_pdf = counts / p_norm
+
+
+    fig = plt.figure(figsize=(12,10))
+    plt.clf()
+    ax = plt.gca()
+
+    # #####################################################
+    # PDF
+    img = ax.pcolormesh(xedges, yedges, np.log10(consv_pdf.T), 
+                            cmap='Greens')
+    gen_cb(img, r'$\log_{10} \, p('+f'{xvar},{yvar})$',
+           csz=19.)
+
+    # ##########################################################
+    tsz = 25.
+    ax.text(0.05, 0.9, f'Line: {line}',
+                transform=ax.transAxes,
+                fontsize=tsz, ha='left', color='k')
+    ax.text(0.05, 0.8, f'z = {(iz+1)*10}m',
+                transform=ax.transAxes,
+                fontsize=tsz, ha='left', color='k')
+
+    ax.set_xlabel(ylbl_dict[xvar])
+    ax.set_ylabel(ylbl_dict[yvar])
+
+    #ax.set_xlim(0.4, 1.6)
+    #ax.set_ylim(0., 22.)
+    # Set x-axis interval to 0.5
+    #ax.xaxis.set_major_locator(MultipleLocator(0.5))
+    # 
+    fsz = 27.
+    plotting.set_fontsize(ax, fsz)
+
+    # Vertical line at hyperoxic
+    ax.axvline(1.1, color='black', linestyle=':')
+    
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
 def main(flg):
     if flg== 'all':
         flg= np.sum(np.array([2 ** ii for ii in range(25)]))
@@ -1979,6 +2054,10 @@ def main(flg):
     if flg & (2**37):
         fig_cluster_date_vs_loc()#debug=True)
 
+    if flg & (2**38):
+        line = '80' # '90'
+        fig_joint_pdf_MLDSO(line)
+
 # Command line execution
 if __name__ == '__main__':
     import sys
@@ -2019,7 +2098,10 @@ if __name__ == '__main__':
         # Clusters
         #flg += 2 ** 35  # clusters
         #flg += 2 ** 36  # size vs age
-        flg += 2 ** 37  # date vs location/size
+        #flg += 2 ** 37  # date vs location/size
+
+        # MLD
+        flg += 2 ** 38  # date vs location/size
 
     else:
         flg = sys.argv[1]
