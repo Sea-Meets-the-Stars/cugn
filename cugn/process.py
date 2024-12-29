@@ -25,7 +25,6 @@ def add_gsw():
     """ Add physical quantities to the Spray CUGN data
     using the TEOS-10 GSW package
     """
-    MLD_sigma0 = 0.125
 
     # Spray files
     spray_files = glob(os.path.join(
@@ -101,7 +100,7 @@ def add_gsw():
         MLDs = []
         for iprofile in ds.profile.data:
             f = interp1d(ds.sigma0.data[:,iprofile], ds.depth.data-5.)
-            MLD = f(ds.sigma0.data[0,iprofile]+MLD_sigma0)
+            MLD = f(ds.sigma0.data[0,iprofile]+defs.MLD_sigma0)
             MLDs.append(MLD)
         ds['MLD'] = (('profile'), MLDs)
 

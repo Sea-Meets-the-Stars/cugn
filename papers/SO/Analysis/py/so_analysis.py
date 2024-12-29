@@ -1,13 +1,26 @@
 """ Analsis related to SO paper """
 
 import numpy as np
+import os
+import glob
+
+from scipy.interpolate import interp1d
+
+from matplotlib import pyplot as plt
 
 import pandas
+import xarray
+
+from gsw import conversions, density
+import gsw
+
+from ocpy.utils import plotting
 
 from cugn import io as cugn_io
 from cugn import defs
 from cugn import utils as cugn_utils
 from cugn import annualcycle
+
 
 from IPython import embed
 
@@ -132,6 +145,113 @@ def load_annual(line:str, zmax:int=9, dmax:float=100.):
 
     return grid_tbl  
 
+def check_mld_and_N(line:str, mission_name:str, mission_profile:int=None,
+                    min_depth:float=0.5, debug:bool=False):
+
+    # Load up
+    items = cugn_io.load_up(line)#, gextrem='low')
+    grid_extrem = items[0]
+    ds = items[1]
+    grid_tbl = items[3]
+
+    # 
+    lat = np.nanmedian(ds.lat.data)
+    lon = np.nanmedian(ds.lon.data)
+
+    # High res
+    high_path = os.path.join(os.getenv('OS_SPRAY'), 'CUGN', 'HighRes')
+    gfiles = glob.glob(os.path.join(high_path, f'SPRAY-FRSQ-{mission_name}-*.nc'))
+    hfile = gfiles[0]                   
+    ds_high = xarray.open_dataset(hfile)
+    salinity = ds_high.salinity.values
+    temperature = ds_high.temperature.values
+
+    gm_idx = grid_extrem.mission.values == mission_name
+    if mission_profile is None:
+        mprofiles = np.unique(grid_extrem.mission_profile[gm_idx])
+    else:
+        mprofiles = [mission_profile]
+
+    gMLDs, MLDs = [], []
+    for mission_profile in mprofiles:
+        print(f'Working on {mission_name} {mission_profile}')
+    
+        # Pull the extrema
+        gidx = (grid_extrem.mission.values == mission_name) & (
+            grid_extrem.mission_profile.values == mission_profile)
+        gMLD = np.median(grid_extrem.MLD.values[gidx])
+        gMLDs.append(gMLD)
+
+        # Find the obs
+        my_obs = ds_high.profile_obs_index.values == mission_profile
+        my_obs &= ds_high.depth.values > min_depth
+
+        # Calculate density, etc.
+
+        # Require finite
+        my_obs &= np.isfinite(salinity) & np.isfinite(temperature)
+
+        # Pressure
+        p = conversions.p_from_z(-1*ds_high.depth.values[my_obs], lat)
+
+        # SA
+        SA = conversions.SA_from_SP(salinity[my_obs], p, lon, lat)
+
+        # CT
+        CT = conversions.CT_from_t(SA, temperature[my_obs], p)
+
+        # sigma0 
+        sigma0 = density.sigma0(SA, CT)
+        srt_z = np.argsort(ds_high.depth[my_obs])
+
+        # sigma0 at surface
+        sigma0_0 = np.mean(sigma0[srt_z[:5]])
+
+        # Calculate MLD
+        f = interp1d(sigma0[srt_z], ds_high.depth[my_obs].values[srt_z])
+        MLD = f(sigma0_0 + defs.MLD_sigma0)
+        MLDs.append(MLD)
+
+        if debug:
+            gidx = (grid_tbl.mission.values == mission_name) & (
+                grid_tbl.mission_profile.values == mission_profile)
+            profile = grid_tbl[gidx].profile.values[0]
+            zs = ds_high.depth[my_obs].values[srt_z]
+            sigma0s = sigma0[srt_z]
+            embed(header='166 of so_analysis.py')
+
+    # Arrays
+    MLDs = np.array(MLDs)
+    gMLDs = np.array(gMLDs)
+        
+    # Plot
+    fig = plt.figure(figsize=(18, 16))
+    ax = plt.gca()
+
+    ax.plot(gMLDs, MLDs, 'o')
+    # 1-1 line
+    ax.plot([0, np.max([gMLDs.max(),MLDs.max()])], 
+             [0, np.max([gMLDs.max(),MLDs.max()])], 'k--')
+
+    ax.set_xlabel('MLD from Grid')
+    ax.set_ylabel('MLD from HighRes')
+    plotting.set_fontsize(ax, 27.)
+
+    plt.show()
+
+    # Check a few
+    bad = (MLDs > 12.5) & (gMLDs < 8.)
+    bprofiles = mprofiles[bad]
+    ib = 0
+
+    gidx = (grid_tbl.mission.values == mission_name) & (
+        grid_tbl.mission_profile.values == bprofiles[ib])
+    profile = grid_tbl[gidx].profile.values[0]
+    mprofile = bprofiles[ib]
+    my_obs = ds_high.profile_obs_index.values == mprofile
+
+    embed(header='219 of so_analysis.py')
+
 # Command line execution
 if __name__ == '__main__':
 
@@ -142,7 +262,7 @@ if __name__ == '__main__':
 
     # Count em
     nclusters = 0
-    for line in defs.lines:
+    for line in defs.lines
         nc = count_clusters(line)
         nclusters += nc
     print(f"Total number of clusters = {nclusters}")
@@ -152,4 +272,9 @@ if __name__ == '__main__':
     #count_profiles()
 
     # Anamolies
-    anamolies('90.0')
+    #anamolies('90.0')
+
+    # Assess MLD, N
+    mname = '20503001'
+    mprofile = 14
+    check_mld_and_N('90.0', mname, mission_profile=mprofile, debug=True)

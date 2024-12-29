@@ -11,3 +11,6 @@ line_cmaps = ['Reds','Blues','Greens','Oranges']
 SO_hyper = 1.1
 
 AOU_hyper = 25.
+
+# MLD
+MLD_sigma0 = 0.125  # kg/m^3
