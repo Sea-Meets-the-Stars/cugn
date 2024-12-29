@@ -17,6 +17,7 @@ from cugn import utils as cugn_utils
 from cugn import grid_utils
 from cugn import io as cugn_io
 from cugn import defs as cugn_defs
+from cugn import highres as cugn_highres
 
 
 from IPython import embed
@@ -100,7 +101,7 @@ def add_gsw():
         MLDs = []
         for iprofile in ds.profile.data:
             f = interp1d(ds.sigma0.data[:,iprofile], ds.depth.data-5.)
-            MLD = f(ds.sigma0.data[0,iprofile]+defs.MLD_sigma0)
+            MLD = f(ds.sigma0.data[0,iprofile]+cugn_defs.MLD_sigma0)
             MLDs.append(MLD)
         ds['MLD'] = (('profile'), MLDs)
 
@@ -129,7 +130,8 @@ def add_gsw():
 def build_ds_grid(line:str, line_file:str, gridtbl_outfile:str, 
                   edges_outfile:str, min_counts:int=50, 
                   debug:bool=False,
-                  max_offset:float=90.):
+                  max_offset:float=90.,
+                  warn_highres:bool=False):
     """ Grid up density and salinity for a line
     to generate a table of grid indices and values
 
@@ -142,6 +144,8 @@ def build_ds_grid(line:str, line_file:str, gridtbl_outfile:str,
             grid to be included in the analysis. Defaults to 50.
         debug (bool, optional): Debug. Defaults to False.
         max_offset (float, optional): Maximum offset from the line. Defaults to 90 km
+        warn_highres (bool, optional): Warn if high res data is missing. Defaults to False.
+            Otherwise crash out
     """
     # Dataset
     ds = xarray.load_dataset(line_file)
@@ -182,6 +186,33 @@ def build_ds_grid(line:str, line_file:str, gridtbl_outfile:str,
     grid_tbl = grid_tbl[keep].copy()
     grid_tbl.reset_index(inplace=True, drop=True)
 
+    # MLD and N at high resolution
+    high_path = os.path.join(os.getenv('OS_SPRAY'), 'CUGN', 'HighRes')
+    uni_missions = np.unique(grid_tbl.mission)
+    for mission in uni_missions:
+        gfiles = glob(os.path.join(high_path, f'SPRAY-FRSQ-{mission}-*.nc'))
+        if len(gfiles) != 1:
+            if warn_highres:
+                print(f"Missing high res data for {mission}")
+                continue
+            else:
+                raise ValueError(f"Missing high res data for {mission}")
+        # Run
+        gm_idx = grid_tbl.mission.values == mission
+        mprofiles = np.unique(grid_tbl.mission_profile[gm_idx])
+        iz = grid_tbl[gm_idx].depth.max()
+
+        MLDs, Ns = cugn_highres.calc_mld_N(gfiles[0], mprofiles,
+                                           max_depth=(iz+1)*10)
+        # Fill in
+        for mprofile, MLD, N in zip(mprofiles, MLDs, Ns):
+            in_mission = (grid_tbl.mission == mission) & (
+                grid_tbl.mission_profile == mprofile)
+            grid_tbl.loc[in_mission, 'MLD'] = MLD
+            these_N = [N[ii] for ii in grid_tbl[in_mission].depth.values]
+            grid_tbl.loc[in_mission, 'N'] = these_N
+
+
     if debug:
         grid_utils.fill_in_grid(grid_tbl, ds)
         tmin = pandas.Timestamp('2020-08-22')
@@ -216,15 +247,15 @@ if __name__ == '__main__':
 
     # Grids
     for line in cugn_defs.lines:
-        #if line != '90.0':
-        #    continue
+        if line != '90.0':
+            continue
         line_files = cugn_io.line_files(line)
 
         # Control
         build_ds_grid(line, line_files['datafile'],
             line_files['gridtbl_file_control'], 
             line_files['edges_file'],
-            min_counts=50)
+            min_counts=50, warn_highres=True)
 
         # Full
         build_ds_grid(line, line_files['datafile'],
