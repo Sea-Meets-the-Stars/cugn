@@ -167,7 +167,10 @@ def build_ds_grid(line:str, line_file:str, gridtbl_outfile:str,
     grid_tbl['col'] = grid_indices[1,:] - 1
     grid_tbl['doxy'] = gd_oxy
 
-    
+    # Trajectory, mission etc.
+    tidx = ds.trajectory_index[gd_profile].values
+    grid_tbl['mission'] = ds.mission_name[tidx].values.astype(str)
+    grid_tbl['mission_profile'] = ds.mission_profile[gd_profile].values
 
     # Cut on counts
     gd_rows, gd_cols = np.where(countsT > min_counts)
@@ -210,7 +213,7 @@ def build_ds_grid(line:str, line_file:str, gridtbl_outfile:str,
 if __name__ == '__main__':
 
     # Add potential density and salinity to the CUGN files
-    add_gsw()
+    #add_gsw()
 
     # Grids
     for line in cugn_defs.lines:

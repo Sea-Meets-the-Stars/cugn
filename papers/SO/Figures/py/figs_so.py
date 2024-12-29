@@ -218,7 +218,7 @@ def fig_pdf_cdf(outfile:str, line, SO_cut:float=1.1):
 
     # Pretty up
     for ax in axes:
-        plot_utils.set_fontsize(ax, 17)
+        plotting.set_fontsize(ax, 17)
 
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
@@ -254,7 +254,7 @@ def fig_varySO_pdf_cdf(outfile:str, line):
 
     # Finish
     ax.legend(fontsize=15.)
-    plot_utils.set_fontsize(ax, 17)
+    plotting.set_fontsize(ax, 17)
 
     ax.set_xlabel('N (cycles/hour)')
     ax.set_ylabel('CDF')
@@ -312,7 +312,7 @@ def fig_timeseries(outfile:str, line, vmax=1.3):
         
 
         # Finish
-        plot_utils.set_fontsize(ax, 13)
+        plotting.set_fontsize(ax, 13)
 
     cax,kw = mpl.colorbar.make_axes([ax for ax in axs.flat])
     cbaxes = plt.colorbar(sc, cax=cax, **kw)
@@ -453,7 +453,7 @@ def fig_event(outfile:str, line:str, event:str, t_off,
 
         ax.tick_params(axis='x', rotation=10)
         #ax.autofmt_xdate()
-        plot_utils.set_fontsize(ax, 14)
+        plotting.set_fontsize(ax, 14)
 
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
@@ -606,7 +606,7 @@ def fig_pivot_event(outfile:str, line:str, event:str, t_off,
 
         ax.tick_params(axis='x', rotation=20)
         #ax.autofmt_xdate()
-        plot_utils.set_fontsize(ax, 14)
+        plotting.set_fontsize(ax, 14)
 
     #plt.tight_layout(h_pad=0.3, w_pad=10.3)
     plt.savefig(outfile, dpi=300)
@@ -653,7 +653,7 @@ def fig_percentiles(outfile:str, line:str, metric='N',
         jg.ax_joint.set_xlabel('DO Percentile')
     else:
         jg.ax_joint.set_xlabel(xlabel)
-    plot_utils.set_fontsize(jg.ax_joint, 14)
+    plotting.set_fontsize(jg.ax_joint, 14)
 
         # Submplit
         #mg0 = SeabornFig2Grid(jg, fig, gs[ss])
@@ -720,7 +720,7 @@ def fig_scatter_event(outfile:str, line:str,
 
         ax.set_ylabel(metric)
 
-        plot_utils.set_fontsize(ax, 13.)
+        plotting.set_fontsize(ax, 13.)
 
     #gs.tight_layout(fig)
     plt.savefig(outfile, dpi=300)
@@ -798,7 +798,7 @@ def fig_multi_z_event(outfile:str, line:str,
 
             # Axes
             ax.set_ylabel(ylbl_dict[metric])
-            plot_utils.set_fontsize(ax, 13.)
+            plotting.set_fontsize(ax, 13.)
             if z < 30:
                 ax.set_xticklabels([])
             else:
@@ -841,8 +841,10 @@ def fig_multi_scatter_event(outfile:str, line:str,
     # Mission
     missions = np.unique(ds.mission[ds_in_event].data)
     mission_profiles = np.unique(ds.mission_profile[ds_in_event].data)
+    mission_names = np.unique(ds.mission_name[missions].data)
     print(f'Missions: {missions}')
-    #print(f'Mission Profiles: {mission_profiles}')
+    print(f'Mission Names: {mission_names}')
+    print(f'Profiles: {mission_profiles}')
 
     dist, _ = cugn_utils.calc_dist_offset(
                     line, ds.lon[ds_in_event].values, 
@@ -939,7 +941,7 @@ def fig_multi_scatter_event(outfile:str, line:str,
 
             # Axes
             ax.set_ylabel(short_lbl[metric])
-            plot_utils.set_fontsize(ax, 14.)
+            plotting.set_fontsize(ax, 14.)
             #if z < 20 or ii < 3:
             if ii < (nsub-1):
                 ax.set_xticklabels([])
@@ -1008,7 +1010,7 @@ def fig_dSO_dT():
     ax.set_ylabel('dSO/dT (1/deg C)')
 
     fsz = 21.
-    plot_utils.set_fontsize(ax, fsz)
+    plotting.set_fontsize(ax, fsz)
 
     ax.legend(fontsize=fsz)
 
@@ -1084,7 +1086,7 @@ def fig_T_fluctuations(outfile:str, line:str, debug:bool=False):
     #ax.set_ylabel('dSO/dT (1/deg C)')
 
     fsz = 21.
-    plot_utils.set_fontsize(ax, fsz)
+    plotting.set_fontsize(ax, fsz)
 
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
@@ -1164,7 +1166,7 @@ def fig_joint_pdfs(line:str):
         # Set x-axis interval to 0.5
         ax.xaxis.set_major_locator(MultipleLocator(0.5))
         # 
-        plot_utils.set_fontsize(ax, fsz)
+        plotting.set_fontsize(ax, fsz)
     
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
@@ -1217,7 +1219,7 @@ def fig_joint_pdf(line:str, xvar:str, yvar:str):
     # Set x-axis interval to 0.5
     #ax.xaxis.set_major_locator(MultipleLocator(0.5))
     # 
-    plot_utils.set_fontsize(ax, fsz)
+    plotting.set_fontsize(ax, fsz)
     
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
@@ -1280,7 +1282,7 @@ def fig_avgSO_zd(line:str):
     # Set x-axis interval to 0.5
     #ax.xaxis.set_major_locator(MultipleLocator(0.5))
     # 
-    plot_utils.set_fontsize(ax, fsz)
+    plotting.set_fontsize(ax, fsz)
     
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
@@ -1327,7 +1329,7 @@ def fig_absolute(outfile:str, line:str, metric='N',
     # Axes                                 
     jg.ax_joint.set_ylabel(f'{metric}')
     jg.ax_joint.set_xlabel('DO')
-    plot_utils.set_fontsize(jg.ax_joint, 14)
+    plotting.set_fontsize(jg.ax_joint, 14)
 
     # Extrema
     jg.ax_joint.plot(grid_extrem.doxy, grid_extrem[metric], 
@@ -1387,7 +1389,7 @@ def fig_lowSO_jointDO(outfile:str, line:str='56.0',
     # Axes                                 
     jg.ax_joint.set_ylabel(f'{metric}')
     jg.ax_joint.set_xlabel('DO')
-    plot_utils.set_fontsize(jg.ax_joint, 14)
+    plotting.set_fontsize(jg.ax_joint, 14)
 
     # Extrema
     jg.ax_joint.plot(grid_extrem.doxy, grid_extrem[metric], 
@@ -1477,7 +1479,7 @@ def fig_upwell_search(line:str, gextrem:str='high',
     ax.set_ylabel('Count')
 
     fsz = 17.
-    plot_utils.set_fontsize(ax, fsz)
+    plotting.set_fontsize(ax, fsz)
 
     ax.legend(fontsize=fsz)
 
@@ -1591,7 +1593,7 @@ def fig_sodo_anomalies(line:str, zmax:int=9,
                 va='top')
 
         fsz = 19.
-        plot_utils.set_fontsize(ax, fsz)
+        plotting.set_fontsize(ax, fsz)
 
         #ax.legend(fontsize=fsz)
 
@@ -1908,12 +1910,12 @@ def main(flg):
         eventN = ('2020-05-10', '2W') # 
         eventO = ('2022-03-01', '2W') # 
 
-        line = '80.0'
+        #line = '80.0'
         #eventA = ('2020-08-11', '1W') # NO GOOD 
         #eventB = ('2022-02-15', '10D') # 
         eventC = ('2022-06-25', '10D') # 
 
-        event, t_off = eventC
+        event, t_off = eventA
         # Original
         #fig_scatter_event(f'fig_scatter_event_{line}_{event}.png', 
         #             line, event, t_off)
@@ -2072,7 +2074,7 @@ if __name__ == '__main__':
         #flg += 2 ** 5  # 32 -- 
         #flg += 2 ** 6  # 64 -- dist vs DOY
 
-        #flg += 2 ** 7  # 128 -- scatter event
+        flg += 2 ** 7  # 128 -- scatter event
         #flg += 2 ** 8  # 256 -- dSO/dT
         #flg += 2 ** 9  # 512 -- T fluctuations
         #flg += 2 ** 10  # 1024 -- joint PDFs
