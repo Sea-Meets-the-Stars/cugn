@@ -61,6 +61,7 @@ short_lbl = {'doxy': 'DO ('+r'$\mu$'+'mol/kg)',
                  'SA': 'SA (g/kg)',
                  'SO': 'SO',
                  'N': 'N (cycles/hr)',
+                 'MLD': 'MLD (m)',
                  'dist': 'Distance from shore (km)',
                  'chla': 'Chl-a (mg/m'+r'$^3$'+')'}
 
@@ -858,13 +859,14 @@ def fig_multi_scatter_event(outfile:str, line:str,
     fig = plt.figure(figsize=(10,8))
     plt.clf()
 
-    gs = gridspec.GridSpec(5,2)
 
     cnt = 0
     #metrics = ['SO', 'doxy', 'N', 'CT', 'dist']
-    metrics = ['SO', 'doxy', 'N', 'CT', 'chla']
+    metrics = ['SO', 'doxy', 'N', 'MLD', 'CT', 'chla']
+
+    gs = gridspec.GridSpec(len(metrics),2)
     #metrics = ['SO', 'doxy', 'N', 'CT', 'SA']
-    clrs = ['gray', 'purple', 'blue', 'red', 'green']
+    clrs = ['gray', 'purple', 'blue', 'orange', 'red', 'green']
     nsub = len(metrics)
     #for clr, z in zip(['b', 'g', 'r'], [10, 20, 30]):
     for col, z in enumerate([10, 20]):
@@ -1910,12 +1912,12 @@ def main(flg):
         eventN = ('2020-05-10', '2W') # 
         eventO = ('2022-03-01', '2W') # 
 
-        #line = '80.0'
+        line = '80.0'
         #eventA = ('2020-08-11', '1W') # NO GOOD 
         #eventB = ('2022-02-15', '10D') # 
         eventC = ('2022-06-25', '10D') # 
 
-        event, t_off = eventA
+        event, t_off = eventC
         # Original
         #fig_scatter_event(f'fig_scatter_event_{line}_{event}.png', 
         #             line, event, t_off)
@@ -2103,7 +2105,7 @@ if __name__ == '__main__':
         #flg += 2 ** 37  # date vs location/size
 
         # MLD
-        flg += 2 ** 38  # date vs location/size
+        #flg += 2 ** 38  # date vs location/size
 
     else:
         flg = sys.argv[1]
