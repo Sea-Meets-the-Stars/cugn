@@ -237,6 +237,7 @@ def check_mld_and_N(line:str, mission_name:str, mission_profile:int=None,
     ax.set_ylabel('MLD from HighRes')
     plotting.set_fontsize(ax, 27.)
 
+    plt.savefig('MLD_comparison.png')
     plt.show()
 
     # Check a few
@@ -250,7 +251,11 @@ def check_mld_and_N(line:str, mission_name:str, mission_profile:int=None,
     mprofile = bprofiles[ib]
     my_obs = ds_high.profile_obs_index.values == mprofile
 
+
     embed(header='219 of so_analysis.py')
+    bad = (MLDs < 5) & (gMLDs < 8.)
+    bprofiles = mprofiles[bad]
+    print(bprofiles[0])
 
 # Command line execution
 if __name__ == '__main__':
@@ -277,4 +282,4 @@ if __name__ == '__main__':
     # Assess MLD, N
     mname = '20503001'
     mprofile = 14
-    check_mld_and_N('90.0', mname, mission_profile=mprofile, debug=True)
+    check_mld_and_N('90.0', mname)#, mission_profile=mprofile, debug=True)
