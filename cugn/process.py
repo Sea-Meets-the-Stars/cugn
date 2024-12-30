@@ -186,6 +186,10 @@ def build_ds_grid(line:str, line_file:str, gridtbl_outfile:str,
     grid_tbl = grid_tbl[keep].copy()
     grid_tbl.reset_index(inplace=True, drop=True)
 
+    # Prep
+    grid_tbl['MLD'] = np.nan
+    grid_tbl['N'] = np.nan
+
     # MLD and N at high resolution
     high_path = os.path.join(os.getenv('OS_SPRAY'), 'CUGN', 'HighRes')
     uni_missions = np.unique(grid_tbl.mission)
@@ -211,8 +215,9 @@ def build_ds_grid(line:str, line_file:str, gridtbl_outfile:str,
             # MLD
             grid_tbl.loc[in_mission, 'MLD'] = MLD
             # N
-            these_N = [N[ii] for ii in grid_tbl[in_mission].depth.values]
+            these_N = np.array([N[ii] for ii in grid_tbl.depth.values[in_mission]])
             grid_tbl.loc[in_mission, 'N'] = these_N
+            #embed(header='build_ds_grid: 130')
 
 
     if debug:
@@ -231,6 +236,7 @@ def build_ds_grid(line:str, line_file:str, gridtbl_outfile:str,
     #vals = grid_tbl.doxy.values[in_cell]
     #pct = np.nanpercentile(vals, 5)
 
+    #embed(header='234 of process')
     # Save
     if not debug:
         grid_tbl.to_parquet(gridtbl_outfile)
@@ -248,20 +254,21 @@ if __name__ == '__main__':
     #add_gsw()
 
     # Grids
+    warn_highres = True
     for line in cugn_defs.lines:
-        #if line != '90.0':
-        #    continue
+        if line != '80.0':
+            continue
         line_files = cugn_io.line_files(line)
 
         # Control
         build_ds_grid(line, line_files['datafile'],
             line_files['gridtbl_file_control'], 
             line_files['edges_file'],
-            min_counts=50, warn_highres=True)
+            min_counts=50, warn_highres=warn_highres)
 
         # Full
         build_ds_grid(line, line_files['datafile'],
             line_files['gridtbl_file_full'], 
             None,
             min_counts=0,
-            max_offset=90.)
+            max_offset=90., warn_highres=warn_highres)

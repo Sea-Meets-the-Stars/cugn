@@ -84,7 +84,8 @@ def calc_mld_N(highres_file:str, mission_profiles:list, min_depth:float=0.5,
             mask = bin_indices == i
             if np.any(mask):
                 bin_means[i] = np.nanmean(buoyfreq[mask])
-        Ns.append(bin_means)
+        Ns.append(bin_means.copy())
+        #embed(header='cugn/highres.py: 88')
 
     # Return
     return np.array(MLDs), np.array(Ns)

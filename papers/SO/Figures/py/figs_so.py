@@ -901,6 +901,8 @@ def fig_multi_scatter_event(outfile:str, line:str,
                 yvals = grid_depth[metric][grid_in_event].values
                 #yvals = ds[ds_metric][plt_depth,ds_in_event][srt_ds].values
 
+            #if metric == 'N':
+            #    embed(header='fig_multi_scatter_event 905')
             # Twin?
             axi = ax
             #if metric == 'T':

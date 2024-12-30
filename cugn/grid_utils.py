@@ -167,7 +167,7 @@ def gen_outliers(line:str, pcut:float):
     # Return
     return grid_outliers, grid_tbl, ds
 
-def fill_in_grid(grid, ds):
+def fill_in_grid(grid, ds, kludge_MLDN:bool=False):
     """
     Fills in the grid with data from the given dataset.
 
@@ -189,8 +189,7 @@ def fill_in_grid(grid, ds):
     grid['sigma0'] = ds.sigma0.data[(grid.depth.values, grid.profile.values)]
     grid['SO'] = ds.SO.data[(grid.depth.values, grid.profile.values)]
     grid['AOU'] = ds.AOU.data[(grid.depth.values, grid.profile.values)]
-    # Buyoancy                            
-    grid['N'] = ds.N.data[(grid.depth.values, grid.profile.values)]
+
 
     # Others                            
     grid['chla'] = ds.chlorophyll_a.data[(grid.depth.values, grid.profile.values)]
@@ -202,8 +201,11 @@ def fill_in_grid(grid, ds):
     grid['vel'] = np.sqrt(ds.u.data[(grid.depth.values, grid.profile.values)]**2 +
                             ds.v.data[(grid.depth.values, grid.profile.values)]**2)
 
-    # MLD
-    grid['MLD'] = ds.MLD[grid.profile.values].values
+    if kludge_MLDN:
+        # Buoyancy                            
+        grid['N'] = ds.N.data[(grid.depth.values, grid.profile.values)]
+        # MLD
+        grid['MLD'] = ds.MLD[grid.profile.values].values
 
     # Upwelling
     cuti, beuti = cugn_io.load_upwelling()

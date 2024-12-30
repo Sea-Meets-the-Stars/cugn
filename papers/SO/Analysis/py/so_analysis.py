@@ -173,6 +173,7 @@ def check_mld_and_N(line:str, mission_name:str, mission_profile:int=None,
         mprofiles = [mission_profile]
 
     gMLDs, MLDs = [], []
+    SOs, dMLDs = [], []
     for mission_profile in mprofiles:
         print(f'Working on {mission_name} {mission_profile}')
     
@@ -200,6 +201,11 @@ def check_mld_and_N(line:str, mission_name:str, mission_profile:int=None,
         # CT
         CT = conversions.CT_from_t(SA, temperature[my_obs], p)
 
+        # OC
+        OC = gsw.O2sol(SA, CT, p, lon, lat)
+        SO = ds_high.doxy.values[my_obs]/OC
+        SOs += list(SO)
+
         # sigma0 
         sigma0 = density.sigma0(SA, CT)
         srt_z = np.argsort(ds_high.depth[my_obs])
@@ -212,6 +218,8 @@ def check_mld_and_N(line:str, mission_name:str, mission_profile:int=None,
         MLD = f(sigma0_0 + defs.MLD_sigma0)
         MLDs.append(MLD)
 
+        dMLDs += list(ds_high.depth[my_obs].values - MLD)
+
         if debug:
             gidx = (grid_tbl.mission.values == mission_name) & (
                 grid_tbl.mission_profile.values == mission_profile)
@@ -223,6 +231,32 @@ def check_mld_and_N(line:str, mission_name:str, mission_profile:int=None,
     # Arrays
     MLDs = np.array(MLDs)
     gMLDs = np.array(gMLDs)
+    dMLDs = np.array(dMLDs)
+    SOs = np.array(SOs)
+
+    # SO vs. dMLD
+    fig = plt.figure(figsize=(18, 16))
+    ax = plt.gca()
+
+    ax.plot(dMLDs, SOs, 'o')
+    ax.set_xlim(-50., 50.)
+    ax.set_ylim(0.8, None)
+
+    ax.axhline(1.1, color='k', ls=':')
+    ax.axvline(0., color='k', ls='--')
+
+    ax.set_xlabel('dMLD (m)')
+    ax.set_ylabel('SO')
+    plotting.set_fontsize(ax, 27.)
+
+    plt.savefig('SO_vs_dMLD.png')
+    plt.show()
+
+    # Stats
+    hyper = SOs > 1.1
+    below = dMLDs[hyper] > 0
+    print(f'Fraction of hyperoxia profiles with dMLD > 0 = {np.sum(below)/np.sum(hyper)}')
+    embed(header='247 of so_analysis.py')
         
     # Plot
     fig = plt.figure(figsize=(18, 16))
@@ -279,7 +313,12 @@ if __name__ == '__main__':
     # Anamolies
     #anamolies('90.0')
 
+    # ##
     # Assess MLD, N
-    mname = '20503001'
-    mprofile = 14
-    check_mld_and_N('90.0', mname)#, mission_profile=mprofile, debug=True)
+
+    #mname = '20503001'
+    #check_mld_and_N('90.0', mname)#, mission_profile=mprofile, debug=True)
+    #mprofile = 14
+
+    mname = '22305801' # Line 80, 2022-07
+    check_mld_and_N('80.0', mname)#, mission_profile=mprofile, debug=True)
