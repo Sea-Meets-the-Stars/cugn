@@ -129,7 +129,7 @@ def chk_grid_gaussianity(values:np.ndarray, mean_grid:np.ndarray,
 
     return p_values
 
-def gen_outliers(line:str, pcut:float):
+def gen_outliers(line:str, pcut:float, grid_tbl:pandas.DataFrame=None):
     """ Generate a table of outliers for a given line
     and percentile
 
@@ -151,7 +151,8 @@ def gen_outliers(line:str, pcut:float):
     # Load and unpack
     items = cugn_io.load_line(line)
     ds = items['ds']
-    grid_tbl = items['grid_tbl']
+    if grid_tbl is None:
+        grid_tbl = items['grid_tbl']
 
     # Outliers
     if pcut > 50.:

@@ -139,7 +139,7 @@ def fig_AOU_cdf(outfile:str='fig_AOU_cdf.png',
 
     for clr, line in zip(line_colors, lines):
         # Load
-        items = cugn_io.load_up(line, use_full=use_full)#, skip_dist=True)
+        items = cugn_io.load_up(line, use_full=use_full, kludge_MLDN=True)#, skip_dist=True)
         grid_tbl = items[3]
 
         for ss, depth in enumerate([0,1]):
@@ -192,7 +192,8 @@ def fig_AOU_cdf(outfile:str='fig_AOU_cdf.png',
 
 def fig_extrema_cdfs(outfile:str='fig_N_AOU_cdfs.png', metric:str='N',
                      xyLine:tuple=(0.05, 0.90),
-                     leg_loc:str='lower right'):
+                     leg_loc:str='lower right',
+                     kludge_MLDN:bool=False):
 
     # CDFs
     fig = plt.figure(figsize=(7,7))
@@ -201,7 +202,7 @@ def fig_extrema_cdfs(outfile:str='fig_N_AOU_cdfs.png', metric:str='N',
 
     for ss, line in enumerate(cugn_defs.lines):
         # Load
-        items = cugn_io.load_up(line, gextrem='highAOU')
+        items = cugn_io.load_up(line, gextrem='highAOU', kludge_MLDN=kludge_MLDN)
         grid_extrem = items[0]
         ds = items[1]
         times = items[2]
@@ -260,14 +261,16 @@ def main(flg):
 
     # Extrema CDFs
     if flg == 3:
+        kludge_MLDN = True
         # N
-        fig_extrema_cdfs()
+        fig_extrema_cdfs(kludge_MLDN=kludge_MLDN)
         # Chla
         fig_extrema_cdfs('fig_chla_AOU_cdfs.png', metric='chla',
-                         xyLine=(0.7, 0.4))
+                         xyLine=(0.7, 0.4), kludge_MLDN=kludge_MLDN)
         # DO
         fig_extrema_cdfs('fig_doxy_AOU_cdfs.png', metric='doxy',
-                         xyLine=(0.7, 0.4), leg_loc='upper left')
+                         xyLine=(0.7, 0.4), leg_loc='upper left',
+                         kludge_MLDN=kludge_MLDN)
 
 # Command line execution
 if __name__ == '__main__':

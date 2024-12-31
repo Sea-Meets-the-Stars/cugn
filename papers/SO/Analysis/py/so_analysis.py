@@ -86,7 +86,7 @@ def frac_within_x_days(line:str, dt_days:int=5, dd_km=5.):
 def count_clusters(line:str):
 
     # Load
-    items = cugn_io.load_up(line)#, skip_dist=True)
+    items = cugn_io.load_up(line, kludge_MLDN=True)#, skip_dist=True)
     grid_extrem = items[0]
     times = items[2]
 
@@ -97,6 +97,10 @@ def count_clusters(line:str):
     nper_year = (uni_cluster.size - 1)/(Dt/365)
 
     print(f"Line: {line} -- clusters per year = {nper_year}")
+
+    # Number in clusters
+    in_cluster = np.sum(grid_extrem.cluster >= 0)
+    print(f'Fraction of profiles in clusters = {in_cluster/len(grid_extrem)}')
 
     # Return
     return uni_cluster.size - 1
@@ -298,15 +302,15 @@ if __name__ == '__main__':
     # Clustering
     for line in defs.lines:
         frac_within_x_days(line, dt_days=1, dd_km=7.)
+    '''
 
     # Count em
     nclusters = 0
-    for line in defs.lines
+    for line in defs.lines:
         nc = count_clusters(line)
         nclusters += nc
     print(f"Total number of clusters = {nclusters}")
     #
-    '''
 
     #count_profiles()
 
@@ -320,5 +324,5 @@ if __name__ == '__main__':
     #check_mld_and_N('90.0', mname)#, mission_profile=mprofile, debug=True)
     #mprofile = 14
 
-    mname = '22305801' # Line 80, 2022-07
-    check_mld_and_N('80.0', mname)#, mission_profile=mprofile, debug=True)
+    #mname = '22305801' # Line 80, 2022-07
+    #check_mld_and_N('80.0', mname)#, mission_profile=mprofile, debug=True)

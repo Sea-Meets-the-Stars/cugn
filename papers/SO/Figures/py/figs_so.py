@@ -10,7 +10,6 @@ import matplotlib as mpl
 import matplotlib.gridspec as gridspec
 import matplotlib.dates as mdates
 from matplotlib.ticker import MultipleLocator 
-from matplotlib.patches import Ellipse
 
 mpl.rcParams['font.family'] = 'stixgeneral'
 
@@ -1707,65 +1706,6 @@ def fig_cluster_size_vs_age(outfile='fig_cluster_size_vs_age.png', use_full:bool
     print(f"Saved: {outfile}")
 
 
-def fig_cluster_date_vs_loc(outfile='fig_cluster_date_vs_loc.png', 
-                            use_full:bool=False, debug:bool=False):
-
-    day_ns = 24 * 60 * 60 * 1_000_000_000
-    
-    # Figure
-    fig = plt.figure(figsize=(6,6))
-    plt.clf()
-    gs = gridspec.GridSpec(1,1)
-    ax = plt.subplot(gs[0])
-
-    markers = ['o', 's', 'd', '^']
-    for tt, clr, line in zip(np.arange(4), line_colors, lines):
-        if tt != 0 and debug:
-            continue
-
-        # Load
-        items = cugn_io.load_up(line, use_full=use_full)#, skip_dist=True)
-        grid_extrem = items[0]
-        ds = items[1]
-        times = items[2]
-        grid_tbl = items[3]
-
-        cluster_stats = clusters.cluster_stats(grid_extrem)
-        dur_days = cluster_stats.Dtime.values.astype('float') / day_ns
-        #embed(header='fig_cluster_char 1622')
-
-        # Duration, size
-        #embed(header='1689 of figs')
-        ax.scatter(cluster_stats['Cdist'].values, 
-                   cluster_stats['time'].values, 
-                marker=markers[tt], edgecolor=clr, 
-                facecolor='None',
-                s=0.01, #cluster_stats['Ddist'].values, 
-                label=f'Line {line}')
-
-        # Loop over the clusters
-        #embed(header='1739 of figs')
-        for jj in range(len(cluster_stats)):
-            iobj = cluster_stats.iloc[jj]
-            #
-            iE = Ellipse((iobj.Cdist,iobj.time),
-                         iobj.Ddist, 3*dur_days[jj],
-                         color=clr)
-            ax.add_patch(iE)
-
-    plotting.set_fontsize(ax, 17.)
-    ax.yaxis.set_major_locator(mdates.MonthLocator(interval=6))
-
-    #ax.legend(fontsize=15.)
-
-    # Labels
-    ax.set_xlabel('Distance Offshore (km)')
-    ax.set_ylabel('Date')
-    
-    plt.tight_layout(pad=0.5)#, h_pad=0.1, w_pad=0.3)
-    plt.savefig(outfile, dpi=300)
-    print(f"Saved: {outfile}")
-
 
 def fig_joint_pdf_MLDSO(line:str, iz:int=0):
 
@@ -2056,9 +1996,6 @@ def main(flg):
     if flg & (2**36):
         fig_cluster_size_vs_age()
 
-    # Cluster date vs location/size
-    if flg & (2**37):
-        fig_cluster_date_vs_loc()#debug=True)
 
     if flg & (2**38):
         line = '80' # '90'
@@ -2078,7 +2015,7 @@ if __name__ == '__main__':
         #flg += 2 ** 5  # 32 -- 
         #flg += 2 ** 6  # 64 -- dist vs DOY
 
-        flg += 2 ** 7  # 128 -- scatter event
+        #flg += 2 ** 7  # 128 -- scatter event
         #flg += 2 ** 8  # 256 -- dSO/dT
         #flg += 2 ** 9  # 512 -- T fluctuations
         #flg += 2 ** 10  # 1024 -- joint PDFs
@@ -2104,7 +2041,6 @@ if __name__ == '__main__':
         # Clusters
         #flg += 2 ** 35  # clusters
         #flg += 2 ** 36  # size vs age
-        #flg += 2 ** 37  # date vs location/size
 
         # MLD
         #flg += 2 ** 38  # date vs location/size

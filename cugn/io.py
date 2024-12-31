@@ -72,7 +72,8 @@ def load_line(line:str, use_full:bool=False):
     return items
 
 
-def load_up(line:str, gextrem:str='high', use_full:bool=False):
+def load_up(line:str, gextrem:str='high', use_full:bool=False,
+            kludge_MLDN:bool=False):
     """
     Load data and perform various operations on it.
 
@@ -80,6 +81,7 @@ def load_up(line:str, gextrem:str='high', use_full:bool=False):
         line (str): The line to load data for.
         gextrem (str, optional): The type of extremum to consider. Defaults to 'high'.
         use_full (bool, optional): Whether to use the full data or not. Defaults to False.
+        kludge_MLDN (bool, optional): Whether to kludge the MLDN data. Defaults to False.
 
     Returns:
         tuple: A tuple containing the following:
@@ -94,7 +96,7 @@ def load_up(line:str, gextrem:str='high', use_full:bool=False):
     ds = items['ds']
 
     # Fill
-    grid_utils.fill_in_grid(grid_tbl, ds)
+    grid_utils.fill_in_grid(grid_tbl, ds, kludge_MLDN=kludge_MLDN)
 
     # Extrema
     if gextrem in ['high', 'highAOU']:
@@ -107,7 +109,7 @@ def load_up(line:str, gextrem:str='high', use_full:bool=False):
         perc = 50.
     else:
         raise IOError("Bad gextrem input")
-    grid_outliers, tmp, _ = grid_utils.gen_outliers(line, perc)
+    grid_outliers, tmp, _ = grid_utils.gen_outliers(line, perc, grid_tbl=grid_tbl)
 
     if gextrem == 'high':
         extrem = grid_outliers.SO > 1.1
@@ -125,6 +127,7 @@ def load_up(line:str, gextrem:str='high', use_full:bool=False):
         extrem = grid_outliers.AOU > cugn_defs.AOU_hyper
     else:
         raise IOError("Bad gextrem input")
+
     grid_extrem = grid_outliers[extrem].copy()
     times = pandas.to_datetime(grid_extrem.time.values)
 
