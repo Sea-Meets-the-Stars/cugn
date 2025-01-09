@@ -189,6 +189,7 @@ def build_ds_grid(line:str, line_file:str, gridtbl_outfile:str,
     # Prep
     grid_tbl['MLD'] = np.nan
     grid_tbl['N'] = np.nan
+    grid_tbl['zNpeak'] = np.nan
 
     # MLD and N at high resolution
     high_path = os.path.join(os.getenv('OS_SPRAY'), 'CUGN', 'HighRes')
@@ -206,14 +207,16 @@ def build_ds_grid(line:str, line_file:str, gridtbl_outfile:str,
         mprofiles = np.unique(grid_tbl.mission_profile[gm_idx])
         iz = grid_tbl[gm_idx].depth.max()
 
-        MLDs, Ns = cugn_highres.calc_mld_N(gfiles[0], mprofiles,
-                                           max_depth=(iz+1)*10)
+        # Do it
+        MLDs, Ns, zNs = cugn_highres.calc_mission(
+            gfiles[0], mprofiles, max_depth=(iz+1)*10)
         # Fill in (this is slow)
-        for mprofile, MLD, N in zip(mprofiles, MLDs, Ns):
+        for mprofile, MLD, N, zN in zip(mprofiles, MLDs, Ns, zNs):
             in_mission = (grid_tbl.mission == mission) & (
                 grid_tbl.mission_profile == mprofile)
             # MLD
             grid_tbl.loc[in_mission, 'MLD'] = MLD
+            grid_tbl.loc[in_mission, 'zNpeak'] = zN
             # N
             these_N = np.array([N[ii] for ii in grid_tbl.depth.values[in_mission]])
             grid_tbl.loc[in_mission, 'N'] = these_N
@@ -256,7 +259,7 @@ if __name__ == '__main__':
     # Grids
     warn_highres = True
     for line in cugn_defs.lines:
-        if line != '80.0':
+        if line != '90.0':
             continue
         line_files = cugn_io.line_files(line)
 
