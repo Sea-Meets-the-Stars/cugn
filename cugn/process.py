@@ -208,19 +208,27 @@ def build_ds_grid(line:str, line_file:str, gridtbl_outfile:str,
         iz = grid_tbl[gm_idx].depth.max()
 
         # Do it
-        MLDs, Ns, zNs = cugn_highres.calc_mission(
+        MLDs, Ns, zNs, zN5s, zN10s, Nf5s, Nf10s, NSOs = \
+            cugn_highres.calc_mission(
             gfiles[0], mprofiles, max_depth=(iz+1)*10)
         # Fill in (this is slow)
-        for mprofile, MLD, N, zN in zip(mprofiles, MLDs, Ns, zNs):
+        for mprofile, MLD, N, zN, zN5, zN10, Nf5, Nf10, NSO in zip(
+            mprofiles, MLDs, Ns, zNs, zN5s, zN10s, Nf5s, Nf10s, NSOs):
             in_mission = (grid_tbl.mission == mission) & (
                 grid_tbl.mission_profile == mprofile)
             # MLD
             grid_tbl.loc[in_mission, 'MLD'] = MLD
             grid_tbl.loc[in_mission, 'zNpeak'] = zN
+            grid_tbl.loc[in_mission, 'zN5'] = zN5
+            grid_tbl.loc[in_mission, 'zN10'] = zN10
+            # Counting SO extrema
+            grid_tbl.loc[in_mission, 'Nf5'] = Nf5
+            grid_tbl.loc[in_mission, 'Nf10'] = Nf10
+            grid_tbl.loc[in_mission, 'NSO'] = NSO
             # N
             these_N = np.array([N[ii] for ii in grid_tbl.depth.values[in_mission]])
             grid_tbl.loc[in_mission, 'N'] = these_N
-            #embed(header='build_ds_grid: 130')
+            #embed(header='build_ds_grid: 230')
 
 
     if debug:

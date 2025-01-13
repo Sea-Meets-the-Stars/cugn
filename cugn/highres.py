@@ -6,12 +6,13 @@ from scipy.interpolate import interp1d
 import xarray
 
 from gsw import conversions, density
+import gsw
 
 from cugn import defs as cugn_defs
 
 from IPython import embed
 
-def calc_mld_N(depths, salinities, temperatures, 
+def calc_mld_N(depths, salinities, temperatures, oxygens,
                lat, lon, max_depth, return_extras:bool=False,
                Npeak_min:float=10.):
 
@@ -30,6 +31,10 @@ def calc_mld_N(depths, salinities, temperatures,
     # CT
     CT = conversions.CT_from_t(SA, temperatures, p)
 
+    # Oxygen
+    OC = gsw.O2sol(SA, CT, p, lon, lat)
+    SO = oxygens / OC
+
     # sigma0 
     sigma0 = density.sigma0(SA, CT)
 
@@ -37,6 +42,7 @@ def calc_mld_N(depths, salinities, temperatures,
     srt_z = np.argsort(depths)
     sigma0 = sigma0[srt_z]
     z_sort = depths[srt_z]
+    SO = SO[srt_z]
 
     # sigma0 at surface
     sigma0_0 = np.mean(sigma0[:5])
@@ -51,6 +57,8 @@ def calc_mld_N(depths, salinities, temperatures,
     dsigmadz[dsigmadz < 0.] = 0.
     buoyfreq = np.sqrt(9.8/1025*dsigmadz)/(2*np.pi)*3600
 
+    # Smoothed
+    sbuoyfreq = np.convolve(buoyfreq, np.ones(3)/3, mode='same')
 
     # Now grid the N values according to max depth
     bin_indices = np.digitize(z_sort, z_edges) - 1
@@ -71,14 +79,34 @@ def calc_mld_N(depths, salinities, temperatures,
     else:
         z_Npeak = np.nan
 
+    # N depths
+    N5 = sbuoyfreq > 5.
+    if np.any(N5):
+        zN5 = z_sort[np.where(N5)[0][0]]
+    else:
+        zN5 = np.nan
+    N10 = sbuoyfreq > 10.
+    if np.any(N10):
+        zN10 = z_sort[np.where(N10)[0][0]]
+    else:
+        zN10 = np.nan
+
+    # Fraction of SO > 1.1
+    SO1 = SO > 1.1
+    f5 = SO1 & (z_sort >= zN5)
+    f10 = SO1 & (z_sort >= zN10)
+    Nf5 = np.sum(f5)
+    Nf10 = np.sum(f10)
+    NSO = np.sum(SO1)
+
     # Extras?
     if return_extras:
         extras['N'] = buoyfreq
         extras['sigma0'] = sigma0
         extras['z_sort'] = z_sort
-        return MLD, bin_means, z_Npeak, extras
+        return MLD, bin_means, z_Npeak, zN5, zN10, Nf5, Nf10, NSO, extras
 
-    return MLD, bin_means, z_Npeak
+    return MLD, bin_means, z_Npeak, zN5, zN10, Nf5, Nf10, NSO
 
 def calc_mission(highres_file:str, mission_profiles:list, 
                min_depth:float=2.0,
@@ -105,6 +133,7 @@ def calc_mission(highres_file:str, mission_profiles:list,
 
     salinity = ds_high.salinity.values
     temperature = ds_high.temperature.values
+    oxygen = ds_high.doxy.values
 
     # QC
     good_sal = ds_high.salinity_qc.values.astype(int) == 1
@@ -116,6 +145,11 @@ def calc_mission(highres_file:str, mission_profiles:list,
     MLDs = []
     Ns = []
     zNs = []
+    zN5s = []
+    zN10s = []
+    Nf5s = []
+    Nf10s = []
+    NSOs = []
 
     for mission_profile in mission_profiles:
         #print(f'Working on {mission_name} {mission_profile}')
@@ -124,7 +158,6 @@ def calc_mission(highres_file:str, mission_profiles:list,
         my_obs = ds_high.profile_obs_index.values == mission_profile
         my_obs &= ds_high.depth.values > min_depth
 
-
         # Require finite
         my_obs &= np.isfinite(salinity) & np.isfinite(temperature)
 
@@ -132,16 +165,26 @@ def calc_mission(highres_file:str, mission_profiles:list,
         my_obs &= good_sal & good_temp
 
         # Calculate 
-        MLD, bin_means, z_Npeak = calc_mld_N(ds_high.depth.values[my_obs],
-                                    salinity[my_obs],
-                                    temperature[my_obs],
-                                    lat, lon, max_depth)
+        MLD, bin_means, z_Npeak, zN5, zN10, \
+            Nf5, Nf10, NSO = calc_mld_N(
+            ds_high.depth.values[my_obs],
+            salinity[my_obs],
+            temperature[my_obs],
+            oxygen[my_obs],
+            lat, lon, max_depth)
 
         # MLD, N
         MLDs.append(MLD)
         Ns.append(bin_means.copy())
         zNs.append(z_Npeak)
+        zN5s.append(zN5)
+        zN10s.append(zN10)
+        Nf5s.append(Nf5)
+        Nf10s.append(Nf10)
+        NSOs.append(NSO)
         #embed(header='cugn/highres.py: 88')
 
     # Return
-    return np.array(MLDs), np.array(Ns), np.array(zNs)
+    return np.array(MLDs), np.array(Ns), np.array(zNs),\
+        np.array(zN5s), np.array(zN10s), np.array(Nf5s),\
+        np.array(Nf10s), np.array(NSOs)
