@@ -273,7 +273,7 @@ def main(flg):
         return
 
     # Grids
-    warn_highres = True
+    warn_highres = False
     items = []
     for line in cugn_defs.lines:
         #if line != '80.0':
