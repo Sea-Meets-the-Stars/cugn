@@ -316,10 +316,10 @@ def main(flg):
             # Missing highres
             mission_names  = np.unique(ds.mission_name.values.astype(str))
             for mission_name in mission_names:
-                print(f"Checking for mission: {mission_name}")
+                #print(f"Checking for mission: {mission_name}")
                 gfiles = glob(os.path.join(high_path, f'SPRAY-FRSQ-{mission_name}-*.nc'))
                 if len(gfiles) != 1:
-                    print(f"Missing high res data for {mission} of line {line}")
+                    print(f"Missing high res data for {mission_name} of line {line}")
 
 if __name__ == '__main__':
     import sys
