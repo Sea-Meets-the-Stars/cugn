@@ -309,6 +309,7 @@ def main(flg):
     # Check all full res files
     if flg == 4:
         for line in cugn_defs.lines:
+            print(f"Working on line: {line}")
             line_files = cugn_io.line_files(line)
             ds = xarray.load_dataset(line_files['datafile'])
 
