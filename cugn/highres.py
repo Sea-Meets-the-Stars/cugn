@@ -48,7 +48,7 @@ def calc_mld_N(depths, salinities, temperatures, oxygens,
     sigma0_0 = np.mean(sigma0[:5])
 
     # Calculate MLD
-    f = interp1d(sigma0, z_sort)
+    f = interp1d(sigma0, z_sort, fill_value='extrapolate')
     MLD = f(sigma0_0 + cugn_defs.MLD_sigma0)
 
 
