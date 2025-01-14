@@ -196,6 +196,7 @@ def build_ds_grid(items,
     # Prep
     grid_tbl['MLD'] = np.nan
     grid_tbl['N'] = np.nan
+    grid_tbl['zNpeak'] = np.nan
 
     # MLD and N at high resolution
     high_path = os.path.join(os.getenv('OS_SPRAY'), 'CUGN', 'HighRes')
@@ -213,18 +214,28 @@ def build_ds_grid(items,
         mprofiles = np.unique(grid_tbl.mission_profile[gm_idx])
         iz = grid_tbl[gm_idx].depth.max()
 
-        MLDs, Ns = cugn_highres.calc_mld_N(gfiles[0], mprofiles,
-                                           max_depth=(iz+1)*10)
+        # Do it
+        MLDs, Ns, zNs, zN5s, zN10s, Nf5s, Nf10s, NSOs = \
+            cugn_highres.calc_mission(
+            gfiles[0], mprofiles, max_depth=(iz+1)*10)
         # Fill in (this is slow)
-        for mprofile, MLD, N in zip(mprofiles, MLDs, Ns):
+        for mprofile, MLD, N, zN, zN5, zN10, Nf5, Nf10, NSO in zip(
+            mprofiles, MLDs, Ns, zNs, zN5s, zN10s, Nf5s, Nf10s, NSOs):
             in_mission = (grid_tbl.mission == mission) & (
                 grid_tbl.mission_profile == mprofile)
             # MLD
             grid_tbl.loc[in_mission, 'MLD'] = MLD
+            grid_tbl.loc[in_mission, 'zNpeak'] = zN
+            grid_tbl.loc[in_mission, 'zN5'] = zN5
+            grid_tbl.loc[in_mission, 'zN10'] = zN10
+            # Counting SO extrema
+            grid_tbl.loc[in_mission, 'Nf5'] = Nf5
+            grid_tbl.loc[in_mission, 'Nf10'] = Nf10
+            grid_tbl.loc[in_mission, 'NSO'] = NSO
             # N
             these_N = np.array([N[ii] for ii in grid_tbl.depth.values[in_mission]])
             grid_tbl.loc[in_mission, 'N'] = these_N
-            #embed(header='build_ds_grid: 130')
+            #embed(header='build_ds_grid: 230')
 
 
     if debug:
@@ -266,6 +277,8 @@ def main(flg):
     items = []
     for line in cugn_defs.lines:
         #if line != '80.0':
+        #    continue
+        #if line != '90.0':
         #    continue
         line_files = cugn_io.line_files(line)
 
