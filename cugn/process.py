@@ -23,6 +23,7 @@ from cugn import io as cugn_io
 from cugn import defs as cugn_defs
 from cugn import highres as cugn_highres
 
+high_path = os.path.join(os.getenv('OS_SPRAY'), 'CUGN', 'HighRes')
 
 from IPython import embed
 
@@ -199,7 +200,6 @@ def build_ds_grid(items,
     grid_tbl['zNpeak'] = np.nan
 
     # MLD and N at high resolution
-    high_path = os.path.join(os.getenv('OS_SPRAY'), 'CUGN', 'HighRes')
     uni_missions = np.unique(grid_tbl.mission)
     for mission in uni_missions:
         gfiles = glob(os.path.join(high_path, f'SPRAY-FRSQ-{mission}-*.nc'))
@@ -273,37 +273,51 @@ def main(flg):
         return
 
     # Grids
-    warn_highres = False
-    items = []
-    for line in cugn_defs.lines:
-        #if line != '80.0':
-        #    continue
-        #if line != '90.0':
-        #    continue
-        line_files = cugn_io.line_files(line)
+    if flg in [2,3]:
+        warn_highres = False
+        items = []
+        for line in cugn_defs.lines:
+            #if line != '80.0':
+            #    continue
+            #if line != '90.0':
+            #    continue
+            line_files = cugn_io.line_files(line)
 
-        if flg == 2: # Control
-            items.append((line, line_files['datafile'],
-                line_files['gridtbl_file_full'], 
-                None))
-            min_counts=0
-        if flg == 3: # Full
-            items.append((line, line_files['datafile'],
-                line_files['gridtbl_file_full'], 
-                line_files['edges_file']))
-            min_counts=50
+            if flg == 2: # Control
+                items.append((line, line_files['datafile'],
+                    line_files['gridtbl_file_full'], 
+                    None))
+                min_counts=0
+            if flg == 3: # Full
+                items.append((line, line_files['datafile'],
+                    line_files['gridtbl_file_full'], 
+                    line_files['edges_file']))
+                min_counts=50
 
-    #build_ds_grid(line, line_files['datafile'],
-    #        line_files['gridtbl_file_full'], 
-    #        None,
-    #        max_offset=90., warn_highres=warn_highres)
+        #build_ds_grid(line, line_files['datafile'],
+        #        line_files['gridtbl_file_full'], 
+        #        None,
+        #        max_offset=90., warn_highres=warn_highres)
 
-    n_cores = 4
-    map_fn = partial(build_ds_grid, min_counts=min_counts, warn_highres=warn_highres)
-    with ProcessPoolExecutor(max_workers=n_cores) as executor:
-        chunksize = len(items) // n_cores if len(items) // n_cores > 0 else 1
-        answers = list(tqdm(executor.map(map_fn, items,
-                                            chunksize=chunksize), total=len(items)))
+        n_cores = 4
+        map_fn = partial(build_ds_grid, min_counts=min_counts, warn_highres=warn_highres)
+        with ProcessPoolExecutor(max_workers=n_cores) as executor:
+            chunksize = len(items) // n_cores if len(items) // n_cores > 0 else 1
+            answers = list(tqdm(executor.map(map_fn, items,
+                                                chunksize=chunksize), total=len(items)))
+
+    # Check all full res files
+    if flg == 4:
+        for line in cugn_defs.lines:
+            line_files = cugn_io.line_files(line)
+            ds = xarray.load_dataset(line_files['datafile'])
+
+            # Missing highres
+            mission_names  = np.unique(ds.mission_name.values.astype(str))
+            for mission_name in mission_names:
+                gfiles = glob(os.path.join(high_path, f'SPRAY-FRSQ-{mission}-*.nc'))
+            if len(gfiles) != 1:
+                print(f"Missing high res data for {mission}")
 
 if __name__ == '__main__':
     import sys
