@@ -8,6 +8,10 @@ from glob import glob
 import numpy as np
 from scipy.interpolate import interp1d
 
+from functools import partial
+from concurrent.futures import ProcessPoolExecutor
+from tqdm import tqdm
+
 import pandas
 
 from gsw import conversions, density
@@ -127,8 +131,9 @@ def add_gsw():
         ds.to_netcdf(new_spray_file)
         print(f"Wrote: {new_spray_file}")
 
-def build_ds_grid(line:str, line_file:str, gridtbl_outfile:str, 
-                  edges_outfile:str, min_counts:int=50, 
+def build_ds_grid(items,
+                #line:str, line_file:str, gridtbl_outfile:str, edges_outfile:str, 
+                  min_counts:int=50, 
                   debug:bool=False,
                   max_offset:float=90.,
                   warn_highres:bool=False):
@@ -136,10 +141,11 @@ def build_ds_grid(line:str, line_file:str, gridtbl_outfile:str,
     to generate a table of grid indices and values
 
     Args:
-        line (str): Line name ['90.0', '67.0']
-        line_file (str): line file
-        gridtbl_outfile (str): name of the output table
-        edges_outfile (str): name of the output grid edges
+        items (tuple): Tuple of line, line_file, gridtbl_outfile, edges_outfile
+            line (str): Line name ['90.0', '67.0']
+            line_file (str): line file
+            gridtbl_outfile (str): name of the output table
+            edges_outfile (str): name of the output grid edges
         min_counts (int, optional): Minimum counts on the
             grid to be included in the analysis. Defaults to 50.
         debug (bool, optional): Debug. Defaults to False.
@@ -147,6 +153,7 @@ def build_ds_grid(line:str, line_file:str, gridtbl_outfile:str,
         warn_highres (bool, optional): Warn if high res data is missing. Defaults to False.
             Otherwise crash out
     """
+    line, line_file, gridtbl_outfile, edges_outfile = items
     # Dataset
     ds = xarray.load_dataset(line_file)
 
@@ -247,28 +254,47 @@ def build_ds_grid(line:str, line_file:str, gridtbl_outfile:str,
         print(f"Wrote: \n {gridtbl_outfile} \n {edges_outfile}")
 
 
-
-if __name__ == '__main__':
+def main(flg):
 
     # Add potential density and salinity to the CUGN files
-    #add_gsw()
+    if flg == 1:
+        add_gsw()
+        return
 
     # Grids
     warn_highres = True
+    items = []
     for line in cugn_defs.lines:
-        if line != '80.0':
-            continue
+        #if line != '80.0':
+        #    continue
         line_files = cugn_io.line_files(line)
 
-        # Control
-        build_ds_grid(line, line_files['datafile'],
-            line_files['gridtbl_file_control'], 
-            line_files['edges_file'],
-            min_counts=50, warn_highres=warn_highres)
+        if flg == 2: # Control
+            items.append((line, line_files['datafile'],
+                line_files['gridtbl_file_full'], 
+                None))
+            min_counts=0
+        if flg == 3: # Full
+            items.append((line, line_files['datafile'],
+                line_files['gridtbl_file_full'], 
+                line_files['edges_file']))
+            min_counts=50
 
-        # Full
-        build_ds_grid(line, line_files['datafile'],
-            line_files['gridtbl_file_full'], 
-            None,
-            min_counts=0,
-            max_offset=90., warn_highres=warn_highres)
+    #build_ds_grid(line, line_files['datafile'],
+    #        line_files['gridtbl_file_full'], 
+    #        None,
+    #        max_offset=90., warn_highres=warn_highres)
+
+    n_cores = 4
+    map_fn = partial(build_ds_grid, min_counts=min_counts, warn_highres=warn_highres)
+    with ProcessPoolExecutor(max_workers=n_cores) as executor:
+        chunksize = len(items) // n_cores if len(items) // n_cores > 0 else 1
+        answers = list(tqdm(executor.map(map_fn, items,
+                                            chunksize=chunksize), total=len(items)))
+
+if __name__ == '__main__':
+    import sys
+    flg = int(sys.argv[1])
+
+
+    main(flg)
