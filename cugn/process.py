@@ -317,7 +317,7 @@ def main(flg):
             for mission_name in mission_names:
                 gfiles = glob(os.path.join(high_path, f'SPRAY-FRSQ-{mission}-*.nc'))
             if len(gfiles) != 1:
-                print(f"Missing high res data for {mission}")
+                print(f"Missing high res data for {mission} of line {line}")
 
 if __name__ == '__main__':
     import sys
