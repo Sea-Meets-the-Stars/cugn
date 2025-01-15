@@ -45,7 +45,7 @@ def calc_mld_N(depths, salinities, temperatures, oxygens,
     SO = SO[srt_z]
 
     # sigma0 at surface
-    sigma0_0 = np.mean(sigma0[:5])
+    sigma0_0 = np.mean(sigma0[:3])
 
     # Calculate MLD
     f = interp1d(sigma0, z_sort, fill_value='extrapolate')
@@ -98,6 +98,11 @@ def calc_mld_N(depths, salinities, temperatures, oxygens,
     Nf5 = np.sum(f5)
     Nf10 = np.sum(f10)
     NSO = np.sum(SO1)
+
+    # delta rho
+    if return_extras:
+        extras['delta_rho'] = sigma0-sigma0_0
+        extras['S0'] = SO
 
     if debug and NSO > 0:
         print(f"z_Npeak={z_Npeak}, zN5={zN5}, zN10={zN10}")
