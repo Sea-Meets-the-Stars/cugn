@@ -283,14 +283,14 @@ def main(flg):
             #    continue
             line_files = cugn_io.line_files(line)
 
-            if flg == 2: # Control
+            if flg == 2: # Full
                 items.append((line, line_files['datafile'],
                     line_files['gridtbl_file_full'], 
                     None))
                 min_counts=0
-            if flg == 3: # Full
+            if flg == 3: # Control
                 items.append((line, line_files['datafile'],
-                    line_files['gridtbl_file_full'], 
+                    line_files['gridtbl_file_control'], 
                     line_files['edges_file']))
                 min_counts=50
 
