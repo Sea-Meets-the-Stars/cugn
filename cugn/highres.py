@@ -14,7 +14,7 @@ from IPython import embed
 
 def calc_mld_N(depths, salinities, temperatures, oxygens,
                lat, lon, max_depth, return_extras:bool=False,
-               Npeak_min:float=10.):
+               Npeak_min:float=10., debug=False):
 
     extras = {}
     # z bins
@@ -99,6 +99,10 @@ def calc_mld_N(depths, salinities, temperatures, oxygens,
     Nf10 = np.sum(f10)
     NSO = np.sum(SO1)
 
+    if debug and NSO > 0:
+        print(f"z_Npeak={z_Npeak}, zN5={zN5}, zN10={zN10}")
+        print(f"Nf5={Nf5}, Nf10={Nf10}, NSO={NSO}")
+
     # Extras?
     if return_extras:
         extras['N'] = buoyfreq
@@ -110,7 +114,7 @@ def calc_mld_N(depths, salinities, temperatures, oxygens,
 
 def calc_mission(highres_file:str, mission_profiles:list, 
                min_depth:float=2.0,
-               max_depth:float=100.):
+               max_depth:float=100., debug:bool=False):
     """ Calculate MLD and N for a mission
 
     Args:
@@ -171,7 +175,7 @@ def calc_mission(highres_file:str, mission_profiles:list,
             salinity[my_obs],
             temperature[my_obs],
             oxygen[my_obs],
-            lat, lon, max_depth)
+            lat, lon, max_depth, debug=debug)
 
         # MLD, N
         MLDs.append(MLD)

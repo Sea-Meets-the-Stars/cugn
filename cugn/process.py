@@ -217,7 +217,7 @@ def build_ds_grid(items,
         # Do it
         MLDs, Ns, zNs, zN5s, zN10s, Nf5s, Nf10s, NSOs = \
             cugn_highres.calc_mission(
-            gfiles[0], mprofiles, max_depth=(iz+1)*10)
+            gfiles[0], mprofiles, max_depth=(iz+1)*10, debug=debug)
         # Fill in (this is slow)
         for mprofile, MLD, N, zN, zN5, zN10, Nf5, Nf10, NSO in zip(
             mprofiles, MLDs, Ns, zNs, zN5s, zN10s, Nf5s, Nf10s, NSOs):
@@ -265,7 +265,7 @@ def build_ds_grid(items,
         print(f"Wrote: \n {gridtbl_outfile} \n {edges_outfile}")
 
 
-def main(flg):
+def main(flg, debug=False):
 
     # Add potential density and salinity to the CUGN files
     if flg == 1:
@@ -279,8 +279,8 @@ def main(flg):
         for line in cugn_defs.lines:
             #if line != '80.0':
             #    continue
-            #if line != '90.0':
-            #    continue
+            if line != '90.0':
+                continue
             line_files = cugn_io.line_files(line)
 
             if flg == 2: # Full
@@ -299,12 +299,16 @@ def main(flg):
         #        None,
         #        max_offset=90., warn_highres=warn_highres)
 
-        n_cores = 4
-        map_fn = partial(build_ds_grid, min_counts=min_counts, warn_highres=warn_highres)
-        with ProcessPoolExecutor(max_workers=n_cores) as executor:
-            chunksize = len(items) // n_cores if len(items) // n_cores > 0 else 1
-            answers = list(tqdm(executor.map(map_fn, items,
+        if not debug:
+            n_cores = 4
+            map_fn = partial(build_ds_grid, min_counts=min_counts, warn_highres=warn_highres)
+            with ProcessPoolExecutor(max_workers=n_cores) as executor:
+                chunksize = len(items) // n_cores if len(items) // n_cores > 0 else 1
+                answers = list(tqdm(executor.map(map_fn, items,
                                                 chunksize=chunksize), total=len(items)))
+        else:                                        
+            build_ds_grid(items[0], min_counts=min_counts, warn_highres=warn_highres,
+                          debug=True)
 
     # Check all full res files
     if flg == 4:
@@ -326,4 +330,4 @@ if __name__ == '__main__':
     flg = int(sys.argv[1])
 
 
-    main(flg)
+    main(flg, debug=False)

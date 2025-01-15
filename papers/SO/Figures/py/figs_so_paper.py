@@ -1398,6 +1398,72 @@ def fig_cluster_date_vs_loc(outfile='fig_cluster_date_vs_loc.png',
     print(f'Max duration: {max_dur:.2f} days')
 
 
+def fig_SO_ex_below(Nval, outroot:str='fig_SO_ex_below_N'):
+
+    outfile = f'{outroot}{Nval}.png'
+
+
+    # Start the figure
+    fig = plt.figure(figsize=(10,12))
+    plt.clf()
+    gs = gridspec.GridSpec(2,2)
+    #embed(header='fig_SO_ex_below 1792')
+
+    # Load
+    for ss, line in enumerate(cugn_defs.lines):
+        items = cugn_io.load_up(line)
+        grid_extrem = items[0]
+        profiles = np.unique(grid_extrem.profile)
+
+        # Stats
+        f5s, f10s = [], []
+        tot_SO, tot_N5, tot_N10 = 0, 0, 0
+        for profile in profiles:
+            idx = grid_extrem.profile == profile
+            idx0 = int(np.where(idx)[0][0])
+            if np.isnan(grid_extrem.iloc[idx0].NSO):
+                continue
+            #
+            f5s.append(grid_extrem.iloc[idx0].Nf5 /  grid_extrem.iloc[idx0].NSO)
+            f10s.append(grid_extrem.iloc[idx0].Nf10 /  grid_extrem.iloc[idx0].NSO)
+            #if profile == 32965:
+            #    import pdb
+            #    pdb.set_trace()
+            #
+            tot_SO += grid_extrem.iloc[idx0].NSO
+            tot_N5 += grid_extrem.iloc[idx0].Nf5
+            tot_N10 += grid_extrem.iloc[idx0].Nf10
+        # Recast
+        f5s = np.array(f5s)
+        f10s = np.array(f10s)
+
+        if Nval == 5:
+            fvals = f5s
+            print(f'Line {line}: N5/Ntot = {tot_N5/tot_SO:.3f}')
+        else:
+            fvals = f10s
+            print(f'Line {line}: N10/Ntot = {tot_N10/tot_SO:.3f}')
+
+        # DOY
+        ax= plt.subplot(gs[ss])
+        ax.hist(fvals, bins=20,# histtype='step',
+                    color=cugn_defs.line_colors[ss], label=f'Line {line}', lw=2)
+        #
+        ax.grid(True)
+        ax.set_xlim(0., 1.)
+        if ss < 2:
+            ax.set_xticklabels([])
+        else:
+            ax.set_xlabel(f'Fraction of Hyperoxic Below N={Nval} (All profiles)')
+        plotting.set_fontsize(ax, 17)
+        ax.set_ylabel('Count')
+
+    #plt.tight_layout(h_pad=0.3, w_pad=10.3)
+    plt.tight_layout(pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+
 def main(flg):
     if flg== 'all':
         flg= np.sum(np.array([2 ** ii for ii in range(25)]))
@@ -1526,6 +1592,11 @@ def main(flg):
     if flg & (2**31):
         fig_diurnal('90.0', kludge_MLDN=True)
 
+    # Diurnal
+    if flg & (2**32):
+        fig_SO_ex_below(5)
+        fig_SO_ex_below(10)
+
     # Cluster date vs location/size
     if flg & (2**37):
         fig_cluster_date_vs_loc(kludge_MLDN=True)#debug=True)
@@ -1544,7 +1615,7 @@ if __name__ == '__main__':
         #flg += 2 ** 4  # Figure 6: SO CDFs
         #flg += 2 ** 5  # Figure 7: DOY vs. offshore distance
         #flg += 2 ** 37  # Figure 8: Clusters
-        flg += 2 ** 18  # # Extreme CDFs
+        #flg += 2 ** 18  # # Extreme CDFs
         #flg += 2 ** 6  # 
         #flg += 2 ** 7  # 
 
@@ -1553,6 +1624,7 @@ if __name__ == '__main__':
 
         # Appenedix
         #flg += 2 ** 31  # Diurnal figs
+        flg += 2 ** 32  # SO below N threshold
 
         #flg += 2 ** 11  
         #flg += 2 ** 12  # Low histograms
@@ -1561,6 +1633,7 @@ if __name__ == '__main__':
 
         #flg += 2 ** 25  # 
         #flg += 2 ** 26  # Upwelling
+
     else:
         flg = sys.argv[1]
 
