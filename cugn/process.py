@@ -215,17 +215,17 @@ def build_ds_grid(items,
         iz = grid_tbl[gm_idx].depth.max()
 
         # Do it
-        MLDs, Ns, zNs, zN5s, zN10s, Nf5s, Nf10s, NSOs, sigma0s = \
+        MLDs, Ns, zNs, zN5s, zN10s, Nf5s, Nf10s, NSOs, sigma0_0s = \
             cugn_highres.calc_mission(
             gfiles[0], mprofiles, max_depth=(iz+1)*10, debug=debug)
         # Fill in (this is slow)
-        for mprofile, MLD, N, zN, zN5, zN10, Nf5, Nf10, NSO, sigma0 in zip(
-            mprofiles, MLDs, Ns, zNs, zN5s, zN10s, Nf5s, Nf10s, NSOs, sigma0s):
+        for mprofile, MLD, N, zN, zN5, zN10, Nf5, Nf10, NSO, sigma0_0 in zip(
+            mprofiles, MLDs, Ns, zNs, zN5s, zN10s, Nf5s, Nf10s, NSOs, sigma0_0s):
             in_mission = (grid_tbl.mission == mission) & (
                 grid_tbl.mission_profile == mprofile)
             # MLD
             grid_tbl.loc[in_mission, 'MLD'] = MLD
-            grid_tbl.loc[in_mission, 'sigma0'] = sigma0
+            grid_tbl.loc[in_mission, 'sigma0_0'] = sigma0_0
             grid_tbl.loc[in_mission, 'zNpeak'] = zN
             grid_tbl.loc[in_mission, 'zN5'] = zN5
             grid_tbl.loc[in_mission, 'zN10'] = zN10
