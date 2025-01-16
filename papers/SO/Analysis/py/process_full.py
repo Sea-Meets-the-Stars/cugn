@@ -105,7 +105,7 @@ def calc_full(line:str, min_depth:float=2.0,
             my_obs &= good_sal & good_temp
 
             nobs = np.sum(my_obs)
-            if nobs == 0:
+            if nobs < 3:
                 continue
 
             # Calculate 
