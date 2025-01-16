@@ -66,6 +66,7 @@ labels = dict(
     cuti='CUTI',
     beuti='BEUTI',
     dsigma0=r'$\sigma_0 - \sigma_0(z=0)$',
+    dsigma=r'$\sigma_0 - \sigma_0(z=0)$',
     MLD='Mixed Layer Depth (m)',
     DO='Dissolved Oxygen '+r'$(\mu$'+'mol/kg)',
     chla='Chl-a (mg/m'+r'$^3$'+')',
@@ -822,7 +823,7 @@ def fig_joint_pdf_NSO(line:str, max_depth:int=20):
     print(f"Saved: {outfile}")
 
 
-def fig_joint_pdf_dsigmaSO(line:str, max_depth:int=20):
+def fig_joint_pdf_dsigmaSO(line:str):#, max_depth:int=20):
 
     def gen_cb(img, lbl, csz = 17.):
         cbaxes = plt.colorbar(img, pad=0., fraction=0.030)
@@ -871,12 +872,12 @@ def fig_joint_pdf_dsigmaSO(line:str, max_depth:int=20):
 
     # ##########################################################
     tsz = 25.
-    ax.text(0.05, 0.9, f'Line: {line}',
+    ax.text(0.95, 0.9, f'Line: {line}',
                 transform=ax.transAxes,
-                fontsize=tsz, ha='left', color='k')
-    ax.text(0.05, 0.8, f'z <= {max_depth}m',
+                fontsize=tsz, ha='right', color='k')
+    ax.text(0.95, 0.8, f'z <= 100m',
                 transform=ax.transAxes,
-                fontsize=tsz, ha='left', color='k')
+                fontsize=tsz, ha='right', color='k')
 
     ax.set_xlabel(labels[xvar])
     ax.set_ylabel(labels[yvar])
@@ -1681,7 +1682,8 @@ def main(flg):
         fig_cluster_date_vs_loc(kludge_MLDN=True)#debug=True)
 
     if flg & (2**40):
-        line = '90'
+        #line = '90'
+        line = '56'
         fig_joint_pdf_dsigmaSO(line)
 
 # Command line execution
@@ -1698,7 +1700,7 @@ if __name__ == '__main__':
         #flg += 2 ** 4  # Figure 6: SO CDFs
         #flg += 2 ** 5  # Figure 7: DOY vs. offshore distance
         #flg += 2 ** 37  # Figure 8: Clusters
-        flg += 2 ** 18  # # Extreme CDFs
+        #flg += 2 ** 18  # # Extreme CDFs
         #flg += 2 ** 6  # 
         #flg += 2 ** 7  # 
 
@@ -1717,7 +1719,7 @@ if __name__ == '__main__':
         #flg += 2 ** 25  # 
         #flg += 2 ** 26  # Upwelling
 
-        #flg += 2 ** 40  # Joint PDF dsigma, SO
+        flg += 2 ** 40  # Joint PDF dsigma, SO
 
     else:
         flg = sys.argv[1]
