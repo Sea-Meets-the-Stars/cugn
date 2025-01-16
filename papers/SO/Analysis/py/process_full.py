@@ -89,14 +89,14 @@ def calc_mission(line:str, min_depth:float=2.0,
 
             # Calculate 
             MLD, bin_means, z_Npeak, zN5, zN10, \
-                Nf5, Nf10, NSO, extras = cugn_highres.calc_mld_N(
+                Nf5, Nf10, NSO, sigma0_0, extras = cugn_highres.calc_mld_N(
                 ds_high.depth.values[my_obs],
                 salinity[my_obs],
                 temperature[my_obs],
                 oxygen[my_obs],
                 lat, lon, max_depth, debug=debug, return_extras=True)
 
-            embed(header='cugn/highres.py: 88')
+            #embed(header='cugn/highres.py: 88')
 
 
 def main(flg, debug=False):
