@@ -53,16 +53,15 @@ def calc_mission(line:str, min_depth:float=2.0,
 
         # High res
         ds_high = xarray.open_dataset(gfiles[0])
+        if 'doxy' not in ds_high.variables:
+            continue 
 
         lat = np.nanmedian(ds_high.latitude.data)
         lon = np.nanmedian(ds_high.longitude.data)
 
         salinity = ds_high.salinity.values
         temperature = ds_high.temperature.values
-        try:
-            oxygen = ds_high.doxy.values
-        except:
-            import pdb; pdb.set_trace()
+        oxygen = ds_high.doxy.values
 
         # QC
         good_sal = ds_high.salinity_qc.values.astype(int) == 1
