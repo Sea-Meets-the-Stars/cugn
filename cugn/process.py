@@ -198,6 +198,7 @@ def build_ds_grid(items,
     grid_tbl['MLD'] = np.nan
     grid_tbl['N'] = np.nan
     grid_tbl['zNpeak'] = np.nan
+    grid_tbl['sigma0_0'] = np.nan
 
     # MLD and N at high resolution
     uni_missions = np.unique(grid_tbl.mission)
@@ -280,8 +281,8 @@ def main(flg, debug=False):
         for line in cugn_defs.lines:
             #if line != '80.0':
             #    continue
-            if line != '90.0':
-                continue
+            #if line != '90.0':
+            #    continue
             line_files = cugn_io.line_files(line)
 
             if flg == 2: # Full

@@ -127,7 +127,7 @@ def calc_mld_N(depths, salinities, temperatures, oxygens,
     # delta rho
     if return_extras:
         extras['delta_rho'] = sigma0-sigma0_0
-        extras['S0'] = SO
+        extras['SO'] = SO
 
     if debug and NSO > 0:
         print(f"z_Npeak={z_Npeak}, zN5={zN5}, zN10={zN10}")
@@ -138,6 +138,7 @@ def calc_mld_N(depths, salinities, temperatures, oxygens,
         extras['N'] = buoyfreq
         extras['sigma0'] = sigma0
         extras['z_sort'] = z_sort
+        extras['srt_z'] = srt_z
         return MLD, bin_means, z_Npeak, zN5, zN10, Nf5, Nf10, NSO, sigma0_0, extras
 
     return MLD, bin_means, z_Npeak, zN5, zN10, Nf5, Nf10, NSO, sigma0_0
