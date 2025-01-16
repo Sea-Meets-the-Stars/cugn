@@ -105,7 +105,8 @@ def calc_full(line:str, min_depth:float=2.0,
             my_obs &= good_sal & good_temp
 
             nobs = np.sum(my_obs)
-
+            if nobs == 0:
+                continue
 
             # Calculate 
             MLD, bin_means, z_Npeak, zN5, zN10, \
