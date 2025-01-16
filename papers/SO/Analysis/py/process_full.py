@@ -3,7 +3,14 @@
 import os
 import numpy as np
 from glob import glob
+
 import xarray
+import pandas
+
+
+from functools import partial
+from concurrent.futures import ProcessPoolExecutor
+from tqdm import tqdm
 
 from cugn import defs as cugn_defs
 from cugn import io as cugn_io
@@ -14,7 +21,7 @@ from IPython import embed
 
 high_path = os.path.join(os.getenv('OS_SPRAY'), 'CUGN', 'HighRes')
 
-def calc_mission(line:str, min_depth:float=2.0,
+def calc_full(line:str, min_depth:float=2.0,
                   max_offset:float=90., warn_highres:bool=False,
                max_depth:float=100., debug:bool=False):
     """ Calculate MLD and N for a mission
@@ -39,6 +46,12 @@ def calc_mission(line:str, min_depth:float=2.0,
 
     # Missions
     uni_missions = np.unique(ds.mission_name.values.astype(str))
+
+    # Init final dict
+    final_dict = {}
+    for key in ['MLD', 'dsigma', 'mission', 'mission_profile',
+                'SO', 'doxy', 'z', 'N', 'sigma0']:
+        final_dict[key] = []
 
     for mission in uni_missions:
         gfiles = glob(os.path.join(high_path, f'SPRAY-FRSQ-{mission}-*.nc'))
@@ -74,18 +87,25 @@ def calc_mission(line:str, min_depth:float=2.0,
         gm_idx = ds.mission.values == mission_idx
         mission_profiles = np.unique(ds.mission_profile[gm_idx])
 
+
+        # Loop
         for mission_profile in mission_profiles:
             #print(f'Working on {mission_name} {mission_profile}')
     
             # Find the obs
             my_obs = ds_high.profile_obs_index.values == mission_profile
             my_obs &= ds_high.depth.values > min_depth
+            my_obs &= ds_high.depth.values < max_depth
+
 
             # Require finite
             my_obs &= np.isfinite(salinity) & np.isfinite(temperature)
 
             # Deal with QC
             my_obs &= good_sal & good_temp
+
+            nobs = np.sum(my_obs)
+
 
             # Calculate 
             MLD, bin_means, z_Npeak, zN5, zN10, \
@@ -94,7 +114,24 @@ def calc_mission(line:str, min_depth:float=2.0,
                 salinity[my_obs],
                 temperature[my_obs],
                 oxygen[my_obs],
-                lat, lon, max_depth, debug=debug, return_extras=True)
+                lat, lon, max_depth, return_extras=True)
+            # Fill in
+            final_dict['mission'] += [mission]*nobs
+            final_dict['mission_profile'] += [mission_profile]*nobs
+            final_dict['MLD'] += [float(MLD)]*nobs
+            final_dict['dsigma'] += extras['delta_rho'].tolist()
+            final_dict['SO'] += extras['SO'].tolist()
+            final_dict['z'] += extras['z_sort'].tolist()
+            final_dict['N'] += extras['N'].tolist()
+            final_dict['sigma0'] += extras['sigma0'].tolist()
+            final_dict['doxy'] += oxygen[my_obs][extras['srt_z']].tolist()
+            #embed(header='cugn/process_full.py: 117')
+
+    # Table me
+    #embed(header='129 of full')
+    tbl = pandas.DataFrame(final_dict)
+    tbl.to_parquet(line_files['fullres_file'])
+    print(f'Wrote: {line_files["fullres_file"]}')
 
             #embed(header='cugn/highres.py: 88')
 
@@ -102,13 +139,13 @@ def calc_mission(line:str, min_depth:float=2.0,
 def main(flg, debug=False):
 
     if debug:
-        calc_mission('90.0', debug=True, warn_highres=True)
+        calc_full('90.0', debug=True, warn_highres=True)
 
 
     if flg == 1:
         items = cugn_defs.lines
         n_cores = 4
-        map_fn = partial(calc_mission, warn_highres=True)
+        map_fn = partial(calc_full, warn_highres=True)
         with ProcessPoolExecutor(max_workers=n_cores) as executor:
             chunksize = len(items) // n_cores if len(items) // n_cores > 0 else 1
             answers = list(tqdm(executor.map(map_fn, items,
@@ -119,4 +156,4 @@ if __name__ == '__main__':
     import sys
     flg = int(sys.argv[1])
 
-    main(flg, debug=True)
+    main(flg, debug=False)

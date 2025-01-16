@@ -65,7 +65,7 @@ labels = dict(
     vel='Total Velocity (m/s)',
     cuti='CUTI',
     beuti='BEUTI',
-    dsigma=r'$\sigma_0 - \sigma_0(z=0)$',
+    dsigma0=r'$\sigma_0 - \sigma_0(z=0)$',
     MLD='Mixed Layer Depth (m)',
     DO='Dissolved Oxygen '+r'$(\mu$'+'mol/kg)',
     chla='Chl-a (mg/m'+r'$^3$'+')',
@@ -1698,7 +1698,7 @@ if __name__ == '__main__':
         #flg += 2 ** 4  # Figure 6: SO CDFs
         #flg += 2 ** 5  # Figure 7: DOY vs. offshore distance
         #flg += 2 ** 37  # Figure 8: Clusters
-        #flg += 2 ** 18  # # Extreme CDFs
+        flg += 2 ** 18  # # Extreme CDFs
         #flg += 2 ** 6  # 
         #flg += 2 ** 7  # 
 
@@ -1717,7 +1717,7 @@ if __name__ == '__main__':
         #flg += 2 ** 25  # 
         #flg += 2 ** 26  # Upwelling
 
-        flg += 2 ** 40  # Joint PDF dsigma, SO
+        #flg += 2 ** 40  # Joint PDF dsigma, SO
 
     else:
         flg = sys.argv[1]

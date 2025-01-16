@@ -209,7 +209,7 @@ def fill_in_grid(grid, ds, kludge_MLDN:bool=False):
         # MLD
         grid['MLD'] = ds.MLD[grid.profile.values].values
 
-    embed(header='212 in grid_utils.py')
+    grid['dsigma0'] = grid['sigma0'] - grid['sigma0_0']
 
     # Upwelling
     cuti, beuti = cugn_io.load_upwelling()
