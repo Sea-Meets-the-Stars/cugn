@@ -15,6 +15,31 @@ from IPython import embed
 def calc_mld_N(depths, salinities, temperatures, oxygens,
                lat, lon, max_depth, return_extras:bool=False,
                Npeak_min:float=10., debug=False):
+    """ Calculate MLD and N for a profile
+
+    Args:
+        depths (np.array): Depths
+        salinities (np.array): Salinities
+        temperatures (np.array): Temperatures
+        oxygens (np.array): Oxygens
+        lat (float): Latitude
+        lon (float): Longitude
+        max_depth (float): Maximum depth
+        return_extras (bool, optional): Return extras. Defaults to False.
+        Npeak_min (float, optional): Minimum N peak. Defaults to 10..
+        debug (bool, optional): Debug. Defaults to False.
+
+    Returns:
+        float: MLD
+        np.array: N
+        float: z_Npeak
+        float: zN5
+        float: zN10
+        int: Nf5
+        int: Nf10
+        int: NSO
+        float: sigma0_0 -- density at surface
+    """
 
     extras = {}
     # z bins
@@ -113,9 +138,9 @@ def calc_mld_N(depths, salinities, temperatures, oxygens,
         extras['N'] = buoyfreq
         extras['sigma0'] = sigma0
         extras['z_sort'] = z_sort
-        return MLD, bin_means, z_Npeak, zN5, zN10, Nf5, Nf10, NSO, extras
+        return MLD, bin_means, z_Npeak, zN5, zN10, Nf5, Nf10, NSO, sigma0_0, extras
 
-    return MLD, bin_means, z_Npeak, zN5, zN10, Nf5, Nf10, NSO
+    return MLD, bin_means, z_Npeak, zN5, zN10, Nf5, Nf10, NSO, sigma0_0
 
 def calc_mission(highres_file:str, mission_profiles:list, 
                min_depth:float=2.0,
@@ -159,6 +184,7 @@ def calc_mission(highres_file:str, mission_profiles:list,
     Nf5s = []
     Nf10s = []
     NSOs = []
+    sigma0s = []
 
     for mission_profile in mission_profiles:
         #print(f'Working on {mission_name} {mission_profile}')
@@ -175,7 +201,7 @@ def calc_mission(highres_file:str, mission_profiles:list,
 
         # Calculate 
         MLD, bin_means, z_Npeak, zN5, zN10, \
-            Nf5, Nf10, NSO = calc_mld_N(
+            Nf5, Nf10, NSO, sigma0_0 = calc_mld_N(
             ds_high.depth.values[my_obs],
             salinity[my_obs],
             temperature[my_obs],
@@ -191,9 +217,10 @@ def calc_mission(highres_file:str, mission_profiles:list,
         Nf5s.append(Nf5)
         Nf10s.append(Nf10)
         NSOs.append(NSO)
+        sigma0s.append(sigma0_0)
         #embed(header='cugn/highres.py: 88')
 
     # Return
     return np.array(MLDs), np.array(Ns), np.array(zNs),\
         np.array(zN5s), np.array(zN10s), np.array(Nf5s),\
-        np.array(Nf10s), np.array(NSOs)
+        np.array(Nf10s), np.array(NSOs), np.array(sigma0s)
