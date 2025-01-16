@@ -33,16 +33,18 @@ def line_files(line:str):
     gridtbl_file_full = os.path.join(data_path, f'full_grid_line{line[0:2]}.parquet')
     gridtbl_file_control = os.path.join(data_path, f'doxy_grid_line{line[0:2]}.parquet')
     edges_file = os.path.join(data_path, f'doxy_edges_line{line[0:2]}.npz')
+    fullres_file = os.path.join(data_path, f'fullres_{line[0:2]}.parquet')
 
     # dict em
     lfiles = dict(datafile=datafile, 
                   gridtbl_file_full=gridtbl_file_full, 
                   gridtbl_file_control=gridtbl_file_control, 
-                  edges_file=edges_file)
+                  edges_file=edges_file,
+                  fullres_file=fullres_file)
     # Return
     return lfiles
     
-def load_line(line:str, use_full:bool=False):
+def load_line(line:str, use_full:bool=False, add_fullres:bool=False):
     """
     Load data for a given line.
 
@@ -68,6 +70,10 @@ def load_line(line:str, use_full:bool=False):
 
     # dict em
     items = dict(ds=ds, grid_tbl=grid_tbl, edges=edges)
+
+    if add_fullres:
+        full_res = pandas.read_parquet(lfiles['fullres_file'])
+        items['full_res'] = full_res
 
     return items
 

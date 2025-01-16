@@ -65,6 +65,7 @@ labels = dict(
     vel='Total Velocity (m/s)',
     cuti='CUTI',
     beuti='BEUTI',
+    dsigma=r'$\sigma_0 - \sigma_0(z=0)$',
     MLD='Mixed Layer Depth (m)',
     DO='Dissolved Oxygen '+r'$(\mu$'+'mol/kg)',
     chla='Chl-a (mg/m'+r'$^3$'+')',
@@ -820,6 +821,81 @@ def fig_joint_pdf_NSO(line:str, max_depth:int=20):
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
+
+def fig_joint_pdf_dsigmaSO(line:str, max_depth:int=20):
+
+    def gen_cb(img, lbl, csz = 17.):
+        cbaxes = plt.colorbar(img, pad=0., fraction=0.030)
+        cbaxes.set_label(lbl, fontsize=csz)
+        cbaxes.ax.tick_params(labelsize=csz)
+
+    xvar = 'SO'
+    yvar = 'dsigma'
+    outfile = f'fig_jointPDF_{line}_SO_dsigma.png'
+
+    # Load
+    items = cugn_io.load_line(line, add_fullres=True)
+    full_res = items['full_res']
+    #embed(header='838 of figs_so')
+
+    # Grid
+    SObins=np.linspace(0.4, 1.5, 100)
+    dsigbins = np.linspace(-0.2, 3.0, 100)
+
+    gd = np.isfinite(full_res[xvar].values) & np.isfinite(full_res[yvar].values)
+
+    # Counts
+    counts, xedges, yedges = np.histogram2d(
+                full_res[xvar].values[gd], 
+                full_res[yvar].values[gd], 
+                bins=[SObins, dsigbins])
+
+    # PDF
+    dx = xedges[1] - xedges[0]
+    dy = yedges[1] - yedges[0]
+
+    p_norm = np.sum(counts) * (dx * dy)
+    consv_pdf = counts / p_norm
+    #embed(header='764 of figs_so')
+
+    fig = plt.figure(figsize=(12,10))
+    plt.clf()
+    ax = plt.gca()
+
+    # #####################################################
+    # PDF
+    img = ax.pcolormesh(xedges, yedges, np.log10(consv_pdf.T), 
+                            cmap='Reds')
+    gen_cb(img, r'$\log_{10} \, p('+f'{xvar},{yvar})$',
+           csz=19.)
+
+    # ##########################################################
+    tsz = 25.
+    ax.text(0.05, 0.9, f'Line: {line}',
+                transform=ax.transAxes,
+                fontsize=tsz, ha='left', color='k')
+    ax.text(0.05, 0.8, f'z <= {max_depth}m',
+                transform=ax.transAxes,
+                fontsize=tsz, ha='left', color='k')
+
+    ax.set_xlabel(labels[xvar])
+    ax.set_ylabel(labels[yvar])
+
+    #ax.set_xlim(0.4, 1.6)
+    #ax.set_ylim(0., 22.)
+    # Set x-axis interval to 0.5
+    #ax.xaxis.set_major_locator(MultipleLocator(0.5))
+    # 
+    fsz = 27.
+    plotting.set_fontsize(ax, fsz)
+
+    # Vertical line at hyperoxic
+    ax.axvline(1.1, color='black', linestyle=':')
+    
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
 def fig_extrema_cdfs(outfile:str='fig_N_cdfs.png', metric:str='N',
                      xyLine:tuple=(0.05, 0.90),
                      leg_loc:str='lower right', kludge_MLDN:bool=False):
@@ -1550,6 +1626,9 @@ def main(flg):
     # Extrema CDFs
     if flg & (2**18):
         kludge_MLDN = False
+        # drho
+        fig_extrema_cdfs('fig_dsigma0_cdfs.png', metric='dsigma0',
+                         xyLine=(0.7, 0.4), kludge_MLDN=kludge_MLDN)
         # N
         fig_extrema_cdfs(kludge_MLDN=kludge_MLDN)
         # Chla
@@ -1601,6 +1680,10 @@ def main(flg):
     if flg & (2**37):
         fig_cluster_date_vs_loc(kludge_MLDN=True)#debug=True)
 
+    if flg & (2**40):
+        line = '90'
+        fig_joint_pdf_dsigmaSO(line)
+
 # Command line execution
 if __name__ == '__main__':
     import sys
@@ -1624,7 +1707,7 @@ if __name__ == '__main__':
 
         # Appenedix
         #flg += 2 ** 31  # Diurnal figs
-        flg += 2 ** 32  # SO below N threshold
+        #flg += 2 ** 32  # SO below N threshold
 
         #flg += 2 ** 11  
         #flg += 2 ** 12  # Low histograms
@@ -1633,6 +1716,8 @@ if __name__ == '__main__':
 
         #flg += 2 ** 25  # 
         #flg += 2 ** 26  # Upwelling
+
+        flg += 2 ** 40  # Joint PDF dsigma, SO
 
     else:
         flg = sys.argv[1]
