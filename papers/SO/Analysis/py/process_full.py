@@ -59,7 +59,10 @@ def calc_mission(line:str, min_depth:float=2.0,
 
         salinity = ds_high.salinity.values
         temperature = ds_high.temperature.values
-        oxygen = ds_high.doxy.values
+        try:
+            oxygen = ds_high.doxy.values
+        except:
+            import pdb; pdb.set_trace()
 
         # QC
         good_sal = ds_high.salinity_qc.values.astype(int) == 1
