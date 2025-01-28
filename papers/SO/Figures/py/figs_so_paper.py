@@ -1399,6 +1399,49 @@ def fig_diurnal(line:str, kludge_MLDN:bool=False,
     print(f'Saved: {outfile}')
 
 
+def fig_di_extrem(line:str, kludge_MLDN:bool=False,
+                iz:int=0):
+
+    lidx = lines.index(line)
+    outfile = f'fig_di_extrem_{line}.png' 
+
+    bins_SO = np.linspace(0.8, 1.3, 50)
+    bins_hour = np.linspace(0, 24, 25)
+
+    # Load
+    items = cugn_io.load_up(line, kludge_MLDN=kludge_MLDN)
+    grid_extrem = items[0]
+    ds = items[1]
+
+    # Time
+    ns = grid_extrem.time.values.astype('datetime64[ns]').astype('int64') % (24 * 60 * 60 * 1_000_000_000)
+    decimal_hours = ns / (60 * 60 * 1_000_000_000) 
+    # Offset to CA
+    decimal_hours -= 8
+    next_day = decimal_hours < 0
+    decimal_hours[next_day] += 24
+
+    #gd = np.isfinite(ds.SO.data[iz,:])
+
+    fig = plt.figure(figsize=(5,5))
+    ax = plt.gca()
+    #
+    _ = sns.histplot(decimal_hours, bins=bins_hour, color=line_colors[lidx], ax=ax)
+    #
+    ax.set_xlabel('Hour (Relative to GMT-8)')
+    ax.set_ylabel('Counts')
+    #
+    plotting.set_fontsize(ax, 15.)
+    #
+    ax.text(0.05, 0.95, f'Line={line}\nHyperoxic Extrema',
+                transform=ax.transAxes,
+                fontsize=15., va='top', ha='left', color='k')
+    plt.tight_layout()
+
+    plt.savefig(outfile, dpi=300) 
+    print(f'Saved: {outfile}')
+
+
 def fig_cluster_date_vs_loc(outfile='fig_cluster_date_vs_loc.png', 
                             use_full:bool=False, kludge_MLDN:bool=False,
                             debug:bool=False):
@@ -1670,7 +1713,8 @@ def main(flg):
 
     # Diurnal
     if flg & (2**31):
-        fig_diurnal('90.0', kludge_MLDN=True)
+        #fig_diurnal('90.0', kludge_MLDN=True)
+        fig_di_extrem('90.0')
 
     # Fraction of SO below N threshold
     if flg & (2**32):
@@ -1710,6 +1754,7 @@ if __name__ == '__main__':
         # Appenedix
         #flg += 2 ** 31  # Diurnal figs
         flg += 2 ** 32  # SO below N threshold (and MOD)
+        #flg += 2 ** 32  # SO below N threshold
 
         #flg += 2 ** 11  
         #flg += 2 ** 12  # Low histograms
