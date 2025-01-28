@@ -1672,10 +1672,10 @@ def main(flg):
     if flg & (2**31):
         fig_diurnal('90.0', kludge_MLDN=True)
 
-    # Diurnal
+    # Fraction of SO below N threshold
     if flg & (2**32):
         fig_SO_ex_below(5)
-        fig_SO_ex_below(10)
+        #fig_SO_ex_below(10)
 
     # Cluster date vs location/size
     if flg & (2**37):
@@ -1709,7 +1709,7 @@ if __name__ == '__main__':
 
         # Appenedix
         #flg += 2 ** 31  # Diurnal figs
-        #flg += 2 ** 32  # SO below N threshold
+        flg += 2 ** 32  # SO below N threshold (and MOD)
 
         #flg += 2 ** 11  
         #flg += 2 ** 12  # Low histograms
@@ -1719,7 +1719,7 @@ if __name__ == '__main__':
         #flg += 2 ** 25  # 
         #flg += 2 ** 26  # Upwelling
 
-        flg += 2 ** 40  # Joint PDF dsigma, SO
+        #flg += 2 ** 40  # Joint PDF dsigma, SO
 
     else:
         flg = sys.argv[1]

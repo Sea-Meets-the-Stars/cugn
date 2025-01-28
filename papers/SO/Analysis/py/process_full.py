@@ -152,6 +152,27 @@ def main(flg, debug=False):
             answers = list(tqdm(executor.map(map_fn, items,
                                             chunksize=chunksize), total=len(items)))
 
+    # Count up the SO below the MLD
+    if flg == 2:
+        for line in cugn_defs.lines:
+            items = cugn_io.load_line(line, add_fullres=True)
+            full_res = items['full_res']
+
+            # Extrema
+            iex = full_res.SO > cugn_defs.SO_hyper
+            below = full_res.depth <= full_res.MLD
+            ex_below = iex & below
+
+            # Stats
+            n_below = np.sum(ex_below)
+            n_ex = np.sum(iex)
+
+            # Print
+            print(f"{line}: Fraction below = {n_below/n_ex:.2f}")
+
+
+            embed(header='cugn/process_full.py: 161')
+
 # Command line execution
 if __name__ == '__main__':
     import sys

@@ -2015,7 +2015,11 @@ if __name__ == '__main__':
         #flg += 2 ** 5  # 32 -- 
         #flg += 2 ** 6  # 64 -- dist vs DOY
 
+        # Events
         #flg += 2 ** 7  # 128 -- scatter event
+
+
+
         #flg += 2 ** 8  # 256 -- dSO/dT
         #flg += 2 ** 9  # 512 -- T fluctuations
         #flg += 2 ** 10  # 1024 -- joint PDFs
