@@ -160,7 +160,7 @@ def main(flg, debug=False):
 
             # Extrema
             iex = full_res.SO > cugn_defs.SO_hyper
-            below = full_res.depth <= full_res.MLD
+            below = full_res.z.values >= full_res.MLD
             ex_below = iex & below
 
             # Stats
@@ -169,9 +169,6 @@ def main(flg, debug=False):
 
             # Print
             print(f"{line}: Fraction below = {n_below/n_ex:.2f}")
-
-
-            embed(header='cugn/process_full.py: 161')
 
 # Command line execution
 if __name__ == '__main__':

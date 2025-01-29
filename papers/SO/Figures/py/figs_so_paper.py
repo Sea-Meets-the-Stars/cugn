@@ -1754,7 +1754,6 @@ if __name__ == '__main__':
         # Appenedix
         #flg += 2 ** 31  # Diurnal figs
         flg += 2 ** 32  # SO below N threshold (and MOD)
-        #flg += 2 ** 32  # SO below N threshold
 
         #flg += 2 ** 11  
         #flg += 2 ** 12  # Low histograms
