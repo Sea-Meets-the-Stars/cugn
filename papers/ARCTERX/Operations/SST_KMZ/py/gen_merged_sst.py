@@ -24,11 +24,14 @@ def main(args):
     if args.use_json is None:
         # Grab the latest data
         amsr2_files, _ = podaac.grab_file_list(
-            'AMSR2-REMSS-L2P_RT-v8.2', dt_past=dict(days=args.ndays),
+            'AMSR2-REMSS-L2P_RT-v8.2', 
+            t_end=args.t_end,
+            dt_past=dict(days=args.ndays),
             bbox='127,18,134,23')
 
         h09_files, _ = podaac.grab_file_list(
             'H09-AHI-L3C-ACSPO-v2.90', dt_past=dict(days=args.ndays),
+            t_end=args.t_end,
             bbox='127,18,134,23')
 
         # Download
@@ -170,6 +173,8 @@ def parse_option():
                         default=10, help="Number of hours of Himawari images to combine")
     parser.add_argument("--ndays", type=int, 
                         default=2, help="Number of days into the past to consdier for images")
+    parser.add_argument("--t_end", type=str, 
+                        help="End time, ISO format e.g. 2025-02-07T04:00:00Z")
     parser.add_argument('--debug', default=False, action='store_true',
                         help='Debug?')
     parser.add_argument('-s', '--show', default=False, action='store_true',
