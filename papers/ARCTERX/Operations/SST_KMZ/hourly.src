@@ -1,0 +1,5 @@
+python /home/xavier/Projects/Oceanography/python/remote_sensing/remote_sensing/operations/merged_sst_to_kmz.py -s --namsr2 3 --nh09 1 --t_end 2025-02-12T00:10:02Z --create_nc --outdir Hourly/ 
+python /home/xavier/Projects/Oceanography/python/remote_sensing/remote_sensing/operations/merged_sst_to_kmz.py -s --namsr2 3 --nh09 1 --t_end 2025-02-12T01:10:02Z --create_nc --outdir Hourly/ 
+python /home/xavier/Projects/Oceanography/python/remote_sensing/remote_sensing/operations/merged_sst_to_kmz.py -s --namsr2 3 --nh09 1 --t_end 2025-02-12T02:10:02Z --create_nc --outdir Hourly/ 
+python /home/xavier/Projects/Oceanography/python/remote_sensing/remote_sensing/operations/merged_sst_to_kmz.py -s --namsr2 3 --nh09 1 --t_end 2025-02-12T03:10:02Z --create_nc --outdir Hourly/ 
+# Completed at 3pm on 2025-02-12
