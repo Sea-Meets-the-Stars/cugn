@@ -1,5 +1,7 @@
 """ Simple Class to hold glider data """
 import os
+import glob
+
 import numpy as np
 import warnings
 
@@ -25,6 +27,10 @@ def load_dataset(dataset:str):
     if dataset == 'ARCTERX':
         dfile = os.path.join(
             os.getenv('OS_SPRAY'), 'ARCTERX', 'arcterx_ctd.mat')
+    elif dataset == 'ARCTERX-Leg2':
+        dfiles = glob.glob(os.path.join(
+            os.getenv('OS_SPRAY'), 'ARCTERX', 'Leg2', '*.mat'))
+        embed(header='33 of figs')
     elif dataset == 'Calypso2019':
         dfile = os.path.join(
             os.getenv('OS_SPRAY'), 'Calypso', 'calypso2019_ctd.mat')
@@ -33,15 +39,19 @@ def load_dataset(dataset:str):
             os.getenv('OS_SPRAY'), 'Calypso', 'calypso2022_ctd.mat')
     else: 
         raise ValueError(f"Dataset {dataset} not supported")
+
     # Load
     cData = CTDData(dfile, dataset)
     return cData
 
 class GliderData:
     """
-    Abstract base class for non-water absoprtion
+    Abstract base class for Gliders
 
     Attributes:
+
+    dataset (str): The name of the glider data
+
 
     """
     __metaclass__ = ABCMeta
@@ -65,10 +75,9 @@ class GliderData:
     udop = None
     vdop = None
 
-    profile_arrays = None
-    depth_arrays = None
-    profile_depth_arrays = None
-
+    profile_arrays:list = None
+    depth_arrays:list = None
+    profile_depth_arrays:list = None
 
     def __init__(self, datafile:str, dataset:str):
         self.datafile = datafile
@@ -76,6 +85,56 @@ class GliderData:
 
         self.load_data()
 
+    @classmethod
+    def from_list(cls, datafiles:list, dataset:str):
+        """
+        Create a GliderData object from a list of data files.
+
+        Args:
+            datafiles (list): A list of data files to load.
+            dataset (str): The name of the dataset.
+
+        Returns:
+            GliderData: A GliderData object containing the data from the provided files.
+        """
+        # Load the first file
+        gData = cls(datafiles[0], dataset)
+
+        # Load the rest
+        for datafile in datafiles[1:]:
+            gData2 = cls(datafile, dataset)
+            gData = gData + gData2
+
+        # Return
+        return gData
+
+    def __add__(self, other):
+        """
+        Add two GliderData objects together.
+
+        Args:
+            other (GliderData): The other GliderData object to add.
+
+        Returns:
+            GliderData: A new GliderData object containing the combined data.
+        """
+        # Check the datasets
+        if self.dataset != other.dataset:
+            raise ValueError("Datasets do not match")
+
+        # Check depths
+        assert np.allclose(self.depth, other.depth)
+
+        # Concatenate the data
+        gData = self.__class__(self.datafile, self.dataset)
+        for key in self.profile_arrays:
+            setattr(gData, key, np.concatenate([getattr(self, key), getattr(other, key)]))
+        for key in self.profile_depth_arrays:
+            setattr(gData, key, np.concatenate([getattr(self, key), getattr(other, key)], axis=1))
+
+        # Return
+        return gData
+    
     def load_data(self):
         pass
 
@@ -158,6 +217,7 @@ class CTDData(GliderData):
                 goodt &= (self.time > (mint + 3*24*3600))
                 self = self.profile_subset(np.where(goodt)[0], init=False)
 
+
         def cut_on_good_velocity(self):
             """
             Cuts the glider data based on good velocity values.
@@ -201,3 +261,76 @@ class CTDData(GliderData):
 
             # Return
             return gData
+
+        def __repr__(self):
+            """ Return the representation of the CTDData object """
+            rstr = f"CTDData object for {self.dataset}\n"
+            rstr += f"  Number of profiles: {len(self.time)}\n"
+            rstr += f"  Time range: {self.time.min()} to {self.time.max()}\n"
+            # Variables
+            rstr += "  Variables:\n"
+            for key in self.depth_arrays:
+                rstr += f"    {key}: {getattr(self, key).shape}\n"
+            for key in self.profile_arrays:
+                rstr += f"    {key}: {getattr(self, key).shape}\n"
+            for key in self.profile_depth_arrays:
+                rstr += f"    {key}: {getattr(self, key).shape}\n"
+            return rstr
+
+
+class FieldData(CTDData):
+    """
+    Class to hold Spray data in the field
+    """
+    dtype = 'Field'
+
+    def __init__(self, datafile:str, dataset:str):
+
+        CTDData.__init__(self, datafile, dataset)
+
+    def load_data(self):
+        """ Load the Field data for ARCTERX """
+        mat_d = loadmat(self.datafile)
+
+        # Scalars
+        #self.scalar_keys = ['x0', 'x1', 'y0', 'y1']
+        #for key in self.scalar_keys:
+        #    setattr(self, key, mat_d['ctd'][key][0][0][0][0])
+
+        # Arrays
+        variables = ['time', 'lat', 'lon', 
+            'n', 'n', 'n', 'n', 'n',
+            'depth', 't', 's', 'fl', 'theta']
+
+        self.depth_arrays = ['depth']
+        self.profile_arrays = ['lat', 'lon', 'time']
+        self.profile_depth_arrays = ['s', 't', 'fl', 'theta']
+
+        for key in variables:
+            if key == 'n':
+                continue
+            idx = variables.index(key)
+            # one-d
+            if mat_d['bindata'][0][0][key].shape[1] == 1:
+                setattr(self, key, mat_d['bindata'][0][0][idx].flatten())
+            else:
+                setattr(self, key, mat_d['bindata'][0][0][idx])
+
+        
+        # Mission ID
+        key = 'missid'
+        self.profile_arrays += [key]
+        missid = int(os.path.basename(self.datafile).split('.')[0])
+        setattr(self, key, missid*np.ones_like(self.lat, dtype=int))
+
+
+    def __repr__(self):
+
+        # Use super
+        rstr = super().__repr__()
+
+        # Replace 
+        rstr = rstr.replace('CTDData', 'FieldData')
+
+        # Return
+        return rstr
