@@ -211,7 +211,10 @@ class GliderPairs:
         d0 = self.data('dist', 0)
         d1 = self.data('dist', 1)
         #
-        o0 = self.data('offset', 0)
+        try:
+            o0 = self.data('offset', 0)
+        except:
+            embed(header='217 of gpairs')
         o1 = self.data('offset', 1)
 
         # Separation

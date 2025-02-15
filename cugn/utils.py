@@ -40,7 +40,8 @@ def line_endpoints(line:str):
 
     return lonendpts, latendpts
 
-def calc_dist_offset(line:str, lons:np.ndarray, lats:np.ndarray):
+def calc_dist_offset(line:str, lons:np.ndarray, lats:np.ndarray,
+                     endpoints:tuple=None):
     """ Calculate the distnace from shore and offset from a line
       for a given line 
 
@@ -48,13 +49,20 @@ def calc_dist_offset(line:str, lons:np.ndarray, lats:np.ndarray):
         line (str): line name
         lons (np.ndarray): longitudes
         lats (np.ndarray): latitudes
+        endpoints (tuple, optional): endpoints of the line. Defaults to None.
+            lonendpts
+            latendpts
 
     Returns:
         tuple: dist, offset
     """
 
     # Endpoints
-    lonendpts, latendpts = line_endpoints(line)
+    if endpoints is None:
+        lonendpts, latendpts = line_endpoints(line)
+    else:
+        lonendpts, latendpts = endpoints
+    # Unpack
     lon0, lon1 = lonendpts
     lat0, lat1 = latendpts
 

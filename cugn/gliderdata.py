@@ -9,6 +9,8 @@ from abc import ABCMeta
 
 from scipy.io import loadmat
 
+from cugn import utils as cugn_utils
+
 from IPython import embed
 
 def load_dataset(dataset:str):
@@ -306,15 +308,21 @@ class FieldData(CTDData):
         self.profile_arrays = ['lat', 'lon', 'time']
         self.profile_depth_arrays = ['s', 't', 'fl', 'theta']
 
-        for key in variables:
+        for ss, key in enumerate(variables):
             if key == 'n':
                 continue
             idx = variables.index(key)
+            # Ignore NaN
+            if ss == 0:
+                gdi = np.isfinite(mat_d['bindata'][0][0][idx].flatten())
             # one-d
             if mat_d['bindata'][0][0][key].shape[1] == 1:
-                setattr(self, key, mat_d['bindata'][0][0][idx].flatten())
+                if key == 'depth':
+                    setattr(self, key, mat_d['bindata'][0][0][idx].flatten())
+                else:
+                    setattr(self, key, mat_d['bindata'][0][0][idx].flatten()[gdi])
             else:
-                setattr(self, key, mat_d['bindata'][0][0][idx])
+                setattr(self, key, mat_d['bindata'][0][0][idx][:,gdi])
 
         
         # Mission ID
@@ -322,6 +330,25 @@ class FieldData(CTDData):
         self.profile_arrays += [key]
         missid = int(os.path.basename(self.datafile).split('.')[0])
         setattr(self, key, missid*np.ones_like(self.lat, dtype=int))
+
+        # Generate dist and offset
+        #  dist is distance to the North from the median lon (km)
+        #  offset is distance to the East from the median lon
+        self.med_lon = np.median(self.lon)
+        self.med_lat = np.median(self.lat)
+        latendpts = (self.med_lat-1., self.med_lat+1.)
+        lonendpts = (self.med_lon, self.med_lon)
+
+        # dist
+        key = 'dist'
+        self.profile_arrays += [key]
+        dist, offset = cugn_utils.calc_dist_offset('None',
+            self.lon, self.lat, endpoints=(lonendpts, latendpts))
+        # Fill in
+        self.dist = dist
+        key = 'offset'
+        self.profile_arrays += [key]
+        self.offset = offset
 
 
     def __repr__(self):
