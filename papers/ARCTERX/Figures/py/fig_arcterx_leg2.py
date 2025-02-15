@@ -292,6 +292,92 @@ def fig_structure(dataset:str, outroot='fig_structure',
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
+
+def fig_dT2_vs_depth(dataset:str='ARCTERX-Leg2', 
+                     outfile='fig_dT2_vs_depth.png',
+                  variables = 'dTdTdT',
+                  iz:int=5, tcut:tuple=None,
+                  calculate:bool=True,
+                  minN:int=10, avoid_same_glider:bool=True,
+                  show_correct:bool=True):
+
+    # Skip velocities?
+    skip_vel = False
+    if dataset in ['ARCTERX-Leg2']:
+        skip_vel = True
+
+    # Load
+    gpair_file = cugn_io.gpair_filename(
+        dataset, iz, not avoid_same_glider)
+    gpair_file = os.path.join('..', 'Analysis', 'Outputs', gpair_file)
+
+    # Cut on valid velocity data 
+    nbins = 20
+    rbins = 10**np.linspace(0., np.log10(400), nbins) # km
+    # Load dataset
+    gData = gliderdata.load_dataset(dataset)
+    if not skip_vel:
+        gData = gData.cut_on_good_velocity()
+    if tcut is not None:
+        gData = gData.cut_on_reltime(tcut)
+
+    # Generate pairs
+    gPairs = gliderpairs.GliderPairs(
+        gData, max_time=10., 
+        avoid_same_glider=avoid_same_glider)
+
+    # Calculate as a function of depth
+    Sndicts = []
+    for iz in range(50):
+        gPairs.calc_delta(iz, variables, skip_velocity=skip_vel)
+        gPairs.calc_Sn(variables)
+
+        Sn_dict = gPairs.calc_Sn_vs_r(rbins, nboot=10000)
+        gPairs.calc_corr_Sn(Sn_dict) 
+        gPairs.add_meta(Sn_dict)
+
+        # Grab
+        Sndicts.append(Sn_dict.copy())
+
+    embed(header='fig_structure: 342')
+
+    # Start the figure
+    fig = plt.figure(figsize=(10,8))
+    plt.clf()
+    gs = gridspec.GridSpec(1,1)
+    ax = plt.subplot(gs[0])
+
+    Skeys = ['S1_dT', 'S2_dT**2', 'S3_'+variables]
+    Skey = Skeys[1] 
+
+    for iz in [0, 5, 10, 15, 20]:
+
+        Sn_dict = Sndicts[iz]
+        goodN = np.array(Sn_dict['config']['N']) > minN
+        ax.plot(Sn_dict['r'][goodN], 
+                    Sn_dict[Skey][goodN], '-o',
+                    label=f'{(iz+1)*10} m')
+
+    ax.set_xscale('log')
+    ax.set_xlabel('Separation (km)')
+    ax.set_ylabel(Sn_lbls[Skey])
+
+    # Label time separation
+    same_glider = 'True' if avoid_same_glider else 'False'
+    ax.text(0.1, 0.8, 
+            f'{dataset}\n t<{int(Sn_dict['config']['max_time'])} hr\nAvoid same glider? {same_glider}\n {variables}', 
+        transform=ax.transAxes, fontsize=16, ha='left')
+    # 0 line
+    #ax.axhline(0., color='black', linestyle='--')
+
+    plotting.set_fontsize(ax, 19) 
+    ax.grid()
+    ax.legend(fontsize=17.)
+        
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
 def fig_Sn_depth(dataset:str, outroot='fig_Sn_depth',
     variables = 'duLduLduL', minN:int=10,
     nz:int=50):
@@ -573,6 +659,9 @@ def main(flg):
     if flg == 2:
         fig_structure('ARCTERX-Leg2', variables='dTdTdT')
 
+    # dT**2 vs. z
+    if flg == 3:
+        fig_dT2_vs_depth()
 
 # Command line execution
 if __name__ == '__main__':
