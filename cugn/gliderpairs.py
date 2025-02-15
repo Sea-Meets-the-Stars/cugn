@@ -231,22 +231,24 @@ class GliderPairs:
         t1 = self.data('time', 1)
         self.dtime = (t1-t0)/3600.
 
-    def calc_delta(self, iz:int, variables:str):
+    def calc_delta(self, iz:int, variables:str,
+                   skip_velocity:bool=False):
 
         self.iz = iz
 
         # Velocity
-        u0 = self.data('udopacross', 0, iz)
-        u1 = self.data('udopacross', 1, iz)
-        v0 = self.data('udopalong', 0, iz)
-        v1 = self.data('udopalong', 1, iz)
+        if not skip_velocity:
+            u0 = self.data('udopacross', 0, iz)
+            u1 = self.data('udopacross', 1, iz)
+            v0 = self.data('udopalong', 0, iz)
+            v1 = self.data('udopalong', 1, iz)
 
-        self.umag = np.sqrt((u1-u0)**2 + (v1-v0)**2)
-        self.du = u1-u0
-        self.dv = v1-v0
+            self.umag = np.sqrt((u1-u0)**2 + (v1-v0)**2)
+            self.du = u1-u0
+            self.dv = v1-v0
 
-        self.duL = self.rxN*self.du + self.ryN*self.dv
-        self.duT = self.ryN*self.du + self.rxN*self.dv
+            self.duL = self.rxN*self.du + self.ryN*self.dv
+            self.duT = self.ryN*self.du + self.rxN*self.dv
 
         # Other
         if 'dS' in variables:
@@ -295,6 +297,11 @@ class GliderPairs:
             self.S2 = self.duT**2
             self.S3 = self.duL*self.duT*self.duT
             self.dlbls = ['duL', 'duT**2', variables]
+        elif variables == 'dTdTdT':
+            self.S1 = self.dT
+            self.S2 = self.dT**2
+            self.S3 = self.dT**3
+            self.dlbls = ['dT', 'dT**2', variables]
         else: 
             raise ValueError("Bad variables")
 

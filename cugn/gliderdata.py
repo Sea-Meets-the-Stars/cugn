@@ -32,7 +32,7 @@ def load_dataset(dataset:str):
     elif dataset == 'ARCTERX-Leg2':
         dfiles = glob.glob(os.path.join(
             os.getenv('OS_SPRAY'), 'ARCTERX', 'Leg2', '*.mat'))
-        embed(header='33 of figs')
+        return FieldData.from_list(dfiles, dataset)
     elif dataset == 'Calypso2019':
         dfile = os.path.join(
             os.getenv('OS_SPRAY'), 'Calypso', 'calypso2019_ctd.mat')
