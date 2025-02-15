@@ -16,6 +16,7 @@ def test_single_spray():
                            in_field=True, adcp_on=False)
 
 def test_from_list():
+
     datafiles = glob.glob('/home/xavier/Projects/Oceanography/data/Spray/ARCTERX/Leg2/*.mat')
     datafiles.sort()
     arcterx2 = gliderdata.SprayData.from_list(datafiles, dataset, adcp_on=False, in_field=True)

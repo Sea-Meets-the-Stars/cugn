@@ -18,9 +18,9 @@ import seaborn as sns
 from ocpy.utils import plotting
 
 from cugn import gliderdata
-from cugn import gliderpairs
+from cugn import floatdata
+from cugn import profilepairs
 from cugn import io as cugn_io
-from cugn import utils as cugn_utils
 from cugn import plotting as cugn_plotting
 
 from IPython import embed
@@ -32,12 +32,17 @@ def fig_separations(dataset:str, outroot='fig_sep', max_time:float=10.):
 
     # Load dataset
     gData = gliderdata.load_dataset(dataset)
+
+    # Add float(s)
+    fData = floatdata.load_dataset('ARCTERX-Leg2')
+    embed(header='38 of figs')
+
     
     # Cut on valid velocity data 
     #gData = gData.cut_on_good_velocity()
 
     # Generate pairs
-    gPairs = gliderpairs.GliderPairs(gData, max_time=max_time)
+    gPairs = profilepairs.ProfilerPairs(gData, max_time=max_time)
 
     # Start the figure
     fig = plt.figure(figsize=(12,6))
@@ -211,7 +216,7 @@ def fig_structure(dataset:str, outroot='fig_structure',
             gData = gData.cut_on_reltime(tcut)
 
         # Generate pairs
-        gPairs = gliderpairs.GliderPairs(
+        gPairs = profilepairs.ProfilerPairs(
             gData, max_time=10., 
             avoid_same_glider=avoid_same_glider)
         gPairs.calc_delta(iz, variables, skip_velocity=skip_vel)
@@ -322,7 +327,7 @@ def fig_dT2_vs_depth(dataset:str='ARCTERX-Leg2',
         gData = gData.cut_on_reltime(tcut)
 
     # Generate pairs
-    gPairs = gliderpairs.GliderPairs(
+    gPairs = profilepairs.ProfilerPairs(
         gData, max_time=10., 
         avoid_same_glider=avoid_same_glider)
 

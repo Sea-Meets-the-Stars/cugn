@@ -68,6 +68,11 @@ class SprayData(profiledata.ADCPData):
         def __init__(self, datafile:str, dataset:str,
                      adcp_on:bool=True, in_field:bool=False):
 
+            # Init
+            self.profile_arrays = ['lat', 'lon', 'time']
+            self.depth_arrays = ['depth']
+            self.profile_depth_arrays = ['s', 't', 'theta']
+
             self.in_field = in_field
             if self.in_field:
                 self.base_key = 'bindata'

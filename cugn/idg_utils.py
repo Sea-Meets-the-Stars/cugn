@@ -37,7 +37,7 @@ def load_binned_data(profiler):
         setattr(profiler, key, mat_d[profiler.base_key][key][gdi])
 
     # Profile + depth
-    if profiler.adcp_on:
+    if profiler.has_adcp and profiler.adcp_on: 
         profiler.profile_depth_arrays += ['udop', 'vdop', 
                                     'udopacross', 'udopalong']
     for key in profiler.profile_depth_arrays:

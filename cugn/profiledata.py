@@ -48,9 +48,8 @@ class ProfileData:
     theta = None
     depth = None
 
-    profile_arrays:list = ['lat', 'lon', 'time']
-    depth_arrays:list = ['depth']
-    profile_depth_arrays:list = ['s', 't']
+    # ADCP
+    has_adcp:bool = False
 
     def __init__(self, datafile:str, dataset:str):
         self.datafile = datafile
@@ -69,15 +68,15 @@ class ProfileData:
             GliderData: A GliderData object containing the data from the provided files.
         """
         # Hack for the internals
-        profile_arrays = cls.profile_arrays.copy()
-        depth_arrays = cls.depth_arrays.copy()
-        profile_depth_arrays = cls.profile_depth_arrays.copy()
+        #profile_arrays = cls.profile_arrays.copy()
+        #depth_arrays = cls.depth_arrays.copy()
+        #profile_depth_arrays = cls.profile_depth_arrays.copy()
 
-        def reset_arrays(cls):
-            cls.profile_arrays = profile_arrays.copy()
-            cls.depth_arrays = depth_arrays.copy()
-            cls.profile_depth_arrays = profile_depth_arrays.copy()
-            return cls
+        #def reset_arrays(cls):
+        #    cls.profile_arrays = profile_arrays.copy()
+        #    cls.depth_arrays = depth_arrays.copy()
+        #    cls.profile_depth_arrays = profile_depth_arrays.copy()
+        #    return cls
 
         # Load the first file
         gData = cls(datafiles[0], dataset, **kwargs)
@@ -85,15 +84,15 @@ class ProfileData:
         # Load the rest
         for datafile in datafiles[1:]:
             #embed(header='87 of profiledata')
-            cls = reset_arrays(cls)
+            #cls = reset_arrays(cls)
             gData2 = cls(datafile, dataset, **kwargs)
-            cls = reset_arrays(cls)
+            #cls = reset_arrays(cls)
             gData = gData.sum(gData2, **kwargs)
 
         # Return
         return gData
 
-    def sum(self, other, **kwargs):
+    def sum(self, other, merge_on_depth:bool=False, **kwargs):
         """
         Add two GliderData objects together.
 
@@ -108,14 +107,29 @@ class ProfileData:
             raise ValueError("Datasets do not match")
 
         # Check depths
-        assert np.allclose(self.depth, other.depth)
+        if merge_on_depth:
+            flg_depth = np.zeros_like(self.depth, dtype=bool)
+            oth_idx = []
+            for iz, z in enumerate(self.depth):
+                mt = np.where(other.depth == z)[0]
+                if len(mt) > 0:
+                    oth_idx.append(mt[0])
+                    flg_depth[iz] = True
+            oth_idx = np.array(oth_idx)
+        else:
+            assert np.allclose(self.depth, other.depth)
+            flg_depth = np.ones_like(self.depth, dtype=bool)
+            oth_idx = flg_depth
 
         # Concatenate the data
         gData = self.__class__(self.datafile, self.dataset, **kwargs)
         for key in self.profile_arrays:
             setattr(gData, key, np.concatenate([getattr(self, key), getattr(other, key)]))
         for key in self.profile_depth_arrays:
-            setattr(gData, key, np.concatenate([getattr(self, key), getattr(other, key)], axis=1))
+            setattr(gData, key, np.concatenate(
+                [getattr(self, key)[flg_depth], 
+                 getattr(other, key)[oth_idx]], 
+                axis=1))
 
         # Return
         return gData
@@ -194,6 +208,7 @@ class ADCPData(ProfileData):
     udopacross = None
     udopalong = None
 
+    has_adcp = True
     adcp_on:bool = None
 
     def __init__(self, datafile:str, dataset:str, adcp_on:bool=True):

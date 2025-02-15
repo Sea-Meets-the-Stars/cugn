@@ -1,9 +1,10 @@
-""" Simple Class to Analyze Pairs of Gliders """
+""" Simple Class to Analyze Pairs of Profilers """
+
 import numpy as np
 import datetime
 import getpass
 
-from cugn import gliderdata
+from cugn import profiledata
 from cugn import utils as cugn_utils
 
 from IPython import embed
@@ -28,7 +29,7 @@ def load_Sndict(filename:str):
     # Return
     return Sn_dict
 
-class GliderPairs:
+class ProfilerPairs:
 
     idx0:np.ndarray = None
     """ 
@@ -50,7 +51,7 @@ class GliderPairs:
     Index of the vertical level
     """
 
-    def __init__(self, gdata:gliderdata.GliderData,
+    def __init__(self, gdata:profiledata.ProfileData,
                  max_dist:float=None, max_time:float=None,
                  from_scratch:bool=True, avoid_same_glider:bool=True):
 
@@ -82,6 +83,12 @@ class GliderPairs:
                             from_scratch=from_scratch,
                             avoid_same_glider=avoid_same_glider)
 
+    @property
+    def npairs(self):
+        if self.idx0 is not None:
+            return self.idx0.size
+        else:
+            return 0
 
     def add_meta(self, sdict:dict):
         """
@@ -399,3 +406,19 @@ class GliderPairs:
             Sn_dict['S2corr_'+f'{self.dlbls[1]}'][ibin] -= Sn_dict['S1_'+f'{self.dlbls[0]}'][ibin]**2
             Sn_dict['S3corr_'+f'{self.dlbls[2]}'][ibin] -= 3.*Sn_dict['S1_'+f'{self.dlbls[0]}'][ibin]*Sn_dict['S2_'+f'{self.dlbls[1]}'][ibin] \
                 + 2.*Sn_dict['S1_'+f'{self.dlbls[0]}'][ibin]**3
+
+
+    def __repr__(self):
+        """ Return the representation of the CTDData object """
+        rstr = f"ProfilerPair object for {self.gdata.dataset}\n"
+        rstr += f"  Number of pairs: {self.npairs}\n"
+        rstr += f"  Time range: {self.gdata.time.min()} to {self.gdata.time.max()}\n"
+        # Variables
+        #rstr += "  Variables:\n"
+        #for key in self.depth_arrays:
+        #    rstr += f"    {key}: {getattr(self, key).shape}\n"
+        #for key in self.profile_arrays:
+        #    rstr += f"    {key}: {getattr(self, key).shape}\n"
+        #for key in self.profile_depth_arrays:
+        #    rstr += f"    {key}: {getattr(self, key).shape}\n"
+        return rstr
