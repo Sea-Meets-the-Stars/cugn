@@ -31,6 +31,11 @@ def load_Sndict(filename:str):
 
 class ProfilerPairs:
 
+    pdata:list = None
+    """
+    List of profiledata.ProfileData objects
+    """
+
     idx0:np.ndarray = None
     """ 
     Index array for the first glider of the pair
@@ -51,12 +56,19 @@ class ProfilerPairs:
     Index of the vertical level
     """
 
-    def __init__(self, gdata:profiledata.ProfileData,
+    def __init__(self, pdata:list, 
                  max_dist:float=None, max_time:float=None,
                  from_scratch:bool=True, avoid_same_glider:bool=True):
+        """ Object to generate and hold pairs of 
+        measurements from profilers
+
+        Args:
+            pdata (list): List of profiledata.ProfileData objects
+            max_dist (float, optional): Maximum distance between gliders. Defaults to None.
+        """
 
         # Inputs
-        self.gdata = gdata
+        self.pdata = pdata
         self.max_dist = max_dist
         self.max_time = max_time
         self.avoid_same_glider = avoid_same_glider
@@ -100,7 +112,8 @@ class ProfilerPairs:
         sdict['config']['max_dist'] = self.max_dist
         sdict['config']['max_time'] = self.max_time
         sdict['config']['avoid_self'] = self.avoid_same_glider
-        sdict['config']['dataset'] = self.gdata.dataset
+        sdict['config']['datasets'] = [item.dataset for item in self.pdata]
+        embed(header='116 of add_meta')
         if self.iz is not None:
             sdict['config']['iz'] = self.iz
         # Add creation date
@@ -132,6 +145,8 @@ class ProfilerPairs:
 
         if not from_scratch:
             raise ValueError("Only from_scratch=True is supported")
+
+        # Concatenate the various profilers
 
         # Time
         if max_time is not None:
@@ -175,7 +190,7 @@ class ProfilerPairs:
 
     def data(self, key:str, ipair:int, iz:int=None):
         """
-        Retrieve data from the glider pairs.
+        Retrieve data from the profilers
 
         Parameters:
             key (str): The key of the data to retrieve.
