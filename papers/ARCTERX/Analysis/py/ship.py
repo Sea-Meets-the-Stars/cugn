@@ -1,5 +1,5 @@
 import numpy as np
-import xarray as xr
+import xarray 
 #import pyterx.src.system_config as sys_cfg
 import system_config as sys_cfg
 import glob
@@ -16,11 +16,13 @@ def load_adcp(adcp_name):
     if adcp_name not in ['wh300', 'os75nb']:
         raise ValueError(f'Unknown adcp name: {adcp_name}')
     fname = f'{tgt_path}/adcp/proc/{adcp_name}/contour/{adcp_name}.nc'
-    adcp = xr.load_dataset(fname)
+    adcp = xarray.load_dataset(fname)
     return adcp
 
 
 def load_ship(tlims=None):
+    import system_config as sys_cfg
+    cruiseshare_path = sys_cfg.get_path('cruiseshare')
     def preprocess(ds):
         ds = ds.sortby('time')
         ds = ds.drop_duplicates('time')
@@ -32,8 +34,8 @@ def load_ship(tlims=None):
     # files = glob.glob(fname)
     # files.sort()
     # files = files[1:]
-    # ship = xr.open_mfdataset(files, combine='by_coords', preprocess=preprocess).load() 
-    with xr.open_mfdataset(fname, combine='by_coords', 
+    # ship = xarray.open_mfdataset(files, combine='by_coords', preprocess=preprocess).load() 
+    with xarray.open_mfdataset(fname, combine='by_coords', 
                            preprocess=preprocess) as ship:
         if tlims is not None:
             ship = ship.sel(time=slice(*tlims))
