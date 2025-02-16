@@ -48,7 +48,7 @@ class SoloData(profiledata.ProfileData):
             self.base_key = 'bindata'
             self.profile_arrays = ['lat', 'lon', 'time']
             self.depth_arrays = ['depth']
-            self.profile_depth_arrays = ['s', 't', 'theta']
+            self.profile_depth_arrays = ['s', 't', 'theta', 'sigma']
 
             # Init
             profiledata.ProfileData.__init__(self, datafile, dataset)

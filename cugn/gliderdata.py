@@ -71,7 +71,7 @@ class SprayData(profiledata.ADCPData):
             # Init
             self.profile_arrays = ['lat', 'lon', 'time']
             self.depth_arrays = ['depth']
-            self.profile_depth_arrays = ['s', 't', 'theta']
+            self.profile_depth_arrays = ['s', 't', 'theta', 'sigma']
 
             self.in_field = in_field
             if self.in_field:

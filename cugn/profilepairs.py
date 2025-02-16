@@ -4,7 +4,10 @@ import numpy as np
 import datetime
 import getpass
 
-from cugn import profiledata
+from scipy.interpolate import interp1d
+
+import pandas
+
 from cugn import utils as cugn_utils
 
 from IPython import embed
@@ -113,7 +116,6 @@ class ProfilerPairs:
         sdict['config']['max_time'] = self.max_time
         sdict['config']['avoid_self'] = self.avoid_same_glider
         sdict['config']['datasets'] = [item.dataset for item in self.pdata]
-        embed(header='116 of add_meta')
         if self.iz is not None:
             sdict['config']['iz'] = self.iz
         # Add creation date
@@ -150,13 +152,8 @@ class ProfilerPairs:
 
         # Time
         if max_time is not None:
-            t = self.gdata.time
-            dt = np.zeros((t.size, t.size))
-            for kk in range(t.size):
-                dt[kk] = (t[kk] - t)/3600.
-
-            # Cut
-            t = self.gdata.time
+            # Times
+            t = np.concatenate([item.time for item in self.pdata])
             dt = np.zeros((t.size, t.size))
             for kk in range(t.size):
                 dt[kk] = (t[kk] - t)/3600.  # hours
@@ -206,6 +203,17 @@ class ProfilerPairs:
         Raises:
             ValueError: If ipair is not 0, 1, or 2.
         """
+        # Build up the data array from the pdata list
+        if iz is None or iz >= 0:
+            if getattr(self.pdata[0], key).ndim >= 2:
+                # Find the minimum number of levels
+                minl = np.min([getattr(item, key).shape[0] for item in self.pdata])
+                # Concatenate
+                data = np.concatenate([getattr(item, key)[:minl,...] for item in self.pdata], axis=1)
+            else:
+                data = np.concatenate([getattr(item, key) for item in self.pdata])
+
+
         if ipair == 2:
             idx = np.unique(np.concatenate((self.idx0, self.idx1)))
         elif ipair in [0,1]:
@@ -214,9 +222,19 @@ class ProfilerPairs:
             raise ValueError("Bad ipair")
         # Return
         if iz is None:
-            return getattr(self.gdata, key)[idx]
+            return data[idx]
         else:
-            return getattr(self.gdata, key)[iz][idx]
+            if iz >=0 :
+                return data[iz][idx]
+            else: # isopycnals
+                vals = []
+                for interpolator in self.interpolators:
+                    if interpolator is None:
+                        vals.append(np.nan)
+                    else:
+                        vals.append(interpolator(self.sigma))
+                # 
+                return np.array(vals)[idx]
         
     def update(self):
         """
@@ -233,10 +251,7 @@ class ProfilerPairs:
         d0 = self.data('dist', 0)
         d1 = self.data('dist', 1)
         #
-        try:
-            o0 = self.data('offset', 0)
-        except:
-            embed(header='217 of gpairs')
+        o0 = self.data('offset', 0)
         o1 = self.data('offset', 1)
 
         # Separation
@@ -253,10 +268,36 @@ class ProfilerPairs:
         t1 = self.data('time', 1)
         self.dtime = (t1-t0)/3600.
 
-    def calc_delta(self, iz:int, variables:str,
+    def prep_isopycnals(self, key:str):
+        """ 
+        Generate density interpolators for all of the profiles
+        """
+
+        self.interpolators = []
+        for pdata in self.pdata:
+            sigma0 = getattr(pdata, 'sigma')
+            data = getattr(pdata, key)
+            # Loop on porfiles
+            ok = np.isfinite(sigma0) & np.isfinite(data)
+            for profile in range(sigma0.shape[1]):
+                # Interpolators
+                if np.sum(ok[:,profile]) < 2:
+                    self.interpolators.append(None)
+                    continue
+                # Do it
+                f = interp1d(sigma0[:,profile][ok[:,profile]], 
+                             data[:,profile][ok[:,profile]],
+                             kind='linear', bounds_error=False)
+                self.interpolators.append(f)
+
+    def calc_delta(self, iz, variables:str,
                    skip_velocity:bool=False):
 
-        self.iz = iz
+        # Depth?
+        if iz >= 0:
+            self.iz = iz
+        else:  # isopycnal
+            self.sigma = np.abs(iz)
 
         # Velocity
         if not skip_velocity:
@@ -425,9 +466,12 @@ class ProfilerPairs:
 
     def __repr__(self):
         """ Return the representation of the CTDData object """
-        rstr = f"ProfilerPair object for {self.gdata.dataset}\n"
+        rstr = f"ProfilerPair object for the following datasets:\n"
+        for item in self.pdata:
+            rstr += f" {item.dataset}, {item.__class__.__name__}\n"
         rstr += f"  Number of pairs: {self.npairs}\n"
-        rstr += f"  Time range: {self.gdata.time.min()} to {self.gdata.time.max()}\n"
+        t = pandas.to_datetime(np.concatenate([item.time for item in self.pdata]), unit='s')
+        rstr += f"  Time range: {t.min()} to {t.max()}\n"
         # Variables
         #rstr += "  Variables:\n"
         #for key in self.depth_arrays:
