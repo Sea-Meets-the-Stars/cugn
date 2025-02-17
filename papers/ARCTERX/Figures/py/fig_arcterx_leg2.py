@@ -16,9 +16,9 @@ import seaborn as sns
 
 from ocpy.utils import plotting
 
-from cugn import gliderdata
-from cugn import floatdata
-from cugn import profilepairs
+from profiler import gliderdata
+from profiler import floatdata
+from profiler import profilepairs
 from cugn import io as cugn_io
 from cugn import plotting as cugn_plotting
 
@@ -32,14 +32,14 @@ def fig_separations(dataset:str, outroot='fig_sep', max_time:float=10.):
     # Load dataset
     gData = gliderdata.load_dataset(dataset)
 
-    # Floats
+    # Floats -- this is a list
     fData = floatdata.load_dataset('ARCTERX-Leg2')
     
     # Cut on valid velocity data 
     #gData = gData.cut_on_good_velocity()
 
     # Generate pairs
-    mixPairs = profilepairs.ProfilerPairs([gData, fData], 
+    mixPairs = profilepairs.ProfilerPairs([gData]+fData, 
                                         max_time=max_time)
 
     # Start the figure
