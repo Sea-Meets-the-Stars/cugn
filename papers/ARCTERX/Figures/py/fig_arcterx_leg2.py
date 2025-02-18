@@ -20,6 +20,7 @@ from ocpy.utils import plotting
 from profiler import gliderdata
 from profiler import floatdata
 from profiler import vmpdata
+from profiler import triaxusdata
 from profiler import profilepairs
 from profiler.specific import em_apex
 from cugn import io as cugn_io
@@ -62,7 +63,29 @@ def load_apexes():
     pDatas = em_apex.load_emapex_infield(dfile, dataset)
     return pDatas
 
-all_assets = ['Spray', 'Solo', 'EMApex', 'VMP']
+#triaxus_missids = {
+#Boomslang/CTD_04501.000.proc.mat      
+#NinjaCat/CTD_03204.000.proc.mat
+#CoralSnake/CTD_04813.000.proc.mat     
+#RainbowSnake/CTD_03608.000.proc.mat
+#MangroveSnake/CTD_03620.000.proc.mat  
+#WhipSnake/CTD_04210.000.proc.mat
+#
+
+def load_triaxes():
+    tris = []
+    datafiles = glob.glob('/home/xavier/Projects/Oceanography/data/ARCTERX/Triaxus/CTD*.mat')
+    for datafile in datafiles:
+        missid = int(datafile.split('/')[-1].split('_')[1].split('.')[0]) + 50000
+        #embed(header='load_triaxes: 79')
+        triaxus = triaxusdata.TriaxusData.from_binned_file(datafile, 'triaxus', 
+                                       dataset, in_field=True,
+                                       missid=missid)
+        tris.append(triaxus)
+    # 
+    return tris
+
+all_assets = ['Spray', 'Solo', 'EMApex', 'VMP', 'Triaxus']
 
 def load_by_asset(assets:list):
     # Generate pairs
@@ -76,6 +99,8 @@ def load_by_asset(assets:list):
             profilers += load_apexes()
         elif asset == 'VMP':
             profilers += load_vmp()
+        elif asset == 'Triaxus':
+            profilers += load_triaxes()
     # Return
     return profilers
 
