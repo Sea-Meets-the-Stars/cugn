@@ -49,7 +49,7 @@ def load_sprays():
 
 def load_solos():
     solos = []
-    datafiles = glob.glob('/home/xavier/Projects/Oceanography/data/ARCTERX/Floats/Solo/Raw/*.mat')
+    datafiles = glob.glob('/home/xavier/Projects/Oceanography/data/ARCTERX/Floats/Solo/*.mat')
     for datafile in datafiles:
         solo = floatdata.SoloData.from_binned_file(
             datafile, 'idg', dataset, in_field=True)
@@ -98,15 +98,17 @@ def fig_separations(dataset:str, outroot='fig_sep',
     # Lat/lon
     ax_ll = plt.subplot(gs[0])
 
-    for mid in np.unique(mixPairs.data('missid',2).astype(int)):
+    for mid in np.unique(mixPairs.data('missida',2).astype(int)):
         fill = True
         if mid < 100:
             marker = '+'
         elif mid < 10000:
             marker = '*'
-        else:
+        elif mid < 20000:
             marker = 'x'
-        idx = mixPairs.data('missid',2) == mid
+        else:
+            marker = '^'
+        idx = mixPairs.data('missida',2) == mid
         ax_ll.scatter(mixPairs.data('lon', 2)[idx], 
             mixPairs.data('lat', 2)[idx], s=2, label=f'MID={mid}',
             marker=marker)
@@ -125,6 +127,7 @@ def fig_separations(dataset:str, outroot='fig_sep',
     # Label
     ax_r.set_xlabel('Separation [km]')
     ax_r.set_ylabel('Count')
+    ax_r.set_yscale('log')
 
     # Add dataset
     lsz = 16.
