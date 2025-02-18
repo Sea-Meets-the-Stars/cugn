@@ -4,6 +4,7 @@
 # imports
 import os
 import sys
+import glob
 
 import numpy as np
 
@@ -18,13 +19,16 @@ from ocpy.utils import plotting
 
 from profiler import gliderdata
 from profiler import floatdata
+from profiler import vmpdata
 from profiler import profilepairs
+from profiler.specific import em_apex
 from cugn import io as cugn_io
 from cugn import plotting as cugn_plotting
 
 from IPython import embed
 
 Sn_lbls = cugn_plotting.Sn_lbls
+dataset = 'ARCTERX-Leg2'
 
 def load_vmp():
     datafile = '/home/xavier/Projects/Oceanography/data/ARCTERX/VMP/combo.nc'
@@ -33,24 +37,58 @@ def load_vmp():
                                        missid=20000)
     return [vmp]
 
-def fig_separations(dataset:str, outroot='fig_sep', max_time:float=10.):
+def load_sprays():
+    datafiles = glob.glob('/home/xavier/Projects/Oceanography/data/Spray/ARCTERX/Leg2/*.mat')
+    sprays = []
+    for datafile in datafiles:
+        s = gliderdata.SprayData.from_binned_file(
+            datafile, 'idg', dataset, in_field=True,
+            extra_dict={'adcp_on': False})
+        sprays.append(s)
+    return sprays
+
+def load_solos():
+    solos = []
+    datafiles = glob.glob('/home/xavier/Projects/Oceanography/data/ARCTERX/Floats/Solo/Raw/*.mat')
+    for datafile in datafiles:
+        solo = floatdata.SoloData.from_binned_file(
+            datafile, 'idg', dataset, in_field=True)
+        solos.append(solo)
+    # 
+    return solos
+
+def load_apexes():
+    dfile = '/home/xavier/Projects/Oceanography/data/ARCTERX/Floats/EM_Apex/EMApex_data_small_array_17-Feb-2025.mat'
+    pDatas = em_apex.load_emapex_infield(dfile, dataset)
+    return pDatas
+
+all_assets = ['Spray', 'Solo', 'EMApex', 'VMP']
+
+def load_by_asset(assets:list):
+    # Generate pairs
+    profilers = []
+    for asset in assets:
+        if asset == 'Spray':
+            profilers += load_sprays()
+        elif asset == 'Solo':
+            profilers += load_solos()
+        elif asset == 'EMApex':
+            profilers += load_apexes()
+        elif asset == 'VMP':
+            profilers += load_vmp()
+    # Return
+    return profilers
+
+def fig_separations(dataset:str, outroot='fig_sep', 
+                    max_time:float=10.,
+                    assets:list=all_assets):
     outfile = f'{outroot}_{dataset}.png'
 
-    # Load dataset
-    gData = gliderdata.load_dataset(dataset)
-
-    # Floats -- this is a list
-    fData = floatdata.load_dataset('ARCTERX-Leg2')
-
-    # Floats -- this is a list
-    vmp = load_vmp()
+    profilers = load_by_asset(assets)
     
-    # Cut on valid velocity data 
-    #gData = gData.cut_on_good_velocity()
-
     # Generate pairs
-    mixPairs = profilepairs.ProfilerPairs([gData]+fData+vmp, 
-                                        max_time=max_time)
+    mixPairs = profilepairs.ProfilerPairs(profilers, 
+                                          max_time=max_time)
 
     # Start the figure
     fig = plt.figure(figsize=(12,6))
@@ -243,15 +281,7 @@ def fig_structure(dataset:str, outroot='fig_structure',
         if tcut is not None:
             gData = gData.cut_on_reltime(tcut)
 
-        # Generate pairs
-        profilers = []
-        for asset in assets:
-            if asset == 'Spray':
-                profilers.append(gData)
-            elif asset == 'Solo':
-                profilers.append(fData[0])
-            elif asset == 'EMApex':
-                profilers.append(fData[1])
+
                 
         gPairs = profilepairs.ProfilerPairs(
             profilers, max_time=10., 
