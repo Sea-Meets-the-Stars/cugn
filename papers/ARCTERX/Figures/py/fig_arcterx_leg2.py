@@ -50,14 +50,22 @@ def fig_separations(dataset:str, outroot='fig_sep', max_time:float=10.):
     # Lat/lon
     ax_ll = plt.subplot(gs[0])
 
-    for mid in np.unique(mixPairs.data('missid',2)):
+    for mid in np.unique(mixPairs.data('missid',2).astype(int)):
+        fill = True
+        if mid < 100:
+            marker = '+'
+        elif mid < 10000:
+            marker = '*'
+        else:
+            marker = 'x'
         idx = mixPairs.data('missid',2) == mid
         ax_ll.scatter(mixPairs.data('lon', 2)[idx], 
-            mixPairs.data('lat', 2)[idx], s=1, label=f'MID={mid}')
+            mixPairs.data('lat', 2)[idx], s=2, label=f'MID={mid}',
+            marker=marker)
 
     ax_ll.set_xlabel('Longitude [deg]')
     ax_ll.set_ylabel('Latitude [deg]')
-    ax_ll.legend(fontsize=11, loc='upper left')
+    ax_ll.legend(fontsize=7, loc='upper left')
 
     ax_ll.grid()
     ax_ll.xaxis.set_major_locator(MultipleLocator(1.0))  # Major ticks every 2 units
@@ -183,7 +191,7 @@ def fig_dus(dataset:str, outroot='fig_du', max_time:float=10., iz:int=4):
 
 def fig_structure(dataset:str, outroot='fig_structure',
                   variables = 'duLduLduL',
-                  assets:list=['Spray', 'Solo'],
+                  assets:list=['Spray', 'Solo', 'EMApex'],
                   iz: int|float=5, tcut:tuple=None,
                   calculate:bool=True,
                   minN:int=10, avoid_same_glider:bool=True,
@@ -231,7 +239,9 @@ def fig_structure(dataset:str, outroot='fig_structure',
             if asset == 'Spray':
                 profilers.append(gData)
             elif asset == 'Solo':
-                profilers.append(fData)
+                profilers.append(fData[0])
+            elif asset == 'EMApex':
+                profilers.append(fData[1])
                 
         gPairs = profilepairs.ProfilerPairs(
             profilers, max_time=10., 
@@ -685,12 +695,12 @@ def main(flg):
 
     # dTdTdT
     if flg == 2:
-        #fig_structure('ARCTERX-Leg2', variables='dTdTdT')
+        fig_structure('ARCTERX-Leg2', variables='dTdTdT')
         #fig_structure('ARCTERX-Leg2', variables='dTdTdT',
         #              assets=['Solo'], outroot='fig_struct_Solo')
-        fig_structure('ARCTERX-Leg2', variables='dTdTdT',
-                      assets=['Spray'], iz=-23.5,
-                      outroot='fig_struct_Spray')
+        #fig_structure('ARCTERX-Leg2', variables='dTdTdT',
+        #              assets=['Spray'], iz=-23.5,
+        #              outroot='fig_struct_Spray')
 
     # dT**2 vs. z
     if flg == 3:
