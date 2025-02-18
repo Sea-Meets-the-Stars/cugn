@@ -26,6 +26,13 @@ from IPython import embed
 
 Sn_lbls = cugn_plotting.Sn_lbls
 
+def load_vmp():
+    datafile = '/home/xavier/Projects/Oceanography/data/ARCTERX/VMP/combo.nc'
+    vmp = vmpdata.VMPData.from_binned_file(datafile, 'cusack', 
+                                       dataset, in_field=True,
+                                       missid=20000)
+    return [vmp]
+
 def fig_separations(dataset:str, outroot='fig_sep', max_time:float=10.):
     outfile = f'{outroot}_{dataset}.png'
 
@@ -34,12 +41,15 @@ def fig_separations(dataset:str, outroot='fig_sep', max_time:float=10.):
 
     # Floats -- this is a list
     fData = floatdata.load_dataset('ARCTERX-Leg2')
+
+    # Floats -- this is a list
+    vmp = load_vmp()
     
     # Cut on valid velocity data 
     #gData = gData.cut_on_good_velocity()
 
     # Generate pairs
-    mixPairs = profilepairs.ProfilerPairs([gData]+fData, 
+    mixPairs = profilepairs.ProfilerPairs([gData]+fData+vmp, 
                                         max_time=max_time)
 
     # Start the figure
