@@ -23,6 +23,7 @@ from profiler import floatdata
 from profiler import vmpdata
 from profiler import triaxusdata
 from profiler import profilepairs
+from profiler import binning
 from profiler.specific import em_apex
 from cugn import io as cugn_io
 from cugn import plotting as cugn_plotting
@@ -63,9 +64,9 @@ def load_apexes():
     emapexs = []
     dfiles = glob.glob('/home/xavier/Projects/Oceanography/data/ARCTERX/Floats/EM_Apex/EMApex_data_*.mat')
     for dfile in dfiles:
-        pDatas = em_apex.load_emapex_infield(dfile, dataset)
-        #embed(header='66 of figs')
-        emapexs += pDatas
+        pData = em_apex.load_emapex_infield(dfile, dataset, binme=True, add_vel=False)
+        #  
+        emapexs += pData
     return emapexs
 
 #triaxus_missids = {
