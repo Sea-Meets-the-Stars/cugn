@@ -2,6 +2,7 @@
 
 
 # imports
+from importlib import reload
 import os
 import sys
 import glob
@@ -59,9 +60,13 @@ def load_solos():
     return solos
 
 def load_apexes():
-    dfile = '/home/xavier/Projects/Oceanography/data/ARCTERX/Floats/EM_Apex/EMApex_data_small_array_17-Feb-2025.mat'
-    pDatas = em_apex.load_emapex_infield(dfile, dataset)
-    return pDatas
+    emapexs = []
+    dfiles = glob.glob('/home/xavier/Projects/Oceanography/data/ARCTERX/Floats/EM_Apex/EMApex_data_*.mat')
+    for dfile in dfiles:
+        pDatas = em_apex.load_emapex_infield(dfile, dataset)
+        #embed(header='66 of figs')
+        emapexs += pDatas
+    return emapexs
 
 #triaxus_missids = {
 #Boomslang/CTD_04501.000.proc.mat      
@@ -112,8 +117,11 @@ def fig_separations(dataset:str, outroot='fig_sep',
     profilers = load_by_asset(assets)
     
     # Generate pairs
+    #embed(header='119 of figs')
+    #reload(profilepairs)
     mixPairs = profilepairs.ProfilerPairs(profilers, 
-                                          max_time=max_time)
+                                          max_time=max_time,
+                                          debug=False)
 
     # Start the figure
     fig = plt.figure(figsize=(12,6))
@@ -759,7 +767,10 @@ def main(flg):
 
     # Separations
     if flg == 1:
-        fig_separations('ARCTERX-Leg2')
+        #fig_separations('ARCTERX-Leg2')
+        fig_separations('ARCTERX-Leg2', outroot='fig_sep_adcp_',
+                        assets=['Spray', 'EMApex', 'Triaxus'], 
+                        max_time=10.)
 
     # dTdTdT
     if flg == 2:
