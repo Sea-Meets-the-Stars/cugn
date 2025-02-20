@@ -25,6 +25,7 @@ from profiler import triaxusdata
 from profiler import profilepairs
 from profiler import binning
 from profiler.specific import em_apex
+from profiler.specific import altos
 from cugn import io as cugn_io
 from cugn import plotting as cugn_plotting
 
@@ -85,14 +86,10 @@ def load_apexes():
         emapexs += pData
     return emapexs
 
-#triaxus_missids = {
-#Boomslang/CTD_04501.000.proc.mat      
-#NinjaCat/CTD_03204.000.proc.mat
-#CoralSnake/CTD_04813.000.proc.mat     
-#RainbowSnake/CTD_03608.000.proc.mat
-#MangroveSnake/CTD_03620.000.proc.mat  
-#WhipSnake/CTD_04210.000.proc.mat
-#
+def load_altos():
+    dfile = '/home/xavier/Projects/Oceanography/data/ARCTERX/Floats/Alto/tn441_alto_gridded.mat'
+    my_altos = altos.load_infield(dfile, dataset, missid_offset=100000)
+    return my_altos
 
 def load_triaxes():
     tris = []
@@ -107,7 +104,7 @@ def load_triaxes():
     # 
     return tris
 
-all_assets = ['Flip', 'Slocumb', 'Spray', 'Solo', 'EMApex', 'VMP', 'Triaxus']
+all_assets = ['Alto', 'Flip', 'Slocumb', 'Spray', 'Solo', 'EMApex', 'VMP', 'Triaxus']
 
 def load_by_asset(assets:list):
     # Generate pairs
@@ -119,6 +116,8 @@ def load_by_asset(assets:list):
             profilers += load_solos()
         elif asset == 'Flip':
             profilers += load_flips()
+        elif asset == 'Alto':
+            profilers += load_altos()
         elif asset == 'EMApex':
             profilers += load_apexes()
         elif asset == 'VMP':
@@ -141,7 +140,7 @@ def fig_separations(dataset:str, outroot='fig_sep',
     
     # Generate pairs
     #embed(header='119 of figs')
-    #reload(profilepairs)
+    reload(profilepairs)
     print("TURN OF RANDOMIZE=FALSE!!")
     mixPairs = profilepairs.ProfilerPairs(profilers, 
                                           max_time=max_time,
@@ -796,6 +795,9 @@ def main(flg):
         fig_separations('ARCTERX-Leg2')
         #fig_separations('ARCTERX-Leg2', outroot='fig_sep_adcp_',
         #                assets=['Spray', 'EMApex', 'Triaxus'], 
+        #                max_time=10.)
+        #fig_separations('ARCTERX-Leg2', outroot='fig_sep_test',
+        #                assets=['Alto'],
         #                max_time=10.)
 
     # dTdTdT
