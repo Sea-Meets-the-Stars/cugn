@@ -40,6 +40,12 @@ def load_vmp():
                                        missid=20000)
     return [vmp]
 
+def load_slocumb():
+    datafile = '/home/xavier/Projects/Oceanography/data/ARCTERX/gliders/slocumb/osu685.l3.nc'
+    pData = gliderdata.SlocumbData.from_binned_file(
+        datafile, 'slocumb', dataset, missid=60000, in_field=True)
+    return [pData]
+
 def load_sprays():
     datafiles = glob.glob('/home/xavier/Projects/Oceanography/data/Spray/ARCTERX/Leg2/*.mat')
     sprays = []
@@ -91,7 +97,7 @@ def load_triaxes():
     # 
     return tris
 
-all_assets = ['Spray', 'Solo', 'EMApex', 'VMP', 'Triaxus']
+all_assets = ['Slocumb', 'Spray', 'Solo', 'EMApex', 'VMP', 'Triaxus']
 
 def load_by_asset(assets:list):
     # Generate pairs
@@ -107,6 +113,10 @@ def load_by_asset(assets:list):
             profilers += load_vmp()
         elif asset == 'Triaxus':
             profilers += load_triaxes()
+        elif asset == 'Slocumb':
+            profilers += load_slocumb()
+        else:
+            raise IOError(f"Bad asset! {asset}")
     # Return
     return profilers
 
@@ -120,9 +130,11 @@ def fig_separations(dataset:str, outroot='fig_sep',
     # Generate pairs
     #embed(header='119 of figs')
     #reload(profilepairs)
+    print("TURN OF RANDOMIZE=FALSE!!")
     mixPairs = profilepairs.ProfilerPairs(profilers, 
                                           max_time=max_time,
-                                          debug=False)
+                                          debug=False,
+                                          randomize=False)
 
     # Start the figure
     fig = plt.figure(figsize=(12,6))
@@ -768,10 +780,10 @@ def main(flg):
 
     # Separations
     if flg == 1:
-        #fig_separations('ARCTERX-Leg2')
-        fig_separations('ARCTERX-Leg2', outroot='fig_sep_adcp_',
-                        assets=['Spray', 'EMApex', 'Triaxus'], 
-                        max_time=10.)
+        fig_separations('ARCTERX-Leg2')
+        #fig_separations('ARCTERX-Leg2', outroot='fig_sep_adcp_',
+        #                assets=['Spray', 'EMApex', 'Triaxus'], 
+        #                max_time=10.)
 
     # dTdTdT
     if flg == 2:
