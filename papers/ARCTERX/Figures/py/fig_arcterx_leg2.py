@@ -66,6 +66,16 @@ def load_solos():
     # 
     return solos
 
+def load_flips():
+    flips = []
+    datafiles = glob.glob('/home/xavier/Projects/Oceanography/data/ARCTERX/Floats/Flip/*.mat')
+    for datafile in datafiles:
+        flip = floatdata.FlipData.from_binned_file(
+            datafile, 'idg', dataset, in_field=True)
+        flips.append(flip)
+    # 
+    return flips
+
 def load_apexes():
     emapexs = []
     dfiles = glob.glob('/home/xavier/Projects/Oceanography/data/ARCTERX/Floats/EM_Apex/EMApex_data_*.mat')
@@ -97,7 +107,7 @@ def load_triaxes():
     # 
     return tris
 
-all_assets = ['Slocumb', 'Spray', 'Solo', 'EMApex', 'VMP', 'Triaxus']
+all_assets = ['Flip', 'Slocumb', 'Spray', 'Solo', 'EMApex', 'VMP', 'Triaxus']
 
 def load_by_asset(assets:list):
     # Generate pairs
@@ -107,6 +117,8 @@ def load_by_asset(assets:list):
             profilers += load_sprays()
         elif asset == 'Solo':
             profilers += load_solos()
+        elif asset == 'Flip':
+            profilers += load_flips()
         elif asset == 'EMApex':
             profilers += load_apexes()
         elif asset == 'VMP':
@@ -161,7 +173,8 @@ def fig_separations(dataset:str, outroot='fig_sep',
 
     ax_ll.set_xlabel('Longitude [deg]')
     ax_ll.set_ylabel('Latitude [deg]')
-    ax_ll.legend(fontsize=7, loc='upper left')
+    ax_ll.legend(fontsize=4, ncol=2,
+                 loc='upper left')
 
     ax_ll.grid()
     ax_ll.xaxis.set_major_locator(MultipleLocator(1.0))  # Major ticks every 2 units
