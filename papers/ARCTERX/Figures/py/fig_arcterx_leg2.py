@@ -64,6 +64,8 @@ def load_solos():
     for datafile in datafiles:
         solo = floatdata.SoloData.from_binned_file(
             datafile, 'idg', dataset, in_field=True)
+        # Add in random second
+        solo.time += np.random.uniform(0, 1, size=solo.Nprof)
         solos.append(solo)
     # 
     return solos
@@ -74,6 +76,8 @@ def load_flips():
     for datafile in datafiles:
         flip = floatdata.FlipData.from_binned_file(
             datafile, 'idg', dataset, in_field=True)
+        # Random time
+        flip.time += np.random.uniform(0, 1, size=flip.Nprof)
         flips.append(flip)
     # 
     return flips
@@ -337,7 +341,7 @@ def fig_structure(dataset:str, outroot='fig_structure',
     gPairs = profilepairs.ProfilerPairs(
         profilers, max_time=10., 
         avoid_same_glider=avoid_same_glider,
-        #remove_nans=True,
+        remove_nans=True,
         debug=debug)
     # Isopycnals?
     if iz < 0:
@@ -794,7 +798,7 @@ def main(flg):
 
     # dTdTdT
     if flg == 2:
-        skip_assets = ['Alto', 'Flip', 'Solo']#, 'Slocumb', 'Spray', 'Solo', 'EMApex', 'VMP', 'Triaxus']
+        skip_assets = []#'Alto', 'Flip', 'Solo']#, 'Slocumb', 'Spray', 'Solo', 'EMApex', 'VMP', 'Triaxus']
         sub_assests = all_assets.copy()
         for skip in skip_assets:
             sub_assests.remove(skip)
@@ -802,13 +806,13 @@ def main(flg):
         fig_structure('ARCTERX-Leg2', variables='dTdTdT',
            assets=sub_assests)
         #fig_structure('ARCTERX-Leg2', variables='dTdTdT',
-        #              assets=['Alto'],  # No good
                       #assets=['EMApex'], 
                       #assets=['Triaxus'], 
-                      #assets=['Flip'],  # No good
-                      #assets=['Solo'],  # No good
+        #              assets=['Alto'],  
+                      #assets=['Solo'],  
+        #              assets=['Flip'],  
         #              outroot='fig_struct_test',
-        #              debug=True)
+        #              debug=False)
         #fig_structure('ARCTERX-Leg2', variables='dTdTdT',
         #              assets=['Spray'], iz=-23.5,
         #              outroot='fig_struct_Spray')
