@@ -104,7 +104,8 @@ def load_triaxes():
     # 
     return tris
 
-all_assets = ['Alto', 'Flip', 'Slocumb', 'Spray', 'Solo', 'EMApex', 'VMP', 'Triaxus']
+all_assets = ['Alto', 'Flip', 'Slocumb', 'Spray', 'Solo', 
+              'EMApex', 'VMP', 'Triaxus']
 
 def load_by_asset(assets:list):
     # Generate pairs
@@ -306,6 +307,8 @@ def fig_structure(dataset:str, outroot='fig_structure',
                   minN:int=10, avoid_same_glider:bool=True,
                   show_correct:bool=True):
 
+    profilers = load_by_asset(assets)
+
     # Skip velocities?
     skip_vel = False
     if dataset in ['ARCTERX-Leg2']:
@@ -323,39 +326,26 @@ def fig_structure(dataset:str, outroot='fig_structure',
             dataset, iz, not avoid_same_glider)
         gpair_file = os.path.join('..', 'Analysis', 'Outputs', gpair_file)
 
-    if (tcut is None) and not calculate:
-        Sn_dict = gliderpairs.load_Sndict(gpair_file)
-        print(f'Loaded: {gpair_file}')
-    else:
-        if variables not in ['duLduLduL', 'dTdTdT']:
-            raise NotImplementedError('Not ready for these variablaes')
-        # Cut on valid velocity data 
-        nbins = 20
-        rbins = 10**np.linspace(0., np.log10(400), nbins) # km
-        # Load dataset
-        gData = gliderdata.load_dataset(dataset)
-        # Floats
-        fData = floatdata.load_dataset('ARCTERX-Leg2')
+    if variables not in ['duLduLduL', 'dTdTdT']:
+        raise NotImplementedError('Not ready for these variablaes')
+    # Cut on valid velocity data 
+    nbins = 20
+    rbins = 10**np.linspace(0., np.log10(400), nbins) # km
 
-        if not skip_vel:
-            gData = gData.cut_on_good_velocity()
-        if tcut is not None:
-            gData = gData.cut_on_reltime(tcut)
+    gPairs = profilepairs.ProfilerPairs(
+        profilers, max_time=10., 
+        avoid_same_glider=avoid_same_glider,
+        #remove_nans=True,
+        debug=False)
+    # Isopycnals?
+    if iz < 0:
+        gPairs.prep_isopycnals('t')
+    gPairs.calc_delta(iz, variables, skip_velocity=skip_vel)
+    gPairs.calc_Sn(variables)
 
-
-                
-        gPairs = profilepairs.ProfilerPairs(
-            profilers, max_time=10., 
-            avoid_same_glider=avoid_same_glider)
-        # Isopycnals?
-        if iz < 0:
-            gPairs.prep_isopycnals('t')
-        gPairs.calc_delta(iz, variables, skip_velocity=skip_vel)
-        gPairs.calc_Sn(variables)
-
-        Sn_dict = gPairs.calc_Sn_vs_r(rbins, nboot=100)
-        gPairs.calc_corr_Sn(Sn_dict) 
-        gPairs.add_meta(Sn_dict)
+    Sn_dict = gPairs.calc_Sn_vs_r(rbins, nboot=100)
+    gPairs.calc_corr_Sn(Sn_dict) 
+    gPairs.add_meta(Sn_dict)
 
     #embed(header='fig_structure: 215')
 
@@ -802,9 +792,20 @@ def main(flg):
 
     # dTdTdT
     if flg == 2:
-        fig_structure('ARCTERX-Leg2', variables='dTdTdT')
+        skip_assets = ['Alto', 'Flip', 'Solo']#, 'Slocumb', 'Spray', 'Solo', 'EMApex', 'VMP', 'Triaxus']
+        sub_assests = all_assets.copy()
+        for skip in skip_assets:
+            sub_assests.remove(skip)
+
+        fig_structure('ARCTERX-Leg2', variables='dTdTdT',
+           assets=sub_assests)
         #fig_structure('ARCTERX-Leg2', variables='dTdTdT',
-        #              assets=['Solo'], outroot='fig_struct_Solo')
+                      #assets=['Alto'],  # No good
+                      #assets=['EMApex'], 
+                      #assets=['Triaxus'], 
+                      #assets=['Flip'],  # No good
+                      #assets=['Solo'],  # No good
+        #              outroot='fig_struct_test')
         #fig_structure('ARCTERX-Leg2', variables='dTdTdT',
         #              assets=['Spray'], iz=-23.5,
         #              outroot='fig_struct_Spray')
