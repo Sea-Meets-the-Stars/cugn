@@ -33,6 +33,7 @@ from IPython import embed
 
 Sn_lbls = cugn_plotting.Sn_lbls
 dataset = 'ARCTERX-Leg2'
+apath = os.getenv('ARCTERX')
 
 def load_vmp():
     datafile = '/home/xavier/Projects/Oceanography/data/ARCTERX/VMP/combo.nc'
@@ -48,7 +49,7 @@ def load_slocumb():
     return [pData]
 
 def load_sprays():
-    datafiles = glob.glob('/home/xavier/Projects/Oceanography/data/Spray/ARCTERX/Leg2/*.mat')
+    datafiles = glob.glob(os.path.join(apath, 'gliders/spray/*.mat'))
     sprays = []
     for datafile in datafiles:
         s = gliderdata.SprayData.from_binned_file(
@@ -783,7 +784,7 @@ def main(flg):
 
     # Separations
     if flg == 1:
-        #fig_separations('ARCTERX-Leg2')
+        fig_separations('ARCTERX-Leg2')
         fig_separations('ARCTERX-Leg2', outroot='fig_sep_adcp_',
                         assets=['Spray', 'EMApex', 'Triaxus'], 
                         max_time=10.)
