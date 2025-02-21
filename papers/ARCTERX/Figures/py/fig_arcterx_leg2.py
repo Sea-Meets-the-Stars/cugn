@@ -306,7 +306,7 @@ def fig_structure(dataset:str, outroot='fig_structure',
                   calculate:bool=True,
                   minN:int=10, avoid_same_glider:bool=True,
                   debug:bool=False,
-                  show_correct:bool=True):
+                  show_correct:bool=False):
 
     profilers = load_by_asset(assets)
 
@@ -783,12 +783,12 @@ def main(flg):
 
     # Separations
     if flg == 1:
-        fig_separations('ARCTERX-Leg2')
-        #fig_separations('ARCTERX-Leg2', outroot='fig_sep_adcp_',
-        #                assets=['Spray', 'EMApex', 'Triaxus'], 
-        #                max_time=10.)
+        #fig_separations('ARCTERX-Leg2')
+        fig_separations('ARCTERX-Leg2', outroot='fig_sep_adcp_',
+                        assets=['Spray', 'EMApex', 'Triaxus'], 
+                        max_time=10.)
         #fig_separations('ARCTERX-Leg2', outroot='fig_sep_test',
-        #                assets=['Alto'],
+        #                assets=['Solo', 'Slocumb'],
         #                max_time=10.)
 
     # dTdTdT
@@ -798,16 +798,16 @@ def main(flg):
         for skip in skip_assets:
             sub_assests.remove(skip)
 
-        #fig_structure('ARCTERX-Leg2', variables='dTdTdT',
-        #   assets=sub_assests)
         fig_structure('ARCTERX-Leg2', variables='dTdTdT',
-                      assets=['Alto'],  # No good
+           assets=sub_assests)
+        #fig_structure('ARCTERX-Leg2', variables='dTdTdT',
+        #              assets=['Alto'],  # No good
                       #assets=['EMApex'], 
                       #assets=['Triaxus'], 
                       #assets=['Flip'],  # No good
                       #assets=['Solo'],  # No good
-                      outroot='fig_struct_test',
-                      debug=True)
+        #              outroot='fig_struct_test',
+        #              debug=True)
         #fig_structure('ARCTERX-Leg2', variables='dTdTdT',
         #              assets=['Spray'], iz=-23.5,
         #              outroot='fig_struct_Spray')
