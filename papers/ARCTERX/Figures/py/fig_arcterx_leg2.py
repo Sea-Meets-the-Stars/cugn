@@ -305,6 +305,7 @@ def fig_structure(dataset:str, outroot='fig_structure',
                   iz: int|float=5, tcut:tuple=None,
                   calculate:bool=True,
                   minN:int=10, avoid_same_glider:bool=True,
+                  debug:bool=False,
                   show_correct:bool=True):
 
     profilers = load_by_asset(assets)
@@ -336,7 +337,7 @@ def fig_structure(dataset:str, outroot='fig_structure',
         profilers, max_time=10., 
         avoid_same_glider=avoid_same_glider,
         #remove_nans=True,
-        debug=False)
+        debug=debug)
     # Isopycnals?
     if iz < 0:
         gPairs.prep_isopycnals('t')
@@ -797,15 +798,16 @@ def main(flg):
         for skip in skip_assets:
             sub_assests.remove(skip)
 
-        fig_structure('ARCTERX-Leg2', variables='dTdTdT',
-           assets=sub_assests)
         #fig_structure('ARCTERX-Leg2', variables='dTdTdT',
-                      #assets=['Alto'],  # No good
+        #   assets=sub_assests)
+        fig_structure('ARCTERX-Leg2', variables='dTdTdT',
+                      assets=['Alto'],  # No good
                       #assets=['EMApex'], 
                       #assets=['Triaxus'], 
                       #assets=['Flip'],  # No good
                       #assets=['Solo'],  # No good
-        #              outroot='fig_struct_test')
+                      outroot='fig_struct_test',
+                      debug=True)
         #fig_structure('ARCTERX-Leg2', variables='dTdTdT',
         #              assets=['Spray'], iz=-23.5,
         #              outroot='fig_struct_Spray')
