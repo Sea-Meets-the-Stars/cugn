@@ -33,17 +33,17 @@ from IPython import embed
 
 Sn_lbls = cugn_plotting.Sn_lbls
 dataset = 'ARCTERX-Leg2'
-apath = os.getenv('ARCTERX')
+apath = os.path.join(os.getenv('OS_ARCTERX'), '2025_IOP')
 
 def load_vmp():
-    datafile = '/home/xavier/Projects/Oceanography/data/ARCTERX/VMP/combo.nc'
+    datafile = os.path.join(apath, 'VMP/combo.nc')
     vmp = vmpdata.VMPData.from_binned_file(datafile, 'cusack', 
                                        dataset, in_field=True,
                                        missid=20000)
     return [vmp]
 
 def load_slocumb():
-    datafile = '/home/xavier/Projects/Oceanography/data/ARCTERX/gliders/slocumb/osu685.l3.nc'
+    datafile = os.path.join(apath, 'gliders/slocumb/osu685.l3.nc')
     pData = gliderdata.SlocumbData.from_binned_file(
         datafile, 'slocumb', dataset, missid=60000, in_field=True)
     return [pData]
@@ -60,7 +60,8 @@ def load_sprays():
 
 def load_solos():
     solos = []
-    datafiles = glob.glob('/home/xavier/Projects/Oceanography/data/ARCTERX/Floats/Solo/*.mat')
+    datafiles = glob.glob(os.path.join(apath, 'Floats/Solo/*.mat'))
+        #'/home/xavier/Projects/Oceanography/data/ARCTERX/Floats/Solo/*.mat')
     for datafile in datafiles:
         solo = floatdata.SoloData.from_binned_file(
             datafile, 'idg', dataset, in_field=True)
@@ -72,7 +73,8 @@ def load_solos():
 
 def load_flips():
     flips = []
-    datafiles = glob.glob('/home/xavier/Projects/Oceanography/data/ARCTERX/Floats/Flip/*.mat')
+    #datafiles = glob.glob('/home/xavier/Projects/Oceanography/data/ARCTERX/Floats/Flip/*.mat')
+    datafiles = glob.glob(os.path.join(apath, 'Floats/Flip/*.mat'))
     for datafile in datafiles:
         flip = floatdata.FlipData.from_binned_file(
             datafile, 'idg', dataset, in_field=True)
@@ -84,7 +86,8 @@ def load_flips():
 
 def load_apexes():
     emapexs = []
-    dfiles = glob.glob('/home/xavier/Projects/Oceanography/data/ARCTERX/Floats/EM_Apex/EMApex_data_*.mat')
+    #dfiles = glob.glob('/home/xavier/Projects/Oceanography/data/ARCTERX/Floats/EM_Apex/EMApex_data_*.mat')
+    dfiles = glob.glob(os.path.join(apath, 'Floats/EM_Apex/EMApex_data_*.mat'))
     for dfile in dfiles:
         pData = em_apex.load_emapex_infield(dfile, dataset, binme=True, add_vel=False)
         #  
@@ -92,13 +95,14 @@ def load_apexes():
     return emapexs
 
 def load_altos():
-    dfile = '/home/xavier/Projects/Oceanography/data/ARCTERX/Floats/Alto/tn441_alto_gridded.mat'
+    dfile = os.path.join(apath, 'Floats/Alto/tn441_alto_gridded.mat')
     my_altos = altos.load_infield(dfile, dataset, missid_offset=100000)
     return my_altos
 
 def load_triaxes():
     tris = []
-    datafiles = glob.glob('/home/xavier/Projects/Oceanography/data/ARCTERX/Triaxus/CTD*.mat')
+    #datafiles = glob.glob('/home/xavier/Projects/Oceanography/data/ARCTERX/Triaxus/CTD*.mat')
+    datafiles = glob.glob(os.path.join(apath, 'Triaxus/CTD*.mat'))
     for datafile in datafiles:
         missid = int(datafile.split('/')[-1].split('_')[1].split('.')[0]) + 50000
         #embed(header='load_triaxes: 79')
@@ -785,6 +789,14 @@ def main(flg):
         flg= np.sum(np.array([2 ** ii for ii in range(25)]))
     else:
         flg= int(flg)
+    # Test loading
+    if flg == 0:
+        profilers = load_by_asset(['Slocumb'])#
+        for profiler in profilers:
+            print(profiler)
+        print("Success!")
+                       #, 'Solo', 'Spray', 'Slocumb', 'EMApex', 'VMP', 'Triaxus'])
+        #load_by_asset(all_assets)
 
     # Separations
     if flg == 1:
