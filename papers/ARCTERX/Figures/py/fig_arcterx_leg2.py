@@ -790,12 +790,12 @@ def main(flg):
         flg= int(flg)
     # Test loading
     if flg == 0:
-        profilers = load_by_asset(['Slocum'])#
-        for profiler in profilers:
-            print(profiler)
-        print("Success!")
+        #profilers = load_by_asset(['Slocum'])#
+        #for profiler in profilers:
+        #    print(profiler)
+        #print("Success!")
                        #, 'Solo', 'Spray', 'Slocumb', 'EMApex', 'VMP', 'Triaxus'])
-        #load_by_asset(all_assets)
+        load_by_asset(all_assets)
 
     # Separations
     if flg == 1:
