@@ -23,7 +23,6 @@ from profiler import floatdata
 from profiler import vmpdata
 from profiler import triaxusdata
 from profiler import profilepairs
-from profiler import binning
 from profiler.specific import em_apex
 from profiler.specific import altos
 from cugn import io as cugn_io
@@ -42,10 +41,10 @@ def load_vmp():
                                        missid=20000)
     return [vmp]
 
-def load_slocumb():
-    datafile = os.path.join(apath, 'gliders/slocumb/osu685.l3.nc')
-    pData = gliderdata.SlocumbData.from_binned_file(
-        datafile, 'slocumb', dataset, missid=60000, in_field=True)
+def load_slocum():
+    datafile = os.path.join(apath, 'gliders/slocum/osu685.l3.nc')
+    pData = gliderdata.SlocumData.from_binned_file(
+        datafile, 'slocum', dataset, missid=60000, in_field=True)
     return [pData]
 
 def load_sprays():
@@ -113,7 +112,7 @@ def load_triaxes():
     # 
     return tris
 
-all_assets = ['Alto', 'Flip', 'Slocumb', 'Spray', 'Solo', 
+all_assets = ['Alto', 'Flip', 'Slocum', 'Spray', 'Solo', 
               'EMApex', 'VMP', 'Triaxus']
 
 def load_by_asset(assets:list):
@@ -134,8 +133,8 @@ def load_by_asset(assets:list):
             profilers += load_vmp()
         elif asset == 'Triaxus':
             profilers += load_triaxes()
-        elif asset == 'Slocumb':
-            profilers += load_slocumb()
+        elif asset == 'Slocum':
+            profilers += load_slocum()
         else:
             raise IOError(f"Bad asset! {asset}")
     # Return
@@ -791,7 +790,7 @@ def main(flg):
         flg= int(flg)
     # Test loading
     if flg == 0:
-        profilers = load_by_asset(['Slocumb'])#
+        profilers = load_by_asset(['Slocum'])#
         for profiler in profilers:
             print(profiler)
         print("Success!")
