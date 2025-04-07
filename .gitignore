@@ -15,6 +15,7 @@ __pycache__/
 *.json
 *.kmz
 *.nc
+*.npz
 
 # Distribution / packaging
 .Python
