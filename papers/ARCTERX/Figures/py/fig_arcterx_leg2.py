@@ -22,9 +22,11 @@ from profiler import gliderdata
 from profiler import floatdata
 from profiler import vmpdata
 from profiler import triaxusdata
-from profiler import profilepairs
+from profiler import profilerpairs
 from profiler.specific import em_apex
 from profiler.specific import altos
+from profiler import profilers_io
+
 from cugn import io as cugn_io
 from cugn import plotting as cugn_plotting
 
@@ -149,9 +151,9 @@ def fig_separations(dataset:str, outroot='fig_sep',
     
     # Generate pairs
     #embed(header='119 of figs')
-    reload(profilepairs)
+    #reload(profilerpairs)
     print("TURN OF RANDOMIZE=FALSE!!")
-    mixPairs = profilepairs.ProfilerPairs(profilers, 
+    mixPairs = profilerpairs.ProfilerPairs(profilers, 
                                           max_time=max_time,
                                           debug=False,
                                           randomize=False)
@@ -341,7 +343,7 @@ def fig_structure(dataset:str, outroot='fig_structure',
     nbins = 20
     rbins = 10**np.linspace(0., np.log10(400), nbins) # km
 
-    gPairs = profilepairs.ProfilerPairs(
+    gPairs = profilerpairs.ProfilerPairs(
         profilers, max_time=10., 
         avoid_same_glider=avoid_same_glider,
         remove_nans=True,
@@ -425,6 +427,11 @@ def fig_structure(dataset:str, outroot='fig_structure',
 
         plotting.set_fontsize(ax, 19) 
         ax.grid()
+
+        # log <dT2>
+        if n == 1:
+            ax.set_yscale('log')
+            ax.set_ylim(1e-3,1.)
         
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
@@ -460,7 +467,7 @@ def fig_dT2_vs_depth(dataset:str='ARCTERX-Leg2',
         gData = gData.cut_on_reltime(tcut)
 
     # Generate pairs
-    gPairs = profilepairs.ProfilerPairs(
+    gPairs = profilerpairs.ProfilerPairs(
         gData, max_time=10., 
         avoid_same_glider=avoid_same_glider)
 
@@ -788,14 +795,16 @@ def main(flg):
         flg= np.sum(np.array([2 ** ii for ii in range(25)]))
     else:
         flg= int(flg)
-    # Test loading
+
+    # Load + write
     if flg == 0:
         #profilers = load_by_asset(['Slocum'])#
         #for profiler in profilers:
         #    print(profiler)
         #print("Success!")
                        #, 'Solo', 'Spray', 'Slocumb', 'EMApex', 'VMP', 'Triaxus'])
-        load_by_asset(all_assets)
+        arcterx_iop2025_leg2 = load_by_asset(all_assets)
+        profilers_io.write_profilers(arcterx_iop2025_leg2, 'ARCTERX-IOP2025-Leg2.json')
 
     # Separations
     if flg == 1:
