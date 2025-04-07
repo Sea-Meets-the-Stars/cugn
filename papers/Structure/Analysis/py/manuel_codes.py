@@ -1,8 +1,77 @@
+""" Codes by Manuel
 
+https://github.com/manuelogtzv/SF3_RLS/blob/master/calcSF_QGmodel.ipynb
+
+"""
 
 # First-order structure function
+import numpy as np
+import xarray
+
 from scipy.stats import norm
 from xhistogram.xarray import histogram
+
+
+def gen_spatavg():
+
+    fileraw = '/data/SO3/manuelogv/MethodsKEFlux/rawduLT/'
+
+    # Open the NetCDF files using xarray's open_mfdataset (multi-file dataset)
+    nc_files = fileraw +'*.nc'  #
+    dult = xarray.open_mfdataset(nc_files, engine='netcdf4', combine='by_coords', 
+                            chunks={'time': 100, 'x': 256, 'y': 256, 'dcorr': 10}, 
+                            parallel=True)
+
+    dult = dult.sortby('time')
+
+    tchunk_size = 15 # time slice length
+    Ntot = len(dult.time)
+    chunk_slic = {'time': tchunk_size, 'x': len(dult.x), 'y': len(dult.y), 'dcorr': 3599}
+    dult = dult.chunk(chunk_slic)
+
+    output_list = []
+    ii = 0
+
+    for start_time in tqdm(range(0, Ntot, tchunk_size), desc="Time slice", position=2):
+        # Ensure the end time does not exceed the total length of the 'time' dimension
+        end_time = min(start_time + tchunk_size, len(dult['time']))
+        
+        # Slice the data to include the current chunk
+        data_slice = dult.isel(time=slice(start_time, end_time))
+        
+        # Calculates du1, du2 and du3
+        sf2, sf3 = SF2_3(data_slice.dul, data_slice.dut)
+        data_slice['du2'] = sf2
+        data_slice['du3'] = sf3
+        
+        # Averages over all $s$ positions
+        with ProgressBar():
+            data_avers = data_slice.mean(dim=('x','y'), skipna=True).compute()
+        
+        fileSp = '/data/SO3/manuelogv/MethodsKEFlux/spatialaverduLT/SF_spatialaver_' + str(ii) + '.nc'
+        print('Save SF_spatialaver_{}.nc file'.format(ii))
+        data_avers.to_netcdf(fileSp)
+        
+        ii = ii + 1
+
+def gen_mSF():
+
+    fileaver = '/data/SO3/manuelogv/MethodsKEFlux/spatialaverduLT/'
+
+    # Open the NetCDF files using xarray's open_mfdataset (multi-file dataset)
+    nc_files3 = fileaver +'*.nc'  #
+    dult_aver = xarray.open_mfdataset(nc_files3, engine='netcdf4', combine='by_coords')
+    dult_aver = dult_aver.sortby('time').chunk({'time': 1825, 'dcorr': 2}).load()
+
+    # Defines distance bins 
+    dr = 5000 # meters
+    rbins = np.arange(0, 3e5, dr)
+    mid_rbins = 0.5*(rbins[:-1] + rbins[1:])
+
+    # Process
+    dudlt_aver_angl = process_SF_samples(dult_aver, rbins, mid_rbins)
+    dudlt_aver_angl.to_netcdf('/data/SO3/manuelogv/MethodsKEFlux/SFQG_aver_pos_orien_5yearb.nc')
+
 
 def first_order():
 
