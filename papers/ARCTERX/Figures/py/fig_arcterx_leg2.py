@@ -804,7 +804,10 @@ def main(flg):
         #print("Success!")
                        #, 'Solo', 'Spray', 'Slocumb', 'EMApex', 'VMP', 'Triaxus'])
         arcterx_iop2025_leg2 = load_by_asset(all_assets)
-        profilers_io.write_profilers(arcterx_iop2025_leg2, 'ARCTERX-IOP2025-Leg2.json')
+        #profilers = load_by_asset(['Triaxus'])#
+        #profilers_io.write_profilers(profilers, 
+        profilers_io.write_profilers(arcterx_iop2025_leg2, 
+                                     'ARCTERX-IOP2025-Leg2.json')
 
     # Separations
     if flg == 1:
