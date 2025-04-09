@@ -1,11 +1,7 @@
 # Code for generating Structure Functions (SF) of second and third order.
-from scipy.integrate import cumtrapz as ctrpz
 from tqdm.notebook import tqdm
-import math
 import numpy as np
 import xarray as xr
-import gsw_xarray as gsw
-import time
 from dask import delayed, compute  # <-- Importing the necessary Dask modules
 from dask.diagnostics import ProgressBar
 
