@@ -20,7 +20,7 @@ from strucFunct2_ai import calculateSF_2
 
 QG_path = '/home/xavier/Projects/Oceanography/data/QG'
 
-def calc_structure(eddyrun_lev):
+def calc_structure(eddyrun_lev, clobber:bool=False):
     # Calculates structure functions
     shiftdim = 'x','y'
     maxcorr = 60
@@ -53,6 +53,12 @@ def calc_structure(eddyrun_lev):
 
     # Loop over the time indices in chunks of 15
     for start in tqdm(range(0, len(time_indices), chunk_size), desc="Processing Chunks: "):
+        filessv = os.path.join(QG_path, 'rawduLT', str(start))
+        # Clobber?
+        if os.path.exists(filessv) and not clobber:
+            print('File {} exists'.format(filessv))
+            continue
+        # End
         end = start + chunk_size
         
         # Ensure that the 'end' index doesn't exceed the total number of time indices
@@ -66,7 +72,6 @@ def calc_structure(eddyrun_lev):
         # Runs code
         SFQG = calculateSF_2(data, maxcorr, shiftdim, grid)
         print('Save {}.nc file'.format(start))
-        filessv = os.path.join(QG_path, 'rawduLT', str(start))
         SFQG.to_netcdf(filessv)
 
 def gen_spatavg():
