@@ -27,7 +27,8 @@ setup_keywords['install_requires'] = [
     'healpy', 'cftime', 'bokeh', 'umap-learn', 'llvmlite', 'boto3',
     'xarray', 'h5netcdf',  'gsw',
     'importlib-metadata', 'timm==0.3.2',
-    'pymatreader', 'gsw-xarray', 'dask']
+    'pymatreader', 'gsw-xarray', 'dask',
+    'xhistogram']
 setup_keywords['zip_safe'] = False
 setup_keywords['use_2to3'] = False
 setup_keywords['packages'] = find_packages()

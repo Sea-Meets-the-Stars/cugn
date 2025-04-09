@@ -10,6 +10,13 @@ import xarray
 
 from scipy.stats import norm
 from xhistogram.xarray import histogram
+from dask.diagnostics import ProgressBar
+import tqdm
+
+from strucFunct2_ai import SF2_3
+from strucFunct2_ai import process_SF_samples
+from strucFunct2_ai import timescale
+#from strucFunct2_ai import mSF_15
 
 
 def gen_spatavg():
@@ -70,10 +77,35 @@ def gen_mSF():
 
     # Process
     dudlt_aver_angl = process_SF_samples(dult_aver, rbins, mid_rbins)
-    dudlt_aver_angl.to_netcdf('/data/SO3/manuelogv/MethodsKEFlux/SFQG_aver_pos_orien_5yearb.nc')
+    dudlt_aver_angl.to_netcdf('SFQG_aver_pos_orien_5yearb.nc')
 
+def load_mSF():
+    chunksSF15 = {'time': 100, 'mid_rbins': 53}
+    mSF_15 = xarray.open_dataset('SFQG_aver_pos_orien_5yearb.nc', 
+                                 chunks=chunksSF15)
+    mSF_15['time'] = mSF_15.time/86400
+    mSF_15['du1'] = mSF_15.ulls + mSF_15.utts
 
-def first_order():
+    return mSF_15
+
+def first_order(mSF_15):
+
+    # Calculates degrees of freedom
+    nyears = 5
+    yr2day = 365
+
+    # Gets the first 40 index in r
+    indx = 1
+    indf = 40
+
+    Tmax = yr2day*nyears*86400
+
+    qg_tscale3 = timescale(mSF_15.du2.mean(dim='time').values[indx:indf], 
+                        mSF_15.dr.mean(dim='time').values[indx:indf])
+
+    qg_dof = Tmax/qg_tscale3
+
+    nu3 = np.sqrt(qg_dof)
 
     # First order structure function
     sf1_mn = mSF_15.du1.mean(dim='time')[indx:indf]
@@ -124,3 +156,6 @@ def first_order():
         
         sf1_skew[ii] = skew(du1.isel(mid_rbins=ii).values, axis=0, bias=True)
         sf1_kurt[ii] = kurtosis(du1.isel(mid_rbins=ii).values, axis=0, fisher=True, bias=True)
+
+    # Return
+    return rr1, du1, sf1_mn, dull_mn, dutt_mn, sf1_std, dull_std, dutt_std
