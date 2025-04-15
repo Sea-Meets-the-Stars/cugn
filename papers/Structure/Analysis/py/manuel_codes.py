@@ -53,7 +53,7 @@ def calc_structure(eddyrun_lev, clobber:bool=False):
 
     # Loop over the time indices in chunks of 15
     for start in tqdm(range(0, len(time_indices), chunk_size), desc="Processing Chunks: "):
-        filessv = os.path.join(QG_path, 'rawduLT', str(start))
+        filessv = os.path.join(QG_path, 'rawduLT', str(start)+'.nc')
         # Clobber?
         if os.path.exists(filessv) and not clobber:
             print('File {} exists'.format(filessv))
