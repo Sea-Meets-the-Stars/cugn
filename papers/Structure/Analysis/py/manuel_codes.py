@@ -76,7 +76,8 @@ def calc_structure(eddyrun_lev, clobber:bool=False):
 
 def gen_spatavg():
 
-    fileraw = '/data/SO3/manuelogv/MethodsKEFlux/rawduLT/'
+    #fileraw = '/data/SO3/manuelogv/MethodsKEFlux/rawduLT/'
+    fileraw = '/data/Projects/Oceanography/data/QG/rawduLT/'
 
     # Open the NetCDF files using xarray's open_mfdataset (multi-file dataset)
     nc_files = fileraw +'*.nc'  #
@@ -110,7 +111,8 @@ def gen_spatavg():
         with ProgressBar():
             data_avers = data_slice.mean(dim=('x','y'), skipna=True).compute()
         
-        fileSp = '/data/SO3/manuelogv/MethodsKEFlux/spatialaverduLT/SF_spatialaver_' + str(ii) + '.nc'
+        #fileSp = '/data/SO3/manuelogv/MethodsKEFlux/spatialaverduLT/SF_spatialaver_' + str(ii) + '.nc'
+        fileSp = '/data/Projects/Oceanography/data/QG/SF_spatialaver_' + str(ii) + '.nc'
         print('Save SF_spatialaver_{}.nc file'.format(ii))
         data_avers.to_netcdf(fileSp)
         
@@ -223,8 +225,11 @@ def main(flg:int):
         eddyrun_lev = xarray.open_dataset(fileQG)
         calc_structure(eddyrun_lev)
 
+    # Spatial average
+    if flg == 1:
+        gen_spatavg()
+
     if flg == 5:
-        #gen_spatavg()
         #gen_mSF()
         mSF_15 = load_mSF()
         rr1, du1, sf1_mn, dull_mn, dutt_mn, sf1_std, dull_std, dutt_std = first_order(mSF_15)
