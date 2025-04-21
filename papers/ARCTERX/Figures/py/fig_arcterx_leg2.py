@@ -16,8 +16,6 @@ import matplotlib.gridspec as gridspec
 
 import seaborn as sns
 
-from ocpy.utils import plotting
-
 from profiler import gliderdata
 from profiler import floatdata
 from profiler import vmpdata
@@ -174,7 +172,7 @@ def fig_separations(dataset:str, outroot='fig_sep',
     # Generate pairs
     #embed(header='119 of figs')
     #reload(profilerpairs)
-    print("TURN OF RANDOMIZE=FALSE!!")
+    print("TURN OFF RANDOMIZE=FALSE!!")
     mixPairs = profilerpairs.ProfilerPairs(profilers, 
                                           max_time=max_time,
                                           debug=False,
@@ -227,7 +225,7 @@ def fig_separations(dataset:str, outroot='fig_sep',
     ax_r.text(0.1, 0.8, f't < {max_time} hours', transform=ax_r.transAxes, fontsize=15)
 
     for ax in [ax_ll, ax_r]:
-        plotting.set_fontsize(ax, 15) 
+        cugn_plotting.set_fontsize(ax, 15) 
         
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
@@ -268,7 +266,7 @@ def fig_dtimes(dataset:str, outroot='fig_dtime', max_time:float=10.):
     # Log scale
     ax_t.set_yscale('log')
 
-    plotting.set_fontsize(ax_t, 15) 
+    cugn_plotting.set_fontsize(ax_t, 15) 
         
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
@@ -325,7 +323,7 @@ def fig_dus(dataset:str, outroot='fig_du', max_time:float=10., iz:int=4):
     #ax_umag.set_yscale('log')
 
     for ax in [ax_umag, ax_duL]:
-        plotting.set_fontsize(ax, 15) 
+        cugn_plotting.set_fontsize(ax, 15) 
         
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
@@ -447,7 +445,7 @@ def fig_structure(dataset:str, outroot='fig_structure',
         # 0 line
         ax.axhline(0., color='red', linestyle='--')
 
-        plotting.set_fontsize(ax, 19) 
+        cugn_plotting.set_fontsize(ax, 19) 
         ax.grid()
 
         # log <dT2>
@@ -537,7 +535,7 @@ def fig_dT2_vs_depth(dataset:str='ARCTERX-Leg2',
     # 0 line
     #ax.axhline(0., color='black', linestyle='--')
 
-    plotting.set_fontsize(ax, 19) 
+    cugn_plotting.set_fontsize(ax, 19) 
     ax.grid()
     ax.legend(fontsize=17.)
         
@@ -623,7 +621,7 @@ def fig_Sn_depth(dataset:str, outroot='fig_Sn_depth',
         # 0 line
         ax.axhline(0., color='k', linestyle='--')
 
-        plotting.set_fontsize(ax, 19) 
+        cugn_plotting.set_fontsize(ax, 19) 
         ax.grid()
 
         ax.set_xlim(1., 100.)
@@ -798,7 +796,7 @@ def fig_Sn_distribution(dataset:str, outfile:str,
     a_y = np.sum(y)*(x[1]-x[0])
     ax.plot(x, y*area/a_y, color='red', linestyle='--')
 
-    plotting.set_fontsize(ax, 19) 
+    cugn_plotting.set_fontsize(ax, 19) 
     ax.grid()
 
     ax.text(0.1, 0.8, f'{dataset}\n depth = {(iz+1)*10} m, \nr={int(np.round(rbins[ir])),int(np.round(rbins[ir+1]))} km',
@@ -829,7 +827,8 @@ def main(flg):
         #arcterx_iop2025_leg2 = load_by_asset(all_assets)
         #profilers = load_by_asset(['Spray', 'Slocum'])#
         #profilers = load_by_asset(['Solo', 'Flip', 'Alto'])#
-        profilers = load_by_asset(['Seaglider'])
+        #profilers = load_by_asset(['Seaglider'])
+        profilers = load_by_asset(['Spray'])
         #profilers_io.write_profilers(profilers, 
         #profilers_io.write_profilers(arcterx_iop2025_leg2, 
         #                             'ARCTERX-IOP2025-Leg2.json')
@@ -838,12 +837,12 @@ def main(flg):
     # Separations
     if flg == 1:
         #fig_separations('ARCTERX-Leg2')
-        fig_separations('ARCTERX-Leg2', outroot='fig_sep_tst_',
-                        assets=['Spray', 'Seaglider'],
-                        max_time=10.)
-        #fig_separations('ARCTERX-Leg2', outroot='fig_sep_adcp_',
-        #                assets=['Spray', 'EMApex', 'Triaxus'], 
+        #fig_separations('ARCTERX-Leg2', outroot='fig_sep_tst_',
+        #                assets=['Spray', 'Seaglider'],
         #                max_time=10.)
+        fig_separations('ARCTERX-Leg2', outroot='fig_sep_adcp',
+                        assets=['Spray', 'EMApex', 'Triaxus'], 
+                        max_time=10.)
         #fig_separations('ARCTERX-Leg2', outroot='fig_sep_test',
         #                assets=['Solo', 'Slocumb'],
         #                max_time=10.)
