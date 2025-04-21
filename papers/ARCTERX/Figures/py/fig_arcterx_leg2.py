@@ -37,19 +37,34 @@ dataset = 'ARCTERX-Leg2'
 apath = os.path.join(os.getenv('OS_ARCTERX'), '2025_IOP')
 
 def load_vmp():
+    print("Loading VMP")
     datafile = os.path.join(apath, 'VMP/combo.nc')
     vmp = vmpdata.VMPData.from_binned_file(datafile, 'cusack', 
                                        dataset, in_field=True,
                                        missid=20000)
     return [vmp]
 
+def load_seagliders():
+    print("Loading Seagliders")
+    datafiles = glob.glob(os.path.join(apath, 'gliders/Seagliders/sg*_level2.nc'))
+    seagliders = []
+    for datafile in datafiles:
+        print("Loading: ", datafile)
+        s = gliderdata.SeagliderData.from_binned_file(
+            datafile, 'seaglider', dataset, in_field=True,
+            extra_dict={'adcp_on': False})
+        seagliders.append(s)
+    return seagliders
+
 def load_slocum():
+    print("Loading Slocum")
     datafile = os.path.join(apath, 'gliders/slocum/osu685.l3.nc')
     pData = gliderdata.SlocumData.from_binned_file(
         datafile, 'slocum', dataset, missid=60000, in_field=True)
     return [pData]
 
 def load_sprays():
+    print("Loading Sprays")
     datafiles = glob.glob(os.path.join(apath, 'gliders/spray/*.mat'))
     sprays = []
     for datafile in datafiles:
@@ -60,6 +75,7 @@ def load_sprays():
     return sprays
 
 def load_solos():
+    print("Loading Solos")
     solos = []
     datafiles = glob.glob(os.path.join(apath, 'Floats/Solo/*.mat'))
         #'/home/xavier/Projects/Oceanography/data/ARCTERX/Floats/Solo/*.mat')
@@ -73,6 +89,7 @@ def load_solos():
     return solos
 
 def load_flips():
+    print("Loading Flips")
     flips = []
     #datafiles = glob.glob('/home/xavier/Projects/Oceanography/data/ARCTERX/Floats/Flip/*.mat')
     datafiles = glob.glob(os.path.join(apath, 'Floats/Flip/*.mat'))
@@ -86,6 +103,7 @@ def load_flips():
     return flips
 
 def load_apexes():
+    print("Loading Apexes")
     emapexs = []
     #dfiles = glob.glob('/home/xavier/Projects/Oceanography/data/ARCTERX/Floats/EM_Apex/EMApex_data_*.mat')
     dfiles = glob.glob(os.path.join(apath, 'Floats/EM_Apex/EMApex_data_*.mat'))
@@ -96,11 +114,13 @@ def load_apexes():
     return emapexs
 
 def load_altos():
+    print("Loading Altos")
     dfile = os.path.join(apath, 'Floats/Alto/tn441_alto_gridded.mat')
     my_altos = altos.load_infield(dfile, dataset, missid_offset=100000)
     return my_altos
 
 def load_triaxes():
+    print("Loading Triaxes")
     tris = []
     #datafiles = glob.glob('/home/xavier/Projects/Oceanography/data/ARCTERX/Triaxus/CTD*.mat')
     datafiles = glob.glob(os.path.join(apath, 'Triaxus/CTD*.mat'))
@@ -115,7 +135,7 @@ def load_triaxes():
     return tris
 
 all_assets = ['Alto', 'Flip', 'Slocum', 'Spray', 'Solo', 
-              'EMApex', 'VMP', 'Triaxus']
+              'EMApex', 'VMP', 'Triaxus', 'Seaglider']
 
 def load_by_asset(assets:list):
     # Generate pairs
@@ -137,6 +157,8 @@ def load_by_asset(assets:list):
             profilers += load_triaxes()
         elif asset == 'Slocum':
             profilers += load_slocum()
+        elif asset == 'Seaglider':
+            profilers += load_seagliders()
         else:
             raise IOError(f"Bad asset! {asset}")
     # Return
@@ -802,19 +824,26 @@ def main(flg):
         #for profiler in profilers:
         #    print(profiler)
         #print("Success!")
-                       #, 'Solo', 'Spray', 'Slocumb', 'EMApex', 'VMP', 'Triaxus'])
-        arcterx_iop2025_leg2 = load_by_asset(all_assets)
-        #profilers = load_by_asset(['Triaxus'])#
+                       #, 'Solo', 'Spray', 'Slocum', 
+                       # 'EMApex', 'VMP', 'Triaxus'])
+        #arcterx_iop2025_leg2 = load_by_asset(all_assets)
+        #profilers = load_by_asset(['Spray', 'Slocum'])#
+        #profilers = load_by_asset(['Solo', 'Flip', 'Alto'])#
+        profilers = load_by_asset(['Seaglider'])
         #profilers_io.write_profilers(profilers, 
-        profilers_io.write_profilers(arcterx_iop2025_leg2, 
-                                     'ARCTERX-IOP2025-Leg2.json')
+        #profilers_io.write_profilers(arcterx_iop2025_leg2, 
+        #                             'ARCTERX-IOP2025-Leg2.json')
+        embed(header='main: 826')
 
     # Separations
     if flg == 1:
-        fig_separations('ARCTERX-Leg2')
-        fig_separations('ARCTERX-Leg2', outroot='fig_sep_adcp_',
-                        assets=['Spray', 'EMApex', 'Triaxus'], 
+        #fig_separations('ARCTERX-Leg2')
+        fig_separations('ARCTERX-Leg2', outroot='fig_sep_tst_',
+                        assets=['Spray', 'Seaglider'],
                         max_time=10.)
+        #fig_separations('ARCTERX-Leg2', outroot='fig_sep_adcp_',
+        #                assets=['Spray', 'EMApex', 'Triaxus'], 
+        #                max_time=10.)
         #fig_separations('ARCTERX-Leg2', outroot='fig_sep_test',
         #                assets=['Solo', 'Slocumb'],
         #                max_time=10.)
