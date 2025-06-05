@@ -925,6 +925,10 @@ def fig_extrema_cdfs(outfile:str='fig_N_cdfs.png', metric:str='N',
                      color=cugn_defs.line_colors[ss])
         sns.ecdfplot(x=ctrl, ax=ax, label='Control', color='k', ls='--')
 
+        # KS test
+        ks_eval = stats.ks_2samp(grid_extrem[metric], ctrl)
+        print(f'KS test: {ks_eval.statistic:.3f}, {ks_eval.pvalue}, {ks_eval.statistic_location}')
+
 
         # Finish
         #ax.axvline(1., color='black', linestyle='--')
@@ -1744,7 +1748,7 @@ if __name__ == '__main__':
         #flg += 2 ** 4  # Figure 6: SO CDFs
         #flg += 2 ** 5  # Figure 7: DOY vs. offshore distance
         #flg += 2 ** 37  # Figure 8: Clusters
-        #flg += 2 ** 18  # # Extreme CDFs
+        flg += 2 ** 18  # # Extreme CDFs; Figures 11, 12, 13
         #flg += 2 ** 6  # 
         #flg += 2 ** 7  # 
 
@@ -1753,7 +1757,7 @@ if __name__ == '__main__':
 
         # Appenedix
         #flg += 2 ** 31  # Diurnal figs
-        flg += 2 ** 32  # SO below N threshold (and MOD)
+        #flg += 2 ** 32  # SO below N threshold (and MOD)
 
         #flg += 2 ** 11  
         #flg += 2 ** 12  # Low histograms
