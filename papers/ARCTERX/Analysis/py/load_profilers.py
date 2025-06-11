@@ -40,14 +40,18 @@ def load_slocum():
         datafile, 'slocum', dataset, missid=60000, in_field=True)
     return [pData]
 
-def load_sprays():
+def load_sprays(in_field:bool=False, adcp_on:bool=False):
     print("Loading Sprays")
     datafiles = glob.glob(os.path.join(apath, 'gliders/spray/*.mat'))
+    # Sort
+    datafiles.sort()
+    if adcp_on:
+        datafiles = datafiles[0:2]
     sprays = []
     for datafile in datafiles:
         s = gliderdata.SprayData.from_binned_file(
-            datafile, 'idg', dataset, in_field=True,
-            extra_dict={'adcp_on': False})
+            datafile, 'idg', dataset, in_field=in_field,
+            extra_dict={'adcp_on': adcp_on})
         sprays.append(s)
     return sprays
 
@@ -112,12 +116,12 @@ def load_triaxes():
     return tris
 
 
-def load_by_asset(assets:list):
+def load_by_asset(assets:list, **kwargs):
     # Generate pairs
     profilers = []
     for asset in assets:
         if asset == 'Spray':
-            profilers += load_sprays()
+            profilers += load_sprays(**kwargs)
         elif asset == 'Solo':
             profilers += load_solos()
         elif asset == 'Flip':

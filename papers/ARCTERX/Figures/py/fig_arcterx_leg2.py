@@ -28,17 +28,30 @@ from profiler import profilers_io
 from cugn import io as cugn_io
 from cugn import plotting as cugn_plotting
 
+# Other imports
+# Local
+sys.path.append(os.path.abspath("../Analysis/py"))
+import build_data
+from load_profilers import load_by_asset
+
+
 from IPython import embed
 
 Sn_lbls = cugn_plotting.Sn_lbls
 
 
 def fig_separations(dataset:str, outroot='fig_sep', 
-                    max_time:float=10.,
-                    assets:list=all_assets):
+                    max_time:float=10., adcp_on:bool=None,
+                    assets:list=build_data.all_assets):
     outfile = f'{outroot}_{dataset}.png'
 
-    profilers = load_by_asset(assets)
+    kwargs = {}
+    if adcp_on is not None:
+        kwargs['adcp_on'] = adcp_on
+    profilers = load_by_asset(assets, **kwargs)
+
+    #embed(header='fig_separations: 51')
+
     
     # Generate pairs
     #embed(header='119 of figs')
@@ -207,14 +220,16 @@ def fig_structure(dataset:str, outroot='fig_structure',
                   calculate:bool=True,
                   minN:int=10, avoid_same_glider:bool=True,
                   debug:bool=False,
+                  skip_vel:bool=True,
                   show_correct:bool=False):
 
-    profilers = load_by_asset(assets)
-
-    # Skip velocities?
-    skip_vel = False
-    if dataset in ['ARCTERX-Leg2']:
-        skip_vel = True
+    # Set in_field=True to load in-field data
+    kwargs = {}
+    if variables in ['duLduLduL']:
+        kwargs['in_field'] = True
+        kwargs['adcp_on'] = True
+        skip_vel = False
+    profilers = load_by_asset(assets, **kwargs)
 
     # Outfile
     if iz >= 0:
@@ -234,6 +249,7 @@ def fig_structure(dataset:str, outroot='fig_structure',
     nbins = 20
     rbins = 10**np.linspace(0., np.log10(400), nbins) # km
 
+    #embed(header='fig_structure: 253')
     gPairs = profilerpairs.ProfilerPairs(
         profilers, max_time=10., 
         avoid_same_glider=avoid_same_glider,
@@ -703,7 +719,7 @@ def main(flg):
         #profilers_io.write_profilers(profilers, 
         #profilers_io.write_profilers(arcterx_iop2025_leg2, 
         #                             'ARCTERX-IOP2025-Leg2.json')
-        embed(header='main: 826')
+        embed(header='main: 713')
 
     # Separations
     if flg == 1:
@@ -711,12 +727,18 @@ def main(flg):
         #fig_separations('ARCTERX-Leg2', outroot='fig_sep_tst_',
         #                assets=['Spray', 'Seaglider'],
         #                max_time=10.)
-        fig_separations('ARCTERX-Leg2', outroot='fig_sep_adcp',
-                        assets=['Spray', 'EMApex', 'Triaxus'], 
-                        max_time=10.)
+        #fig_separations('ARCTERX-Leg2', outroot='fig_sep_adcp',
+        #                assets=['Spray', 'EMApex', 'Triaxus'], 
+        #                max_time=10.)
         #fig_separations('ARCTERX-Leg2', outroot='fig_sep_test',
         #                assets=['Solo', 'Slocumb'],
         #                max_time=10.)
+        #fig_separations('ARCTERX-Leg2', outroot='fig_sep_spray',
+        #                assets=['Spray'],
+        #                max_time=10.)
+        fig_separations('ARCTERX-Leg2', outroot='fig_sep_spray_adcp',
+                        assets=['Spray'], adcp_on=True,
+                        max_time=10.)
 
     # dTdTdT
     if flg == 2:
@@ -742,6 +764,15 @@ def main(flg):
     # dT**2 vs. z
     if flg == 3:
         fig_dT2_vs_depth()
+
+    # duLduLduL
+    if flg == 4:
+        #skip_assets = []#'Alto', 'Flip', 'Solo']#, 'Slocumb', 'Spray', 'Solo', 'EMApex', 'VMP', 'Triaxus']
+        #sub_assests = all_assets.copy()
+        #for skip in skip_assets:
+        #    sub_assests.remove(skip)
+        fig_structure('ARCTERX-Leg2', variables='duLduLduL',
+            assets=['Spray'])
 
 # Command line execution
 if __name__ == '__main__':
