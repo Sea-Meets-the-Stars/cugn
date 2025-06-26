@@ -3,18 +3,81 @@
 https://github.com/manuelogtzv/SF3_RLS/blob/master/calcSF_QGmodel.ipynb
 
 """
-
-# First-order structure function
+import os
 import numpy as np
 import xarray
 
 from scipy.stats import norm
 from xhistogram.xarray import histogram
+from dask.diagnostics import ProgressBar
+from tqdm import tqdm
 
+from strucFunct2_ai import SF2_3
+from strucFunct2_ai import process_SF_samples
+from strucFunct2_ai import timescale
+from strucFunct2_ai import calculateSF_2
+#from strucFunct2_ai import mSF_15
+
+QG_path = '/home/xavier/Projects/Oceanography/data/QG'
+
+def calc_structure(eddyrun_lev, clobber:bool=False):
+    # Calculates structure functions
+    shiftdim = 'x','y'
+    maxcorr = 60
+    grid = 'm'
+
+    # rbins = np.arange(1e3, 2e5, 4e3)
+
+    # Gets last five years of data
+    nyears = 5
+    yr = 365
+
+    i1 = -2-yr*nyears
+    time3y = np.arange(i1, i1 + yr*nyears)
+
+    # Chunks data
+
+    chx = len(eddyrun_lev.x)
+    chy = len(eddyrun_lev.y)
+    cht = len(eddyrun_lev.time)
+
+    chunks = {'x': chx, 'y': chy, 'time': cht}
+
+    Udsn = eddyrun_lev.isel(lev=0, time=time3y).chunk(chunks)
+
+    # Runs code for all datasets
+    time_indices = np.arange(len(Udsn.time))  # All time indices
+
+    # Define the chunk size
+    chunk_size = 15
+
+    # Loop over the time indices in chunks of 15
+    for start in tqdm(range(0, len(time_indices), chunk_size), desc="Processing Chunks: "):
+        filessv = os.path.join(QG_path, 'rawduLT', str(start)+'.nc')
+        # Clobber?
+        if os.path.exists(filessv) and not clobber:
+            print('File {} exists'.format(filessv))
+            continue
+        # End
+        end = start + chunk_size
+        
+        # Ensure that the 'end' index doesn't exceed the total number of time indices
+        if end > len(time_indices):
+            end = len(time_indices)
+        
+        # Slice the time indices for the current chunk
+        indx_time = time_indices[start:end]
+        data = Udsn.isel(time=indx_time).chunk({'x': chx, 'y': chy, 'time': chunk_size})
+        
+        # Runs code
+        SFQG = calculateSF_2(data, maxcorr, shiftdim, grid)
+        print('Save {}.nc file'.format(start))
+        SFQG.to_netcdf(filessv)
 
 def gen_spatavg():
 
-    fileraw = '/data/SO3/manuelogv/MethodsKEFlux/rawduLT/'
+    #fileraw = '/data/SO3/manuelogv/MethodsKEFlux/rawduLT/'
+    fileraw = '/data/Projects/Oceanography/data/QG/rawduLT/'
 
     # Open the NetCDF files using xarray's open_mfdataset (multi-file dataset)
     nc_files = fileraw +'*.nc'  #
@@ -48,7 +111,8 @@ def gen_spatavg():
         with ProgressBar():
             data_avers = data_slice.mean(dim=('x','y'), skipna=True).compute()
         
-        fileSp = '/data/SO3/manuelogv/MethodsKEFlux/spatialaverduLT/SF_spatialaver_' + str(ii) + '.nc'
+        #fileSp = '/data/SO3/manuelogv/MethodsKEFlux/spatialaverduLT/SF_spatialaver_' + str(ii) + '.nc'
+        fileSp = '/data/Projects/Oceanography/data/QG/SF_spatialaver_' + str(ii) + '.nc'
         print('Save SF_spatialaver_{}.nc file'.format(ii))
         data_avers.to_netcdf(fileSp)
         
@@ -56,7 +120,7 @@ def gen_spatavg():
 
 def gen_mSF():
 
-    fileaver = '/data/SO3/manuelogv/MethodsKEFlux/spatialaverduLT/'
+    fileaver = 'spatialaverduLT/'
 
     # Open the NetCDF files using xarray's open_mfdataset (multi-file dataset)
     nc_files3 = fileaver +'*.nc'  #
@@ -70,10 +134,35 @@ def gen_mSF():
 
     # Process
     dudlt_aver_angl = process_SF_samples(dult_aver, rbins, mid_rbins)
-    dudlt_aver_angl.to_netcdf('/data/SO3/manuelogv/MethodsKEFlux/SFQG_aver_pos_orien_5yearb.nc')
+    dudlt_aver_angl.to_netcdf('SFQG_aver_pos_orien_5yearb.nc')
 
+def load_mSF():
+    chunksSF15 = {'time': 100, 'mid_rbins': 53}
+    mSF_15 = xarray.open_dataset('SFQG_aver_pos_orien_5yearb.nc', 
+                                 chunks=chunksSF15)
+    mSF_15['time'] = mSF_15.time/86400
+    mSF_15['du1'] = mSF_15.ulls + mSF_15.utts
 
-def first_order():
+    return mSF_15
+
+def first_order(mSF_15):
+
+    # Calculates degrees of freedom
+    nyears = 5
+    yr2day = 365
+
+    # Gets the first 40 index in r
+    indx = 1
+    indf = 40
+
+    Tmax = yr2day*nyears*86400
+
+    qg_tscale3 = timescale(mSF_15.du2.mean(dim='time').values[indx:indf], 
+                        mSF_15.dr.mean(dim='time').values[indx:indf])
+
+    qg_dof = Tmax/qg_tscale3
+
+    nu3 = np.sqrt(qg_dof)
 
     # First order structure function
     sf1_mn = mSF_15.du1.mean(dim='time')[indx:indf]
@@ -124,3 +213,39 @@ def first_order():
         
         sf1_skew[ii] = skew(du1.isel(mid_rbins=ii).values, axis=0, bias=True)
         sf1_kurt[ii] = kurtosis(du1.isel(mid_rbins=ii).values, axis=0, fisher=True, bias=True)
+
+    # Return
+    return rr1, du1, sf1_mn, dull_mn, dutt_mn, sf1_std, dull_std, dutt_std
+
+def main(flg:int):
+
+    # Generate raw
+    if flg == 0:
+        fileQG = '/home/xavier/Projects/Oceanography/data/QG/QGModelOutput20years.nc'
+        eddyrun_lev = xarray.open_dataset(fileQG)
+        calc_structure(eddyrun_lev)
+
+    # Spatial average
+    if flg == 1:
+        gen_spatavg()
+
+    if flg == 5:
+        #gen_mSF()
+        mSF_15 = load_mSF()
+        rr1, du1, sf1_mn, dull_mn, dutt_mn, sf1_std, dull_std, dutt_std = first_order(mSF_15)
+
+# Command line
+if __name__ == '__main__':
+    import sys
+
+    # Get the command line argument
+    if len(sys.argv) != 2:
+        print("Usage: python script.py <flag>")
+        sys.exit(1)
+    flag = int(sys.argv[1])
+    # Call the main function with the provided flag
+    main(flag)
+
+
+
+    
