@@ -17,8 +17,8 @@ import seaborn as sns
 
 from ocpy.utils import plotting
 
-from cugn import gliderdata
-from cugn import gliderpairs
+from profiler import gliderdata
+from profiler import profilerpairs
 from cugn import io as cugn_io
 from cugn import utils as cugn_utils
 from cugn import plotting as cugn_plotting
@@ -575,9 +575,9 @@ def main(flg):
         #fig_structure('ARCTERX')
         #fig_structure('ARCTERX', avoid_same_glider=False)
         #fig_structure('Calypso2019')
-        #fig_structure('Calypso2022')
+        fig_structure('Calypso2022')
         #fig_structure('Calypso2022', variables='duLdSdS')
-        fig_structure('Calypso2022', variables='duLdTdT', iz=3)
+        #fig_structure('Calypso2022', variables='duLdTdT', iz=3)
 
     # Full run on a daatset
     if flg == 5:
