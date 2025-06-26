@@ -11,6 +11,7 @@ import numpy as np
 
 from matplotlib import pyplot as plt
 import matplotlib as mpl
+from matplotlib.ticker import MultipleLocator
 import matplotlib.gridspec as gridspec
 
 import seaborn as sns
@@ -31,30 +32,41 @@ def fig_separations(dataset:str, outroot='fig_sep', max_time:float=10.):
     outfile = f'{outroot}_{dataset}.png'
 
     # Load dataset
-    gData = gliderdata.load_dataset(dataset)
+    profilers = gliderdata.load_dataset(dataset)
     
-    # Cut on valid velocity data 
-    gData = gData.cut_on_good_velocity()
 
     # Generate pairs
-    gPairs = gliderpairs.GliderPairs(gData, max_time=max_time)
+    #gPairs = gliderpairs.GliderPairs(gData, max_time=max_time)
+    gPairs = profilerpairs.ProfilerPairs(profilers, 
+                                          max_time=max_time,
+                                          debug=False,
+                                          randomize=True)
+
 
     # Start the figure
     fig = plt.figure(figsize=(12,6))
     plt.clf()
     gs = gridspec.GridSpec(1,2)
 
+
     # Lat/lon
     ax_ll = plt.subplot(gs[0])
 
-    for mid in np.unique(gPairs.data('missid',2)):
-        idx = gPairs.data('missid',2) == mid
+    for mid in np.unique(gPairs.data('missida',2).astype(int)):
+        marker = '+'
+        idx = gPairs.data('missida',2) == mid
         ax_ll.scatter(gPairs.data('lon', 2)[idx], 
-            gPairs.data('lat', 2)[idx], s=1, label=f'MID={mid}')
+            gPairs.data('lat', 2)[idx], s=2, label=f'MID={mid}',
+            marker=marker)
 
     ax_ll.set_xlabel('Longitude [deg]')
     ax_ll.set_ylabel('Latitude [deg]')
-    ax_ll.legend(fontsize=15)
+    ax_ll.legend(fontsize=4, ncol=2,
+                 loc='upper left')
+
+    ax_ll.grid()
+    ax_ll.xaxis.set_major_locator(MultipleLocator(1.0))  # Major ticks every 2 units
+
 
     # Separations
     ax_r = plt.subplot(gs[1])
@@ -177,18 +189,33 @@ def fig_dus(dataset:str, outroot='fig_du', max_time:float=10., iz:int=4):
 def fig_structure(dataset:str, outroot='fig_structure',
                   variables = 'duLduLduL',
                   iz:int=5, tcut:tuple=None,
+                  skip_vel:bool=False,
+                  gpair_file:str=None,
                   minN:int=10, avoid_same_glider:bool=True,
                   show_correct:bool=True):
 
+    # Set in_field=True to load in-field data
+    #kwargs = {}
+    #if variables in ['duLduLduL']:
+    #    kwargs['in_field'] = True
+    #    kwargs['adcp_on'] = True
+    #    skip_vel = False
+
+    # Load dataset
+    profilers = gliderdata.load_dataset(dataset)
+
     # Outfile
-    outfile = f'{outroot}_z{(iz+1)*10}_{dataset}_{variables}.png'
+    if iz >= 0:
+        outfile = f'{outroot}_z{(iz+1)*10}_{dataset}_{variables}.png'
+    else:
+        outfile = f'{outroot}_iso{np.abs(iz)}_{dataset}_{variables}.png'
 
     # Load
-    gpair_file = cugn_io.gpair_filename(
-        dataset, iz, not avoid_same_glider)
-    gpair_file = os.path.join('..', 'Analysis', 'Outputs', gpair_file)
+    #gpair_file = cugn_io.gpair_filename(
+    #    dataset, iz, not avoid_same_glider)
+    #gpair_file = os.path.join('..', 'Analysis', 'Outputs', gpair_file)
 
-    if tcut is None:
+    if gpair_file is not None:
         Sn_dict = gliderpairs.load_Sndict(gpair_file)
         print(f'Loaded: {gpair_file}')
     else:
@@ -197,20 +224,25 @@ def fig_structure(dataset:str, outroot='fig_structure',
         # Cut on valid velocity data 
         nbins = 20
         rbins = 10**np.linspace(0., np.log10(400), nbins) # km
-        # Load dataset
-        gData = gliderdata.load_dataset(dataset)
-        gData = gData.cut_on_good_velocity()
-        gData = gData.cut_on_reltime(tcut)
-
         # Generate pairs
-        gPairs = gliderpairs.GliderPairs(
-            gData, max_time=10., 
-            avoid_same_glider=avoid_same_glider)
-        gPairs.calc_delta(iz, variables)
+        #gData = gliderdata.load_dataset(dataset)
+        gPairs = profilerpairs.ProfilerPairs(
+            profilers, max_time=10.,
+            avoid_same_glider=avoid_same_glider,
+            remove_nans=True,
+            debug=False, 
+            randomize=False)
+        # Isopycnals?
+        if iz < 0:
+            gPairs.prep_isopycnals('t')
+        #gData = gData.cut_on_good_velocity()
+        #gData = gData.cut_on_reltime(tcut)
+
+        gPairs.calc_delta(iz, variables, skip_velocity=skip_vel)
         gPairs.calc_Sn(variables)
 
-        Sn_dict = gPairs.calc_Sn_vs_r(rbins, nboot=10000)
-        gPairs.calc_corr_Sn(Sn_dict) 
+        Sn_dict = gPairs.calc_Sn_vs_r(rbins, nboot=100)
+        gPairs.calc_corr_Sn(Sn_dict)
         gPairs.add_meta(Sn_dict)
 
     #embed(header='fig_structure: 215')
@@ -582,20 +614,18 @@ def main(flg):
     # Full run on a daatset
     if flg == 5:
         #dataset = 'Calypso2019'
-        #dataset = 'Calypso2022'
-        dataset = 'ARCTERX'
+        dataset = 'Calypso2022'
+        #dataset = 'ARCTERX'
         avoid_same_glider = True
-        '''
-        fig_separations(dataset)
-        fig_dtimes(dataset)
-        fig_dus(dataset)
-        '''
+        #fig_separations(dataset)
+        #fig_dtimes(dataset)
+        #fig_dus(dataset)
 
-        #fig_structure(dataset, avoid_same_glider=avoid_same_glider)
+        fig_structure(dataset, avoid_same_glider=avoid_same_glider)
         #fig_structure(dataset, avoid_same_glider=avoid_same_glider,
         #              variables='duTduTduT')#, iz=5)
-        fig_structure(dataset, avoid_same_glider=avoid_same_glider,
-                      variables='duLTduLTduLT', show_correct=False)#, iz=5)
+        #fig_structure(dataset, avoid_same_glider=avoid_same_glider,
+        #              variables='duLTduLTduLT', show_correct=False)#, iz=5)
         #fig_structure(dataset, avoid_same_glider=avoid_same_glider, iz=10)
 
     # Sn with depth
