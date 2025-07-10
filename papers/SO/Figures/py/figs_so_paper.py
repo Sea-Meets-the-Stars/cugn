@@ -20,6 +20,7 @@ import matplotlib.gridspec as gridspec
 from matplotlib.ticker import MultipleLocator 
 from matplotlib.patches import Ellipse
 import matplotlib.dates as mdates
+import matplotlib.image as mpimg
 
 import cartopy.crs as ccrs
 import cartopy
@@ -530,6 +531,31 @@ def fig_dist_doy(outfile:str, line:str, color:str,
     # Stats
     not_winter = (grid_extrem.doy > 50) & (grid_extrem.doy < 300)
     print(f'Percent of profiles not in winter [50-300]: {100.*np.sum(not_winter)/len(grid_extrem):.1f}%')
+
+def fig_combine_dist_doy(img_files:list,
+                         outfile='fig_combine_dist_doy.png'):
+
+
+    # Read the PNG files
+    imgs = []
+    for img_file in img_files:
+        img = mpimg.imread(img_file)
+        imgs.append(img)
+
+    # Create a figure with 2x2 subplots
+    fig = plt.figure(figsize=(12,12))
+    gs = gridspec.GridSpec(2,2)
+
+    # Display images in each subplot
+    for ss in range(4):
+        ax = plt.subplot(gs[ss])
+        img = imgs[ss]
+        ax.imshow(img)
+        ax.axis('off')
+
+    plt.tight_layout()
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
 
 def fig_dist_doy_low(outfile:str='fig_dist_doy_low.png', 
                  gextrem:str='low_noperc'):
@@ -1620,6 +1646,7 @@ def main(flg):
 
     # Figure 5 -- DOY vs Offshore distance
     if flg & (2**5):
+        img_files = []
         for line, clr in zip(lines, line_colors):
             # Skip for now
             #if line == '56':
@@ -1629,17 +1656,21 @@ def main(flg):
             else:
                 show_legend = False
             # High
-            fig_dist_doy(f'fig_dist_doy_{line}.png', 
+            img_file = f'fig_dist_doy_{line}.png' 
+            fig_dist_doy(img_file,
                          line, clr, show_legend=show_legend,
                          clr_by_depth=True,
                          cluster_only=False,
-                         kludge_MLDN=True)
+                         kludge_MLDN=False)
+            img_files.append(img_file)
             # Low
             #fig_dist_doy(f'fig_dist_doy_low_{line}.png', 
             #             line, clr, 
             #             gextrem='low_noperc',
             #             show_legend=show_legend,
             #             clr_by_depth=True)
+        # Combine them
+        fig_combine_dist_doy(img_files)
 
     # Figure ? -- SO vs. N
     if flg & (2**6):
@@ -1744,11 +1775,11 @@ if __name__ == '__main__':
         #flg += 2 ** 0  # 1 -- Joint PDFs of all 4 lines
         #flg += 2 ** 1  # 2 ??
         #flg += 2 ** 2  # 4 Figure 4 DO vs. T on Line 90 
-        #flg += 2 ** 3  # Figure 5: N vs. SO
+        #flg += 2 ** 3  # N vs. SO
         #flg += 2 ** 4  # Figure 6: SO CDFs
-        #flg += 2 ** 5  # Figure 7: DOY vs. offshore distance
+        flg += 2 ** 5  # Figure 5: DOY vs. offshore distance
         #flg += 2 ** 37  # Figure 8: Clusters
-        flg += 2 ** 18  # # Extreme CDFs; Figures 11, 12, 13
+        #flg += 2 ** 18  # # Extreme CDFs; Figures 11, 12, 13
         #flg += 2 ** 6  # 
         #flg += 2 ** 7  # 
 
