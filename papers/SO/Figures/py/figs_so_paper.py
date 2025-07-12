@@ -106,7 +106,7 @@ def fig_cugn(outfile:str='fig_cugn.png', debug:bool=False,
         if ss > 0 and debug:
             continue
         # Load
-        items = cugn_io.load_up(line, use_full=True, kludge_MLDN=True)
+        items = cugn_io.load_up(line, use_full=True, kludge_MLDN=False)
         #grid_extrem = items[0]
         #ds = items[1]
         #times = items[2]
@@ -441,11 +441,13 @@ def fig_dist_doy(outfile:str, line:str, color:str,
     #ax = plt.gca()
 
     # Load
-    items = cugn_io.load_up(line, gextrem=gextrem, use_full=True, kludge_MLDN=kludge_MLDN)
+    items = cugn_io.load_up(line, gextrem=gextrem, use_full=True,
+                            kludge_MLDN=kludge_MLDN)
     grid_extrem = items[0]
     #ds = items[1]
     #times = items[2]
     #grid_tbl = items[3]
+    #embed(header='450 of figs')
 
     jg = sns.jointplot(data=grid_extrem, x='dist', 
                     y='doy', color=color,
@@ -944,6 +946,9 @@ def fig_extrema_cdfs(outfile:str='fig_N_cdfs.png', metric:str='N',
 
         ctrl = grid_utils.grab_control_values(grid_extrem, grid_tbl[cut_grid], metric, boost=5)
 
+        # Avoid NaN
+        ok_extrem = np.isfinite(grid_extrem[metric])
+        grid_extrem = grid_extrem[ok_extrem]
 
         ax = plt.subplot(gs[ss])
 
@@ -954,6 +959,8 @@ def fig_extrema_cdfs(outfile:str='fig_N_cdfs.png', metric:str='N',
         # KS test
         ks_eval = stats.ks_2samp(grid_extrem[metric], ctrl)
         print(f'KS test: {ks_eval.statistic:.3f}, {ks_eval.pvalue}, {ks_eval.statistic_location}')
+        #if line == '90.0':
+        #    embed(header='960 of figs')
 
 
         # Finish
@@ -1632,7 +1639,7 @@ def main(flg):
 
     # Figure 3 -- Joint PDF: T, DO on Line 90
     if flg & (2**2):
-        fig_joint_line90(kludge_MLDN=True)
+        fig_joint_line90(kludge_MLDN=False)
 
     # 
     if flg & (2**3):
@@ -1649,8 +1656,8 @@ def main(flg):
         img_files = []
         for line, clr in zip(lines, line_colors):
             # Skip for now
-            #if line == '56':
-            #    continue
+            if line != '90.0':
+                continue
             if line == '56.0':
                 show_legend = True
             else:
@@ -1659,6 +1666,7 @@ def main(flg):
             img_file = f'fig_dist_doy_{line}.png' 
             fig_dist_doy(img_file,
                          line, clr, show_legend=show_legend,
+                         gextrem='high',
                          clr_by_depth=True,
                          cluster_only=False,
                          kludge_MLDN=False)
@@ -1670,7 +1678,7 @@ def main(flg):
             #             show_legend=show_legend,
             #             clr_by_depth=True)
         # Combine them
-        fig_combine_dist_doy(img_files)
+        #fig_combine_dist_doy(img_files)
 
     # Figure ? -- SO vs. N
     if flg & (2**6):
@@ -1687,7 +1695,7 @@ def main(flg):
             line, event, t_off)#, gextrem='hi_noperc')
         
 
-    # Figure 9 -- doy, distance for the low extrema
+    # Figure 10 -- doy, distance for the low extrema
     if flg & (2**8):
         fig_dist_doy_low()
 
@@ -1706,10 +1714,11 @@ def main(flg):
     if flg & (2**18):
         kludge_MLDN = False
         # drho
-        fig_extrema_cdfs('fig_dsigma0_cdfs.png', metric='dsigma0',
-                         xyLine=(0.7, 0.4), kludge_MLDN=kludge_MLDN)
+        #fig_extrema_cdfs('fig_dsigma0_cdfs.png', metric='dsigma0',
+        #                 xyLine=(0.7, 0.4), kludge_MLDN=kludge_MLDN)
         # N
         fig_extrema_cdfs(kludge_MLDN=kludge_MLDN)
+        '''
         # Chla
         fig_extrema_cdfs('fig_chla_cdfs.png', metric='chla',
                          xyLine=(0.7, 0.4), kludge_MLDN=kludge_MLDN)
@@ -1721,6 +1730,7 @@ def main(flg):
         fig_extrema_cdfs('fig_mld_cdfs.png', metric='MLD',
                          xyLine=(0.7, 0.4), leg_loc='lower right',
                          kludge_MLDN=kludge_MLDN)
+        '''
 
     # Annual cycle
     if flg & (2**19):
@@ -1758,7 +1768,7 @@ def main(flg):
 
     # Cluster date vs location/size
     if flg & (2**37):
-        fig_cluster_date_vs_loc(kludge_MLDN=True)#debug=True)
+        fig_cluster_date_vs_loc(kludge_MLDN=False)#debug=True)
 
     if flg & (2**40):
         #line = '90'
@@ -1772,18 +1782,17 @@ if __name__ == '__main__':
     if len(sys.argv) == 1:
         flg = 0
         #flg += 2 ** 30  # Figure 1 -- CUGN 
-        #flg += 2 ** 0  # 1 -- Joint PDFs of all 4 lines
-        #flg += 2 ** 1  # 2 ??
-        #flg += 2 ** 2  # 4 Figure 4 DO vs. T on Line 90 
-        #flg += 2 ** 3  # N vs. SO
-        #flg += 2 ** 4  # Figure 6: SO CDFs
+        #flg += 2 ** 0  # 1 -- Figure 2 Joint PDFs of all 4 lines
+        #flg += 2 ** 2  # 4 Figure 3 Joint PDF of DO vs. T on Line 90 
+        #flg += 2 ** 4  # Figure 4: SO CDFs
         flg += 2 ** 5  # Figure 5: DOY vs. offshore distance
         #flg += 2 ** 37  # Figure 8: Clusters
+        #flg += 2 ** 8  # 256 -- Figure 10: DOY vs. offshore distance for low
         #flg += 2 ** 18  # # Extreme CDFs; Figures 11, 12, 13
         #flg += 2 ** 6  # 
         #flg += 2 ** 7  # 
+        #flg += 2 ** 3  # N vs. SO
 
-        #flg += 2 ** 8  # 256 -- Figure 9: DOY vs. offshore distance for low
         #flg += 2 ** 9  # SOa PDFs
 
         # Appenedix
