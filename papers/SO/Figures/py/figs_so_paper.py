@@ -1656,8 +1656,8 @@ def main(flg):
         img_files = []
         for line, clr in zip(lines, line_colors):
             # Skip for now
-            if line != '90.0':
-                continue
+            #if line != '90.0':
+            #    continue
             if line == '56.0':
                 show_legend = True
             else:
@@ -1678,7 +1678,7 @@ def main(flg):
             #             show_legend=show_legend,
             #             clr_by_depth=True)
         # Combine them
-        #fig_combine_dist_doy(img_files)
+        fig_combine_dist_doy(img_files)
 
     # Figure ? -- SO vs. N
     if flg & (2**6):
@@ -1714,11 +1714,10 @@ def main(flg):
     if flg & (2**18):
         kludge_MLDN = False
         # drho
-        #fig_extrema_cdfs('fig_dsigma0_cdfs.png', metric='dsigma0',
-        #                 xyLine=(0.7, 0.4), kludge_MLDN=kludge_MLDN)
+        fig_extrema_cdfs('fig_dsigma0_cdfs.png', metric='dsigma0',
+                         xyLine=(0.7, 0.4), kludge_MLDN=kludge_MLDN)
         # N
         fig_extrema_cdfs(kludge_MLDN=kludge_MLDN)
-        '''
         # Chla
         fig_extrema_cdfs('fig_chla_cdfs.png', metric='chla',
                          xyLine=(0.7, 0.4), kludge_MLDN=kludge_MLDN)
@@ -1730,7 +1729,7 @@ def main(flg):
         fig_extrema_cdfs('fig_mld_cdfs.png', metric='MLD',
                          xyLine=(0.7, 0.4), leg_loc='lower right',
                          kludge_MLDN=kludge_MLDN)
-        '''
+
 
     # Annual cycle
     if flg & (2**19):
