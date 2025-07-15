@@ -8,7 +8,7 @@ from scipy import stats
 
 import pandas
 
-#from siosandbox import cat_utils
+from cugn import utils
 from cugn import io as cugn_io
 
 from IPython import embed
@@ -16,9 +16,11 @@ from IPython import embed
 default_bins = dict(SA=np.linspace(32.1, 34.8, 50),
                 sigma0=np.linspace(22.8, 27.2, 50),
                 SO=np.linspace(0., 1.5, 100),
+                AOU=np.linspace(-100., 100, 100),
                 doxy=np.linspace(0., 380, 100),
                 z=np.linspace(0., 500, 50),
                 N=np.linspace(0., 25, 100),
+                MLD=np.linspace(0., 100, 50),
                 CT=np.linspace(4, 22.5, 50))
 
 def gen_grid(ds:xarray.Dataset, axes:tuple=('SA', 'sigma0'),
@@ -51,6 +53,7 @@ def gen_grid(ds:xarray.Dataset, axes:tuple=('SA', 'sigma0'),
     # Cut on good data
     xkey, ykey = axes
     
+    #embed(header='cugn/grid_utils.py: 55')
     gd = np.isfinite(ds[xkey]) & np.isfinite(ds[ykey]) & np.isfinite(ds[variable])
     if max_depth is not None:
         depths = np.outer(ds.depth.data, np.ones_like(ds.profile))
@@ -126,7 +129,7 @@ def chk_grid_gaussianity(values:np.ndarray, mean_grid:np.ndarray,
 
     return p_values
 
-def gen_outliers(line:str, pcut:float):
+def gen_outliers(line:str, pcut:float, grid_tbl:pandas.DataFrame=None):
     """ Generate a table of outliers for a given line
     and percentile
 
@@ -148,7 +151,8 @@ def gen_outliers(line:str, pcut:float):
     # Load and unpack
     items = cugn_io.load_line(line)
     ds = items['ds']
-    grid_tbl = items['grid_tbl']
+    if grid_tbl is None:
+        grid_tbl = items['grid_tbl']
 
     # Outliers
     if pcut > 50.:
@@ -164,7 +168,7 @@ def gen_outliers(line:str, pcut:float):
     # Return
     return grid_outliers, grid_tbl, ds
 
-def fill_in_grid(grid, ds):
+def fill_in_grid(grid, ds, kludge_MLDN:bool=False):
     """
     Fills in the grid with data from the given dataset.
 
@@ -185,13 +189,43 @@ def fill_in_grid(grid, ds):
     grid['SA'] = ds.SA.data[(grid.depth.values, grid.profile.values)]
     grid['sigma0'] = ds.sigma0.data[(grid.depth.values, grid.profile.values)]
     grid['SO'] = ds.SO.data[(grid.depth.values, grid.profile.values)]
-    # Buyoancy                            
-    grid['N'] = ds.N.data[(grid.depth.values, grid.profile.values)]
+    grid['AOU'] = ds.AOU.data[(grid.depth.values, grid.profile.values)]
 
 
     # Others                            
     grid['chla'] = ds.chlorophyll_a.data[(grid.depth.values, grid.profile.values)]
     grid['T'] = ds.temperature.data[(grid.depth.values, grid.profile.values)]
+
+    # Velocities
+    grid['u'] = ds.u.data[(grid.depth.values, grid.profile.values)]
+    grid['v'] = ds.v.data[(grid.depth.values, grid.profile.values)]
+    grid['vel'] = np.sqrt(ds.u.data[(grid.depth.values, grid.profile.values)]**2 +
+                            ds.v.data[(grid.depth.values, grid.profile.values)]**2)
+
+    if kludge_MLDN:
+        raise IOError("kludge_MLDN not implemented")
+        # Buoyancy                            
+        grid['N'] = ds.N.data[(grid.depth.values, grid.profile.values)]
+        # MLD
+        grid['MLD'] = ds.MLD[grid.profile.values].values
+
+    grid['dsigma0'] = grid['sigma0'] - grid['sigma0_0']
+
+    # Upwelling
+    cuti, beuti = cugn_io.load_upwelling()
+
+    # Days
+    ds_days = utils.round_to_day(ds.time[grid.profile.values].values)
+    itimes = np.digitize(ds_days.astype(float), 
+                         cuti.time.data.astype(float)) - 1
+    # Latitutdes
+    ilats = np.digitize(grid['lat'], cuti.latitude.data) - 1
+
+    # Upwelling
+    grid['cuti'] = cuti.CUTI.data[itimes, ilats]
+    assert np.all(beuti.time == cuti.time)
+    assert np.all(beuti.latitude == cuti.latitude)
+    grid['beuti'] = beuti.BEUTI.data[itimes, ilats]
 
 
 def grab_control_values(outliers:pandas.DataFrame,
@@ -317,7 +351,7 @@ def find_perc(grid_tbl:pandas.DataFrame, metric:str='doxy'):
         vals = grid_tbl[metric].values[in_cell]
 
         srt = np.argsort(vals)
-        in_srt = cat_utils.match_ids(np.arange(len(vals)), srt)
+        in_srt = utils.match_ids(np.arange(len(vals)), srt)
         perc = np.arange(len(vals))/len(vals-1)*100.
 
         # Save

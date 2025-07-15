@@ -18,12 +18,13 @@ import seaborn as sns
 
 import pandas
 
-from siosandbox import plot_utils
+from ocpy.utils import plotting
 
 from cugn import grid_utils
 from cugn import utils as cugn_utils
 from cugn import io as cugn_io
 from cugn import defs as cugn_defs
+from cugn import clusters
 
 lines = cugn_defs.lines
 line_colors = cugn_defs.line_colors
@@ -47,8 +48,10 @@ ylbl_dict = {'doxy': 'DO ('+r'$\mu$'+'mol/kg)',
                  'T': 'Temperature (deg C)',
                  'CT': 'Temperature (deg C)',
                  'SA': 'Salinity (g/kg)',
-                 'N': 'Buoyancy frequency (cycles/hr)',
-                 'dist': 'Distance from shore (km)',
+                 'N': 'Buoyancy frequency (cycles/hr)', 
+                 'SO':'Oxygen Saturation', 
+                 'dist': 'Distance from shore (km)', 
+                 'MLD': 'Mixed Layer Depth (m)',
                  'chla': 'Chl-a (mg/m'+r'$^3$'+')'}
 
 short_lbl = {'doxy': 'DO ('+r'$\mu$'+'mol/kg)', 
@@ -57,6 +60,7 @@ short_lbl = {'doxy': 'DO ('+r'$\mu$'+'mol/kg)',
                  'SA': 'SA (g/kg)',
                  'SO': 'SO',
                  'N': 'N (cycles/hr)',
+                 'MLD': 'MLD (m)',
                  'dist': 'Distance from shore (km)',
                  'chla': 'Chl-a (mg/m'+r'$^3$'+')'}
 
@@ -214,7 +218,7 @@ def fig_pdf_cdf(outfile:str, line, SO_cut:float=1.1):
 
     # Pretty up
     for ax in axes:
-        plot_utils.set_fontsize(ax, 17)
+        plotting.set_fontsize(ax, 17)
 
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
@@ -250,7 +254,7 @@ def fig_varySO_pdf_cdf(outfile:str, line):
 
     # Finish
     ax.legend(fontsize=15.)
-    plot_utils.set_fontsize(ax, 17)
+    plotting.set_fontsize(ax, 17)
 
     ax.set_xlabel('N (cycles/hour)')
     ax.set_ylabel('CDF')
@@ -308,7 +312,7 @@ def fig_timeseries(outfile:str, line, vmax=1.3):
         
 
         # Finish
-        plot_utils.set_fontsize(ax, 13)
+        plotting.set_fontsize(ax, 13)
 
     cax,kw = mpl.colorbar.make_axes([ax for ax in axs.flat])
     cbaxes = plt.colorbar(sc, cax=cax, **kw)
@@ -449,7 +453,7 @@ def fig_event(outfile:str, line:str, event:str, t_off,
 
         ax.tick_params(axis='x', rotation=10)
         #ax.autofmt_xdate()
-        plot_utils.set_fontsize(ax, 14)
+        plotting.set_fontsize(ax, 14)
 
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
@@ -602,7 +606,7 @@ def fig_pivot_event(outfile:str, line:str, event:str, t_off,
 
         ax.tick_params(axis='x', rotation=20)
         #ax.autofmt_xdate()
-        plot_utils.set_fontsize(ax, 14)
+        plotting.set_fontsize(ax, 14)
 
     #plt.tight_layout(h_pad=0.3, w_pad=10.3)
     plt.savefig(outfile, dpi=300)
@@ -649,7 +653,7 @@ def fig_percentiles(outfile:str, line:str, metric='N',
         jg.ax_joint.set_xlabel('DO Percentile')
     else:
         jg.ax_joint.set_xlabel(xlabel)
-    plot_utils.set_fontsize(jg.ax_joint, 14)
+    plotting.set_fontsize(jg.ax_joint, 14)
 
         # Submplit
         #mg0 = SeabornFig2Grid(jg, fig, gs[ss])
@@ -716,7 +720,7 @@ def fig_scatter_event(outfile:str, line:str,
 
         ax.set_ylabel(metric)
 
-        plot_utils.set_fontsize(ax, 13.)
+        plotting.set_fontsize(ax, 13.)
 
     #gs.tight_layout(fig)
     plt.savefig(outfile, dpi=300)
@@ -794,7 +798,7 @@ def fig_multi_z_event(outfile:str, line:str,
 
             # Axes
             ax.set_ylabel(ylbl_dict[metric])
-            plot_utils.set_fontsize(ax, 13.)
+            plotting.set_fontsize(ax, 13.)
             if z < 30:
                 ax.set_xticklabels([])
             else:
@@ -837,8 +841,10 @@ def fig_multi_scatter_event(outfile:str, line:str,
     # Mission
     missions = np.unique(ds.mission[ds_in_event].data)
     mission_profiles = np.unique(ds.mission_profile[ds_in_event].data)
+    mission_names = np.unique(ds.mission_name[missions].data)
     print(f'Missions: {missions}')
-    #print(f'Mission Profiles: {mission_profiles}')
+    print(f'Mission Names: {mission_names}')
+    print(f'Profiles: {mission_profiles}')
 
     dist, _ = cugn_utils.calc_dist_offset(
                     line, ds.lon[ds_in_event].values, 
@@ -852,13 +858,14 @@ def fig_multi_scatter_event(outfile:str, line:str,
     fig = plt.figure(figsize=(10,8))
     plt.clf()
 
-    gs = gridspec.GridSpec(5,2)
 
     cnt = 0
     #metrics = ['SO', 'doxy', 'N', 'CT', 'dist']
-    metrics = ['SO', 'doxy', 'N', 'CT', 'chla']
+    metrics = ['SO', 'doxy', 'N', 'MLD', 'CT', 'chla']
+
+    gs = gridspec.GridSpec(len(metrics),2)
     #metrics = ['SO', 'doxy', 'N', 'CT', 'SA']
-    clrs = ['gray', 'purple', 'blue', 'red', 'green']
+    clrs = ['gray', 'purple', 'blue', 'orange', 'red', 'green']
     nsub = len(metrics)
     #for clr, z in zip(['b', 'g', 'r'], [10, 20, 30]):
     for col, z in enumerate([10, 20]):
@@ -893,6 +900,8 @@ def fig_multi_scatter_event(outfile:str, line:str,
                 yvals = grid_depth[metric][grid_in_event].values
                 #yvals = ds[ds_metric][plt_depth,ds_in_event][srt_ds].values
 
+            #if metric == 'N':
+            #    embed(header='fig_multi_scatter_event 905')
             # Twin?
             axi = ax
             #if metric == 'T':
@@ -935,7 +944,7 @@ def fig_multi_scatter_event(outfile:str, line:str,
 
             # Axes
             ax.set_ylabel(short_lbl[metric])
-            plot_utils.set_fontsize(ax, 14.)
+            plotting.set_fontsize(ax, 14.)
             #if z < 20 or ii < 3:
             if ii < (nsub-1):
                 ax.set_xticklabels([])
@@ -1004,7 +1013,7 @@ def fig_dSO_dT():
     ax.set_ylabel('dSO/dT (1/deg C)')
 
     fsz = 21.
-    plot_utils.set_fontsize(ax, fsz)
+    plotting.set_fontsize(ax, fsz)
 
     ax.legend(fontsize=fsz)
 
@@ -1080,7 +1089,7 @@ def fig_T_fluctuations(outfile:str, line:str, debug:bool=False):
     #ax.set_ylabel('dSO/dT (1/deg C)')
 
     fsz = 21.
-    plot_utils.set_fontsize(ax, fsz)
+    plotting.set_fontsize(ax, fsz)
 
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
@@ -1160,7 +1169,7 @@ def fig_joint_pdfs(line:str):
         # Set x-axis interval to 0.5
         ax.xaxis.set_major_locator(MultipleLocator(0.5))
         # 
-        plot_utils.set_fontsize(ax, fsz)
+        plotting.set_fontsize(ax, fsz)
     
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
@@ -1213,7 +1222,7 @@ def fig_joint_pdf(line:str, xvar:str, yvar:str):
     # Set x-axis interval to 0.5
     #ax.xaxis.set_major_locator(MultipleLocator(0.5))
     # 
-    plot_utils.set_fontsize(ax, fsz)
+    plotting.set_fontsize(ax, fsz)
     
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
@@ -1276,7 +1285,7 @@ def fig_avgSO_zd(line:str):
     # Set x-axis interval to 0.5
     #ax.xaxis.set_major_locator(MultipleLocator(0.5))
     # 
-    plot_utils.set_fontsize(ax, fsz)
+    plotting.set_fontsize(ax, fsz)
     
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
@@ -1323,7 +1332,7 @@ def fig_absolute(outfile:str, line:str, metric='N',
     # Axes                                 
     jg.ax_joint.set_ylabel(f'{metric}')
     jg.ax_joint.set_xlabel('DO')
-    plot_utils.set_fontsize(jg.ax_joint, 14)
+    plotting.set_fontsize(jg.ax_joint, 14)
 
     # Extrema
     jg.ax_joint.plot(grid_extrem.doxy, grid_extrem[metric], 
@@ -1383,7 +1392,7 @@ def fig_lowSO_jointDO(outfile:str, line:str='56.0',
     # Axes                                 
     jg.ax_joint.set_ylabel(f'{metric}')
     jg.ax_joint.set_xlabel('DO')
-    plot_utils.set_fontsize(jg.ax_joint, 14)
+    plotting.set_fontsize(jg.ax_joint, 14)
 
     # Extrema
     jg.ax_joint.plot(grid_extrem.doxy, grid_extrem[metric], 
@@ -1473,7 +1482,7 @@ def fig_upwell_search(line:str, gextrem:str='high',
     ax.set_ylabel('Count')
 
     fsz = 17.
-    plot_utils.set_fontsize(ax, fsz)
+    plotting.set_fontsize(ax, fsz)
 
     ax.legend(fontsize=fsz)
 
@@ -1587,7 +1596,7 @@ def fig_sodo_anomalies(line:str, zmax:int=9,
                 va='top')
 
         fsz = 19.
-        plot_utils.set_fontsize(ax, fsz)
+        plotting.set_fontsize(ax, fsz)
 
         #ax.legend(fontsize=fsz)
 
@@ -1597,6 +1606,177 @@ def fig_sodo_anomalies(line:str, zmax:int=9,
 
 
     plt.tight_layout()
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+
+def fig_cluster_char(outfile='fig_cluster_char.png', use_full:bool=False):
+
+    day_ns = 24 * 60 * 60 * 1_000_000_000
+    
+    # Figure
+    fig = plt.figure(figsize=(6,6))
+    plt.clf()
+    gs = gridspec.GridSpec(4,2)
+
+    for tt, clr, line in zip(np.arange(4), line_colors, lines):
+
+        # Load
+        items = cugn_io.load_up(line, use_full=use_full)#, skip_dist=True)
+        grid_extrem = items[0]
+        ds = items[1]
+        times = items[2]
+        grid_tbl = items[3]
+
+        cluster_stats = clusters.cluster_stats(grid_extrem)
+        dur_days = cluster_stats.Dtime.values.astype('float') / day_ns
+        #embed(header='fig_cluster_char 1622')
+
+        # Duration, size
+        for ss in range(2):
+            ax = plt.subplot(gs[tt,ss])
+
+            # Duration
+            if ss == 0:
+                sns.histplot(dur_days, ax=ax, color=clr,
+                             binrange=[0.,15.],
+                             binwidth=1.)
+            else: # size
+                sns.histplot(cluster_stats['Ddist'].values, ax=ax, color=clr,
+                             binrange=[0.,150.],
+                             binwidth=10.)
+                             #binrange=[0.,15.],
+                             #binwidth=1.)
+                print(f'Line={line}, max={cluster_stats.Ddist.max()}')
+            
+            if tt < 3:
+                ax.set_xticklabels([])
+                ax.tick_params(bottom=False)
+            else:
+                ax.set_xlabel(['Duration (days)', 'Size (km)'][ss])
+            # Font size
+            plotting.set_fontsize(ax, 15.)
+    
+    plt.tight_layout(pad=0.5)#, h_pad=0.1, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+
+def fig_cluster_size_vs_age(outfile='fig_cluster_size_vs_age.png', use_full:bool=False):
+
+    day_ns = 24 * 60 * 60 * 1_000_000_000
+    
+    # Figure
+    fig = plt.figure(figsize=(6,6))
+    plt.clf()
+    gs = gridspec.GridSpec(1,1)
+    ax = plt.subplot(gs[0])
+
+    markers = ['o', 's', 'd', '^']
+    for tt, clr, line in zip(np.arange(4), line_colors, lines):
+
+        # Load
+        items = cugn_io.load_up(line, use_full=use_full)#, skip_dist=True)
+        grid_extrem = items[0]
+        ds = items[1]
+        times = items[2]
+        grid_tbl = items[3]
+
+        cluster_stats = clusters.cluster_stats(grid_extrem)
+        dur_days = cluster_stats.Dtime.values.astype('float') / day_ns
+        #embed(header='fig_cluster_char 1622')
+
+        # Duration, size
+        #embed(header='1689 of figs')
+        ax.scatter(dur_days, cluster_stats['Ddist'].values, 
+                marker=markers[tt], edgecolor=clr, 
+                facecolor='None',
+                s=cluster_stats['N'].values/2., 
+                label=f'Line {line}')
+
+    plotting.set_fontsize(ax, 17.)
+    ax.legend(fontsize=15.)
+
+    # Labels
+    ax.set_xlabel('Duration (days)')
+    ax.set_ylabel('Size (km)')
+    
+    plt.tight_layout(pad=0.5)#, h_pad=0.1, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+
+
+def fig_joint_pdf_MLDSO(line:str, iz:int=0):
+
+    def gen_cb(img, lbl, csz = 17.):
+        cbaxes = plt.colorbar(img, pad=0., fraction=0.030)
+        cbaxes.set_label(lbl, fontsize=csz)
+        cbaxes.ax.tick_params(labelsize=csz)
+
+    xvar = 'SO'
+    yvar = 'MLD'
+    outfile = f'fig_jointPDF_{line}_SO_MLD.png'
+
+    # Load
+    items = cugn_io.load_line(line)
+    ds = items['ds']
+
+    #
+    bins_SO = np.linspace(0.8, 1.3, 50)
+    bins_MLD = np.linspace(0, 100, 50)
+
+    gd = np.isfinite(ds.SO.data[iz,:]) & np.isfinite(ds.MLD.data)
+
+    # Counts
+    counts, xedges, yedges = np.histogram2d(
+                ds.SO.data[iz,gd], 
+                ds.MLD.data[gd],
+                bins=[bins_SO, bins_MLD])
+
+    # PDF
+    dx = xedges[1] - xedges[0]
+    dy = yedges[1] - yedges[0]
+
+    p_norm = np.sum(counts) * (dx * dy)
+    consv_pdf = counts / p_norm
+
+
+    fig = plt.figure(figsize=(12,10))
+    plt.clf()
+    ax = plt.gca()
+
+    # #####################################################
+    # PDF
+    img = ax.pcolormesh(xedges, yedges, np.log10(consv_pdf.T), 
+                            cmap='Greens')
+    gen_cb(img, r'$\log_{10} \, p('+f'{xvar},{yvar})$',
+           csz=19.)
+
+    # ##########################################################
+    tsz = 25.
+    ax.text(0.05, 0.9, f'Line: {line}',
+                transform=ax.transAxes,
+                fontsize=tsz, ha='left', color='k')
+    ax.text(0.05, 0.8, f'z = {(iz+1)*10}m',
+                transform=ax.transAxes,
+                fontsize=tsz, ha='left', color='k')
+
+    ax.set_xlabel(ylbl_dict[xvar])
+    ax.set_ylabel(ylbl_dict[yvar])
+
+    #ax.set_xlim(0.4, 1.6)
+    #ax.set_ylim(0., 22.)
+    # Set x-axis interval to 0.5
+    #ax.xaxis.set_major_locator(MultipleLocator(0.5))
+    # 
+    fsz = 27.
+    plotting.set_fontsize(ax, fsz)
+
+    # Vertical line at hyperoxic
+    ax.axvline(1.1, color='black', linestyle=':')
+    
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
@@ -1808,6 +1988,19 @@ def main(flg):
                         line, dmax=50., variable=variable,
                         zmax=zmax)
 
+    # Cluster char
+    if flg & (2**35):
+        fig_cluster_char()
+
+    # Cluster size vs age
+    if flg & (2**36):
+        fig_cluster_size_vs_age()
+
+
+    if flg & (2**38):
+        line = '80' # '90'
+        fig_joint_pdf_MLDSO(line)
+
 # Command line execution
 if __name__ == '__main__':
     import sys
@@ -1822,7 +2015,11 @@ if __name__ == '__main__':
         #flg += 2 ** 5  # 32 -- 
         #flg += 2 ** 6  # 64 -- dist vs DOY
 
+        # Events
         #flg += 2 ** 7  # 128 -- scatter event
+
+
+
         #flg += 2 ** 8  # 256 -- dSO/dT
         #flg += 2 ** 9  # 512 -- T fluctuations
         #flg += 2 ** 10  # 1024 -- joint PDFs
@@ -1843,7 +2040,14 @@ if __name__ == '__main__':
         #flg += 2 ** 33  # Search for upwelling
 
         # Anamolies
-        flg += 2 ** 34  # DO
+        #flg += 2 ** 34  # DO
+
+        # Clusters
+        #flg += 2 ** 35  # clusters
+        #flg += 2 ** 36  # size vs age
+
+        # MLD
+        #flg += 2 ** 38  # date vs location/size
 
     else:
         flg = sys.argv[1]

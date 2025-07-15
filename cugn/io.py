@@ -7,42 +7,49 @@ import pandas
 from cugn import grid_utils
 from cugn import clusters
 from cugn import utils as cugn_utils
+from cugn import defs as cugn_defs
+
+from cugn import utils
 
 from IPython import embed
 
-data_path = os.getenv('CUGN')
+data_path = cugn_defs.data_path
 
 def line_files(line:str):
     """
-    Generate a dictionary of file paths based on the given line.
+    Returns a dictionary containing file paths for various data files related to the given line.
 
     Parameters:
-        line (str): The line number.
+    line (str): The line identifier.
 
     Returns:
-        dict: A dictionary containing the file paths for the datafile, gridtbl_file_full, gridtbl_file_control, and edges_file.
+    dict: A dictionary containing the following file paths:
+        - datafile: The path to the data file for the given line.
+        - gridtbl_file_full: The path to the full grid table file for the given line.
+        - gridtbl_file_control: The path to the control grid table file for the given line.
+        - edges_file: The path to the edges file for the given line.
     """
-
-
     datafile = os.path.join(data_path, f'CUGN_potential_line_{line[0:2]}.nc')
     gridtbl_file_full = os.path.join(data_path, f'full_grid_line{line[0:2]}.parquet')
     gridtbl_file_control = os.path.join(data_path, f'doxy_grid_line{line[0:2]}.parquet')
     edges_file = os.path.join(data_path, f'doxy_edges_line{line[0:2]}.npz')
+    fullres_file = os.path.join(data_path, f'fullres_{line[0:2]}.parquet')
 
     # dict em
     lfiles = dict(datafile=datafile, 
-                  gridtbl_file_full=gridtbl_file_full, 
-                  gridtbl_file_control=gridtbl_file_control, 
-                  edges_file=edges_file)
+                  gridtbl_file_full=gridtbl_file_full,
+                  gridtbl_file_control=gridtbl_file_control,
+                  edges_file=edges_file,
+                  fullres_file=fullres_file)
     # Return
     return lfiles
     
-def load_line(line:str, use_full:bool=False):
+def load_line(line:str, use_full:bool=False, add_fullres:bool=False):
     """
-    Load data from files associated with a given line.
+    Load data for a given line.
 
     Parameters:
-        line (str): The line to load data for.
+        line (str): The line identifier.
         use_full (bool, optional): Whether to use the full grid table file or the control grid table file. Defaults to False.
 
     Returns:
@@ -61,15 +68,18 @@ def load_line(line:str, use_full:bool=False):
     ds = xarray.load_dataset(lfiles['datafile'])
     edges = np.load(lfiles['edges_file'])
 
-
     # dict em
     items = dict(ds=ds, grid_tbl=grid_tbl, edges=edges)
+
+    if add_fullres:
+        full_res = pandas.read_parquet(lfiles['fullres_file'])
+        items['full_res'] = full_res
 
     return items
 
 
-
-def load_up(line:str, gextrem:str='high', use_full:bool=False):
+def load_up(line:str, gextrem:str='high', use_full:bool=False,
+            kludge_MLDN:bool=False):
     """
     Load data and perform various operations on it.
 
@@ -77,6 +87,7 @@ def load_up(line:str, gextrem:str='high', use_full:bool=False):
         line (str): The line to load data for.
         gextrem (str, optional): The type of extremum to consider. Defaults to 'high'.
         use_full (bool, optional): Whether to use the full data or not. Defaults to False.
+        kludge_MLDN (bool, optional): Whether to kludge the MLDN data. Defaults to False.
 
     Returns:
         tuple: A tuple containing the following:
@@ -91,10 +102,10 @@ def load_up(line:str, gextrem:str='high', use_full:bool=False):
     ds = items['ds']
 
     # Fill
-    grid_utils.fill_in_grid(grid_tbl, ds)
+    grid_utils.fill_in_grid(grid_tbl, ds, kludge_MLDN=kludge_MLDN)
 
     # Extrema
-    if gextrem == 'high':
+    if gextrem in ['high', 'highAOU']:
         perc = 80.  # Low enough to grab them all
     elif gextrem == 'low':
         perc = 49.  # High enough to grab them all (Line 56.0)
@@ -104,7 +115,7 @@ def load_up(line:str, gextrem:str='high', use_full:bool=False):
         perc = 50.
     else:
         raise IOError("Bad gextrem input")
-    grid_outliers, tmp, _ = grid_utils.gen_outliers(line, perc)
+    grid_outliers, tmp, _ = grid_utils.gen_outliers(line, perc, grid_tbl=grid_tbl)
 
     if gextrem == 'high':
         extrem = grid_outliers.SO > 1.1
@@ -118,8 +129,11 @@ def load_up(line:str, gextrem:str='high', use_full:bool=False):
     elif gextrem == 'hi_noperc':
         grid_outliers = grid_tbl.copy()
         extrem = grid_outliers.SO > 1.1 
+    elif gextrem == 'highAOU':
+        extrem = grid_outliers.AOU > cugn_defs.AOU_hyper
     else:
         raise IOError("Bad gextrem input")
+
     grid_extrem = grid_outliers[extrem].copy()
     times = pandas.to_datetime(grid_extrem.time.values)
 
@@ -137,7 +151,7 @@ def load_up(line:str, gextrem:str='high', use_full:bool=False):
 
     dp_gt = grid_tbl.depth*100000 + grid_tbl.profile
     dp_ge = grid_extrem.depth*100000 + grid_extrem.profile
-    ids = cat_utils.match_ids(dp_ge, dp_gt, require_in_match=True)
+    ids = utils.match_ids(dp_ge, dp_gt, require_in_match=True)
     assert len(np.unique(ids)) == len(ids)
 
     grid_extrem['N_p'] = grid_tbl.N_p.values[ids]
@@ -158,3 +172,38 @@ def load_up(line:str, gextrem:str='high', use_full:bool=False):
     cluster_stats = clusters.cluster_stats(grid_extrem)
 
     return grid_extrem, ds, times, grid_tbl
+
+def load_upwelling():
+    # CUTI
+    cuti_file = os.path.join(os.getenv('OS_CCS'), 'Upwelling',
+                             'CUTI_daily.nc')
+    cuti = xarray.open_dataset(cuti_file)
+    # 
+    beuti_file = os.path.join(os.getenv('OS_CCS'), 'Upwelling',
+                             'BEUTI_daily.nc')
+    beuti = xarray.open_dataset(beuti_file)
+    # Return
+    return cuti, beuti
+
+def gpair_filename(dataset:str, iz:int, same_glider:bool):
+    """
+    Generate a filename for a glider pair dataset.
+
+    Parameters:
+        dataset (str): The name of the dataset.
+        iz (int): The depth level of the dataset.
+        same_glider (bool): Indicates whether the glider pair is the same glider or not.
+
+    Returns:
+        str: The generated filename for the glider pair dataset.
+    """
+
+
+
+    same_lbl = 'self' if same_glider else 'other'
+
+    # Generate a filename
+    outfile = f'gpair_{dataset}_z{iz:02d}_{same_lbl}'
+    outfile += '.json'
+
+    return outfile

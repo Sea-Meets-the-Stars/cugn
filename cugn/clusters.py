@@ -9,8 +9,9 @@ from sklearn.cluster import AgglomerativeClustering, DBSCAN
 from IPython import embed
 
 def generate_clusters(grid_outliers:pandas.DataFrame,
-                      time_scl:float=3.,
-                      doff_scl:float=10./3,
+                      time_scl:float=5.,
+                      doff_scl:float=20./3,
+                      #doff_scl:float=10.,
                       z_scl:float=5.,
                       min_samples:int=10):
     """ Generate clusters of outliers for a given line
@@ -61,7 +62,6 @@ def generate_clusters(grid_outliers:pandas.DataFrame,
 
     grid_outliers['cluster'] = dbscan.labels_
 
-
 def cluster_stats(grid_outliers:pandas.DataFrame):
     """
     Calculate statistics for each cluster in the given DataFrame.
@@ -83,19 +83,22 @@ def cluster_stats(grid_outliers:pandas.DataFrame):
     # Loop on clusters
     stats = {}
     mean_keys = ['z', 'lon','doxy', 'time', 'SA', 'CT', 
-                 'sigma0', 'SO', 'chla']
+                 'sigma0', 'SO', 'chla', 'dist']
     for key in mean_keys:
         stats[key] = []
-    max_keys = ['doxy', 'SO', 'chla']
+    max_keys = ['doxy', 'SO', 'chla', 'dist']
     for key in max_keys:
         stats['max_'+key] = []
         stats['min_'+key] = []
     # A few others
-    stats['N'] = []
+    for key in ['N', 'Dtime', 'Ddist', 'ID', 'Cdist']:
+        stats[key] = []
 
+    # Loop on clusters
     for cluster_ID in cluster_IDs:
         # Grab em
         in_cluster = grid_outliers.cluster.values == cluster_ID
+        stats['ID'].append(cluster_ID)
         stats['N'].append(in_cluster.sum())
 
         # Means
@@ -107,8 +110,16 @@ def cluster_stats(grid_outliers:pandas.DataFrame):
             stats['max_'+key].append(grid_outliers[in_cluster][key].max())
             stats['min_'+key].append(grid_outliers[in_cluster][key].min())
 
+        # Duration
+        stats['Dtime'].append(grid_outliers[in_cluster].time.max() - grid_outliers[in_cluster].time.min())
+
+        # Distance
+        stats['Ddist'].append(stats['max_dist'][-1] - stats['min_dist'][-1])
+        stats['Cdist'].append((stats['max_dist'][-1] + stats['min_dist'][-1])/2.)
+
     # Package
     stats_tbl = pandas.DataFrame(stats)
     stats_tbl['cluster'] = cluster_IDs
+    #embed(header='118 of clusters')
 
     return stats_tbl

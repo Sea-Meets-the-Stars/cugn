@@ -6,6 +6,11 @@ import xarray
 from glob import glob
 
 import numpy as np
+from scipy.interpolate import interp1d
+
+from functools import partial
+from concurrent.futures import ProcessPoolExecutor
+from tqdm import tqdm
 
 import pandas
 
@@ -16,7 +21,9 @@ from cugn import utils as cugn_utils
 from cugn import grid_utils
 from cugn import io as cugn_io
 from cugn import defs as cugn_defs
+from cugn import highres as cugn_highres
 
+high_path = os.path.join(os.getenv('OS_SPRAY'), 'CUGN', 'HighRes')
 
 from IPython import embed
 
@@ -24,10 +31,10 @@ def add_gsw():
     """ Add physical quantities to the Spray CUGN data
     using the TEOS-10 GSW package
     """
-    data_path = os.getenv('CUGN') 
 
     # Spray files
-    spray_files = glob(os.path.join(data_path, 'CUGN_line_*.nc'))
+    spray_files = glob(os.path.join(
+        cugn_defs.data_path, 'CUGN_line_*.nc'))
 
     for spray_file in spray_files:
 
@@ -50,6 +57,7 @@ def add_gsw():
         SA = np.ones_like(ds.temperature.data) * np.nan
         OC = np.ones_like(ds.temperature.data) * np.nan
         SO = np.ones_like(ds.temperature.data) * np.nan
+        AOU = np.ones_like(ds.temperature.data) * np.nan
 
         # Loop on depths
         for zz, z in enumerate(ds.depth.data):
@@ -69,6 +77,7 @@ def add_gsw():
             # Oxygen
             OC[zz,:] = gsw.O2sol(iSA, iCT, p, lon, lat)
             SO[zz,:] = ds.doxy[zz,:] / OC[zz,:] 
+            AOU[zz,:] = ds.doxy[zz,:] - OC[zz,:] 
 
         # sigma0 
         sigma0 = density.sigma0(SA, CT)
@@ -82,6 +91,8 @@ def add_gsw():
         ds.SA.attrs = dict(units='g/kg', long_name='Absolute Salinity')
         ds['SO'] = (('depth', 'profile'), SO)
         ds.SO.attrs = dict(long_name='Oxygen Saturation')
+        ds['AOU'] = (('depth', 'profile'), AOU)
+        ds.AOU.attrs = dict(long_name='Apparent Oxygen Utilization')
 
         # Buoyancy
         dsigmadz, _ = np.gradient(ds.sigma0.data, 
@@ -91,9 +102,17 @@ def add_gsw():
         ds['N'] = (('depth', 'profile'), buoyfreq)
         ds.N.attrs = dict(long_name='Buoyancy Frequency', units='cycles/hour')
 
+        # MLD
+        MLDs = []
+        for iprofile in ds.profile.data:
+            f = interp1d(ds.sigma0.data[:,iprofile], ds.depth.data-5.)
+            MLD = f(ds.sigma0.data[0,iprofile]+cugn_defs.MLD_sigma0)
+            MLDs.append(MLD)
+        ds['MLD'] = (('profile'), MLDs)
+
         # Wipe out the 2020 trip to San Diego
         dskeys =  ['temperature', 'salinity', 'chlorophyll_a', 'u', 'v', 
-                   'acoustic_backscatter', 'doxy', 'CT', 'sigma0', 'SA', 'SO', 'N']
+                   'acoustic_backscatter', 'doxy', 'CT', 'sigma0', 'SA', 'SO', 'N', 'AOU']
         if 'line_80' in spray_file:
             dist, _ = cugn_utils.calc_dist_offset(
                 '80.0', ds.lon.values, ds.lat.values)
@@ -113,23 +132,29 @@ def add_gsw():
         ds.to_netcdf(new_spray_file)
         print(f"Wrote: {new_spray_file}")
 
-def build_ds_grid(line:str, line_file:str, gridtbl_outfile:str, 
-                  edges_outfile:str, min_counts:int=50, 
+def build_ds_grid(items,
+                #line:str, line_file:str, gridtbl_outfile:str, edges_outfile:str, 
+                  min_counts:int=50, 
                   debug:bool=False,
-                  max_offset:float=90.):
+                  max_offset:float=90.,
+                  warn_highres:bool=False):
     """ Grid up density and salinity for a line
     to generate a table of grid indices and values
 
     Args:
-        line (str): Line name ['90.0', '67.0']
-        line_file (str): line file
-        gridtbl_outfile (str): name of the output table
-        edges_outfile (str): name of the output grid edges
+        items (tuple): Tuple of line, line_file, gridtbl_outfile, edges_outfile
+            line (str): Line name ['90.0', '67.0']
+            line_file (str): line file
+            gridtbl_outfile (str): name of the output table
+            edges_outfile (str): name of the output grid edges
         min_counts (int, optional): Minimum counts on the
             grid to be included in the analysis. Defaults to 50.
         debug (bool, optional): Debug. Defaults to False.
         max_offset (float, optional): Maximum offset from the line. Defaults to 90 km
+        warn_highres (bool, optional): Warn if high res data is missing. Defaults to False.
+            Otherwise crash out
     """
+    line, line_file, gridtbl_outfile, edges_outfile = items
     # Dataset
     ds = xarray.load_dataset(line_file)
 
@@ -153,7 +178,10 @@ def build_ds_grid(line:str, line_file:str, gridtbl_outfile:str,
     grid_tbl['col'] = grid_indices[1,:] - 1
     grid_tbl['doxy'] = gd_oxy
 
-    
+    # Trajectory, mission etc.
+    tidx = ds.trajectory_index[gd_profile].values
+    grid_tbl['mission'] = ds.mission_name[tidx].values.astype(str)
+    grid_tbl['mission_profile'] = ds.mission_profile[gd_profile].values
 
     # Cut on counts
     gd_rows, gd_cols = np.where(countsT > min_counts)
@@ -165,6 +193,52 @@ def build_ds_grid(line:str, line_file:str, gridtbl_outfile:str,
 
     grid_tbl = grid_tbl[keep].copy()
     grid_tbl.reset_index(inplace=True, drop=True)
+
+    # Prep
+    grid_tbl['MLD'] = np.nan
+    grid_tbl['N'] = np.nan
+    grid_tbl['zNpeak'] = np.nan
+    grid_tbl['sigma0_0'] = np.nan
+
+    # MLD and N at high resolution
+    uni_missions = np.unique(grid_tbl.mission)
+    for mission in uni_missions:
+        gfiles = glob(os.path.join(high_path, f'SPRAY-FRSQ-{mission}-*.nc'))
+        if len(gfiles) != 1:
+            if warn_highres:
+                print(f"Missing high res data for {mission}")
+                continue
+            else:
+                raise ValueError(f"Missing high res data for {mission}")
+        # Run
+        gm_idx = grid_tbl.mission.values == mission
+        mprofiles = np.unique(grid_tbl.mission_profile[gm_idx])
+        iz = grid_tbl[gm_idx].depth.max()
+
+        # Do it
+        MLDs, Ns, zNs, zN5s, zN10s, Nf5s, Nf10s, NSOs, sigma0_0s = \
+            cugn_highres.calc_mission(
+            gfiles[0], mprofiles, max_depth=(iz+1)*10, debug=debug)
+        # Fill in (this is slow)
+        for mprofile, MLD, N, zN, zN5, zN10, Nf5, Nf10, NSO, sigma0_0 in zip(
+            mprofiles, MLDs, Ns, zNs, zN5s, zN10s, Nf5s, Nf10s, NSOs, sigma0_0s):
+            in_mission = (grid_tbl.mission == mission) & (
+                grid_tbl.mission_profile == mprofile)
+            # MLD
+            grid_tbl.loc[in_mission, 'MLD'] = MLD
+            grid_tbl.loc[in_mission, 'sigma0_0'] = sigma0_0
+            grid_tbl.loc[in_mission, 'zNpeak'] = zN
+            grid_tbl.loc[in_mission, 'zN5'] = zN5
+            grid_tbl.loc[in_mission, 'zN10'] = zN10
+            # Counting SO extrema
+            grid_tbl.loc[in_mission, 'Nf5'] = Nf5
+            grid_tbl.loc[in_mission, 'Nf10'] = Nf10
+            grid_tbl.loc[in_mission, 'NSO'] = NSO
+            # N
+            these_N = np.array([N[ii] for ii in grid_tbl.depth.values[in_mission]])
+            grid_tbl.loc[in_mission, 'N'] = these_N
+            #embed(header='build_ds_grid: 230')
+
 
     if debug:
         grid_utils.fill_in_grid(grid_tbl, ds)
@@ -182,37 +256,79 @@ def build_ds_grid(line:str, line_file:str, gridtbl_outfile:str,
     #vals = grid_tbl.doxy.values[in_cell]
     #pct = np.nanpercentile(vals, 5)
 
+    #embed(header='234 of process')
     # Save
     if not debug:
         grid_tbl.to_parquet(gridtbl_outfile)
         if edges_outfile is not None:
-            np.savez(edges_outfile, SA_edges=SA_edges, 
+            np.savez(edges_outfile, SA_edges=SA_edges,
                 sigma_edges=sigma_edges,
                 counts=countsT)
         print(f"Wrote: \n {gridtbl_outfile} \n {edges_outfile}")
 
 
-
-if __name__ == '__main__':
+def main(flg, debug=False):
 
     # Add potential density and salinity to the CUGN files
-    #add_gsw()
+    if flg == 1:
+        add_gsw()
+        return
 
     # Grids
-    for line in cugn_defs.lines:
-        #if line != '90.0':
-        #    continue
-        line_files = cugn_io.line_files(line)
+    if flg in [2,3]:
+        warn_highres = True
+        items = []
+        for line in cugn_defs.lines:
+            #if line != '80.0':
+            #    continue
+            #if line != '90.0':
+            #    continue
+            line_files = cugn_io.line_files(line)
 
-        # Control
-        build_ds_grid(line, line_files['datafile'],
-            line_files['gridtbl_file_control'], 
-            line_files['edges_file'],
-            min_counts=50)
+            if flg == 2: # Full
+                items.append((line, line_files['datafile'],
+                    line_files['gridtbl_file_full'], 
+                    None))
+                min_counts=0
+            if flg == 3: # Control
+                items.append((line, line_files['datafile'],
+                    line_files['gridtbl_file_control'], 
+                    line_files['edges_file']))
+                min_counts=50
 
-        # Full
-        build_ds_grid(line, line_files['datafile'],
-            line_files['gridtbl_file_full'], 
-            None,
-            min_counts=0,
-            max_offset=90.)
+        #build_ds_grid(line, line_files['datafile'],
+        #        line_files['gridtbl_file_full'], 
+        #        None,
+        #        max_offset=90., warn_highres=warn_highres)
+
+        if not debug:
+            n_cores = 4
+            map_fn = partial(build_ds_grid, min_counts=min_counts, warn_highres=warn_highres)
+            with ProcessPoolExecutor(max_workers=n_cores) as executor:
+                chunksize = len(items) // n_cores if len(items) // n_cores > 0 else 1
+                answers = list(tqdm(executor.map(map_fn, items,
+                                                chunksize=chunksize), total=len(items)))
+        else:                                        
+            build_ds_grid(items[0], min_counts=min_counts, warn_highres=warn_highres,
+                          debug=True)
+
+    # Check all full res files
+    if flg == 4:
+        for line in cugn_defs.lines:
+            print(f"Working on line: {line}")
+            line_files = cugn_io.line_files(line)
+            ds = xarray.load_dataset(line_files['datafile'])
+
+            # Missing highres
+            mission_names  = np.unique(ds.mission_name.values.astype(str))
+            for mission_name in mission_names:
+                #print(f"Checking for mission: {mission_name}")
+                gfiles = glob(os.path.join(high_path, f'SPRAY-FRSQ-{mission_name}-*.nc'))
+                if len(gfiles) != 1:
+                    print(f"Missing high res data for {mission_name} of line {line}")
+
+if __name__ == '__main__':
+    import sys
+    flg = int(sys.argv[1])
+
+    main(flg, debug=False)
