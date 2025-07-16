@@ -26,6 +26,10 @@ from cugn import plotting as cugn_plotting
 
 from IPython import embed
 
+# Local
+sys.path.append(os.path.abspath("../Analysis/py"))
+import qg_utils
+
 Sn_lbls = cugn_plotting.Sn_lbls
 
 def fig_separations(dataset:str, outroot='fig_sep', max_time:float=10.):
@@ -579,7 +583,62 @@ def fig_Sn_distribution(dataset:str, outfile:str,
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
-    
+
+def fig_examine_qg(outfile:str='fig_examine_qg.png'):
+    """
+    Examine the QG structure function
+    """
+    # Load the data
+    qg, mSF_15 = qg_utils.load_qg()
+
+    # Calculate the first order structure function
+    rr1, du1, du1LL, dull_mn, dull_25, dull_50, du2_mn = qg_utils.calc_dus(qg, mSF_15)
+
+    rms = np.sqrt(du2_mn)
+
+
+    # Start the figure
+    fig = plt.figure(figsize=(10,6))
+    plt.clf()
+    gs = gridspec.GridSpec(1,1)
+
+    ax = plt.subplot(gs[0])
+
+
+    #ax.set_xlim(1., 100.)
+    #ax.minorticks_on()
+
+    # Plot the QG RMS from <delta u^2>
+    ax.semilogx(rr1*1e-3, du2_mn*1e3, 'b', linewidth=1, label=r'$\sqrt{<\delta u^2>}$')
+
+    # Plot a random set of 1 day averages
+    c1 = 'red'
+    #embed(header='fig_examine_qg: 617')
+    randi = np.random.choice(np.arange(0, du1LL.data.shape[0]), size=100, replace=False)
+
+    ax.semilogx(rr1*1e-3, du1LL.data.T[:,randi]*1e3, '-', color=c1,
+            linewidth=0.5, alpha=0.1)
+    ax.semilogx(0, 0, '-', color=c1, linewidth=0.5, alpha=0.8, label='Daily $\\overline{\\delta u1_{L}}(r, t)$')
+
+
+    # Plot the 2-month averages
+    c50 = 'green'
+    ax.semilogx(rr1*1e-3, dull_50.T*1e3, '-', color=c50,
+                linewidth=0.5, alpha=0.3)
+    ax.semilogx(0, 0, '-', color=c50, linewidth=0.5, alpha=0.8, 
+                label='50 days $\\overline{\\delta u1_L}(r, t)$')
+
+    ax.legend(fontsize=15, loc='upper left')
+
+    ax.set_xlabel(r'$r$ [km]')
+    ax.set_ylabel(r'Comparison of $\delta u$ and RMS')
+
+    cugn_plotting.set_fontsize(ax, 15)
+
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+        
 
 def main(flg):
     if flg== 'all':
@@ -648,6 +707,10 @@ def main(flg):
     if flg == 8:
         fig_Sn_distribution('ARCTERX', 'fig_Sn_distrib_ARCTERX.png',
             'duLduLduL', 'S3', rval=70., iz=5)
+
+    # QG uL and uL^2
+    if flg == 9:
+        fig_examine_qg()
 
 # Command line execution
 if __name__ == '__main__':

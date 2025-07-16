@@ -1,0 +1,130 @@
+""" Analysis utilities for QG outputs """
+
+
+import os
+
+import xarray
+
+import numpy as np
+from scipy.stats import skew, kurtosis
+from scipy.stats import norm
+
+# import fsspec
+import matplotlib
+import matplotlib.pyplot as plt
+import gsw_xarray as gsw
+from xhistogram.xarray import histogram
+
+from dask.diagnostics import ProgressBar
+
+from strucFunct2_ai import timescale
+
+def load_qg():
+    qg_file = os.path.join(os.getenv('OS_DATA'), 'QG', 'QGModelOutput20years.nc')
+    qg = xarray.open_dataset(qg_file)
+
+    #### Loads 15 years time series
+    chunksSF15 = {'time': 100, 'mid_rbins': 53}
+
+    mSF_15 = xarray.open_dataset(os.path.join(os.getenv('OS_DATA'), 'QG', 'SFQG_aver_pos_orien_5yearb.nc'), 
+                                chunks=chunksSF15)
+    mSF_15['time'] = mSF_15.time/86400
+    mSF_15['du1'] = mSF_15.ulls + mSF_15.utts
+
+    return qg, mSF_15
+
+
+
+def calc_dus(qg, mSF_15, indx:int=1, indf:int=40):
+
+    # First order structure function
+    sf1_mn = mSF_15.du1.mean(dim='time')[indx:indf]
+    sf1_std = mSF_15.du1.std(dim='time')[indx:indf]
+    rr1 = mSF_15.dr.mean(dim='time')[indx:indf].values
+    # Orig
+    du1 = mSF_15.du1.isel(mid_rbins=np.arange(indx, indf)).chunk({'mid_rbins':len(mSF_15.mid_rbins), 'time': 100})
+    du2 = mSF_15.du2.isel(mid_rbins=np.arange(indx, indf)).chunk({'mid_rbins':len(mSF_15.mid_rbins), 'time': 100})
+
+    # LL only
+    du1LL = mSF_15.ulls.isel(mid_rbins=np.arange(indx, indf)).chunk({'mid_rbins':len(mSF_15.mid_rbins), 'time': 100})
+
+
+    in1 = 2
+    in2 = 5
+    in3 = 10
+    in4 = 18
+
+    du1r = 0.4
+
+    dull_mn = mSF_15.ulls.mean(dim='time')[indx:indf]
+    dutt_mn = mSF_15.utts.mean(dim='time')[indx:indf]
+    dull_std = mSF_15.ulls.std(dim='time')[indx:indf]
+    dutt_std = mSF_15.utts.std(dim='time')[indx:indf]
+
+    # du2
+    du2_mn = mSF_15.du2.mean(dim='time')[indx:indf]
+
+    # Bins
+    d1_bins = np.arange(-3, 3.5, du1r)#np.arange(-1e-2, 1e-2, 6e-5)/sf1_std[in1].values
+    d2_bins = np.arange(-3, 3.5, du1r)#np.arange(-1e-2, 1e-2, 2e-4)/sf1_std[in2].values
+    d3_bins = np.arange(-3, 3.5, du1r)#np.arange(-1e-2, 1e-2, 6e-4)/sf1_std[in3].values
+    d4_bins = np.arange(-3, 3.5, du1r)#np.arange(-1e-2, 1e-2, 1e-3)/sf1_std[in4].values
+
+
+    # Histograms
+    sf1h0 =  histogram(du1.isel(mid_rbins=in1)/sf1_std[in1].values, bins=d1_bins, dim=['time'], density=True)
+    sf1h2 = histogram(du1.isel(mid_rbins=in2)/sf1_std[in2].values, bins=d2_bins, dim=['time'], density=True)
+    sf1h10 = histogram(du1.isel(mid_rbins=in3)/sf1_std[in3].values, bins=d3_bins, dim=['time'], density=True)
+    sf1h15 = histogram(du1.isel(mid_rbins=in4)/sf1_std[in4].values, bins=d4_bins, dim=['time'], density=True)
+
+    # Constructs Gaussian
+    sf1p0 = norm.pdf(d1_bins, sf1_mn[in1]/sf1_std[in1].values, 1)
+    sf1p2 = norm.pdf(d2_bins, sf1_mn[in2]/sf1_std[in2].values, 1)
+    sf1p10 = norm.pdf(d3_bins, sf1_mn[in3]/sf1_std[in3].values, 1)
+    sf1p15 = norm.pdf(d4_bins, sf1_mn[in4]/sf1_std[in4].values, 1)
+
+
+    # Calculates kurtosis
+    sf1_skew = np.zeros((len(rr1),))
+    sf1_kurt = sf1_skew*0.
+
+    for ii in range(len(rr1)):
+        sf1_skew[ii] = skew(du1.isel(mid_rbins=ii).values, axis=0, bias=True)
+        sf1_kurt[ii] = kurtosis(du1.isel(mid_rbins=ii).values, axis=0, fisher=True, bias=True)
+
+    # Every 25 and 50 days
+    du1_25 = []
+    du1_50 = []
+    dull_25 = []
+    dull_50 = []
+    ss = 0
+    do_50 = True
+
+    while ss < du1.time.size:
+        # Grab em
+        tmax25 = min(du1.time.size, ss+25)
+        du1s25 = np.mean(du1.values[ss:tmax25,:], axis=0)
+        du1_25.append(du1s25)
+        #
+        dulls25 = np.mean(du1LL.values[ss:tmax25,:], axis=0)
+        dull_25.append(dulls25)
+        if do_50:
+            tmax50 = min(du1.time.size, ss+50)
+            du1s50 = np.mean(du1.values[ss:tmax50,:], axis=0)
+            du1_50.append(du1s50)
+            dulls50 = np.mean(du1LL.values[ss:tmax50,:], axis=0)
+            dull_50.append(dulls50)
+        ss += 25
+        if do_50 is False:
+            do_50 = True
+        else:
+            do_50 = False
+    # Array me
+    du1_25 = np.array(du1_25)
+    du1_50 = np.array(du1_50)
+    dull_25 = np.array(dull_25)
+    dull_50 = np.array(dull_50)
+
+
+    # Return it all
+    return rr1, du1, du1LL, dull_mn, dull_25, dull_50, du2_mn
