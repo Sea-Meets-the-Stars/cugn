@@ -19,6 +19,8 @@ from dask.diagnostics import ProgressBar
 
 from strucFunct2_ai import timescale
 
+from IPython import embed
+
 def load_qg():
     qg_file = os.path.join(os.getenv('OS_DATA'), 'QG', 'QGModelOutput20years.nc')
     qg = xarray.open_dataset(qg_file)
@@ -43,7 +45,7 @@ def calc_dus(qg, mSF_15, indx:int=1, indf:int=40):
     rr1 = mSF_15.dr.mean(dim='time')[indx:indf].values
     # Orig
     du1 = mSF_15.du1.isel(mid_rbins=np.arange(indx, indf)).chunk({'mid_rbins':len(mSF_15.mid_rbins), 'time': 100})
-    du2 = mSF_15.du2.isel(mid_rbins=np.arange(indx, indf)).chunk({'mid_rbins':len(mSF_15.mid_rbins), 'time': 100})
+    #du2 = mSF_15.du2.isel(mid_rbins=np.arange(indx, indf)).chunk({'mid_rbins':len(mSF_15.mid_rbins), 'time': 100})
 
     # LL only
     du1LL = mSF_15.ulls.isel(mid_rbins=np.arange(indx, indf)).chunk({'mid_rbins':len(mSF_15.mid_rbins), 'time': 100})
@@ -64,6 +66,12 @@ def calc_dus(qg, mSF_15, indx:int=1, indf:int=40):
     # du2
     du2_mn = mSF_15.du2.mean(dim='time')[indx:indf]
 
+    # du3
+    du3_mn = mSF_15.du3.mean(dim='time')[indx:indf]
+
+    # Corrected
+    du3_corr = du3_mn - 3*dull_mn*du2_mn**2 + 2*dull_mn**3
+
     # Bins
     d1_bins = np.arange(-3, 3.5, du1r)#np.arange(-1e-2, 1e-2, 6e-5)/sf1_std[in1].values
     d2_bins = np.arange(-3, 3.5, du1r)#np.arange(-1e-2, 1e-2, 2e-4)/sf1_std[in2].values
@@ -71,6 +79,7 @@ def calc_dus(qg, mSF_15, indx:int=1, indf:int=40):
     d4_bins = np.arange(-3, 3.5, du1r)#np.arange(-1e-2, 1e-2, 1e-3)/sf1_std[in4].values
 
 
+    '''
     # Histograms
     sf1h0 =  histogram(du1.isel(mid_rbins=in1)/sf1_std[in1].values, bins=d1_bins, dim=['time'], density=True)
     sf1h2 = histogram(du1.isel(mid_rbins=in2)/sf1_std[in2].values, bins=d2_bins, dim=['time'], density=True)
@@ -91,6 +100,7 @@ def calc_dus(qg, mSF_15, indx:int=1, indf:int=40):
     for ii in range(len(rr1)):
         sf1_skew[ii] = skew(du1.isel(mid_rbins=ii).values, axis=0, bias=True)
         sf1_kurt[ii] = kurtosis(du1.isel(mid_rbins=ii).values, axis=0, fisher=True, bias=True)
+    '''
 
     # Every 25 and 50 days
     du1_25 = []
@@ -127,4 +137,35 @@ def calc_dus(qg, mSF_15, indx:int=1, indf:int=40):
 
 
     # Return it all
-    return rr1, du1, du1LL, dull_mn, dull_25, dull_50, du2_mn
+    return rr1, du1, du1LL, dull_mn, dull_25, dull_50, du2_mn, du3_mn, du3_corr
+
+def calc_dus_limtime(mSF_15, ndays:int, t0:int=0, indx:int=1, indf:int=40):
+
+    #embed(header='Calculating structure functions with limited time')
+    rr1 = np.mean(mSF_15.dr.values[t0:t0+ndays,indx:indf], axis=0)
+
+    # Grab em
+    du1 = mSF_15.du1.isel(mid_rbins=np.arange(indx, indf)).chunk({'mid_rbins':len(mSF_15.mid_rbins), 'time': 100})
+    du1LL = mSF_15.ulls.isel(mid_rbins=np.arange(indx, indf)).chunk({'mid_rbins':len(mSF_15.mid_rbins), 'time': 100})
+    du2 = mSF_15.du2.isel(mid_rbins=np.arange(indx, indf)).chunk({'mid_rbins':len(mSF_15.mid_rbins), 'time': 100})
+    du3 = mSF_15.du3.isel(mid_rbins=np.arange(indx, indf)).chunk({'mid_rbins':len(mSF_15.mid_rbins), 'time': 100})
+
+    # Every 25 and 50 days
+    du1s = np.mean(du1.values[t0:t0+ndays,:], axis=0)
+    du1LLs = np.mean(du1LL.values[t0:t0+ndays,:], axis=0)
+    du2s = np.mean(du2.values[t0:t0+ndays,:], axis=0)
+    du3s = np.mean(du3.values[t0:t0+ndays,:], axis=0)
+
+    #du3_corr = du3s - 3*du1LLs*du2s**2 + 2*du1LLs**3
+    du3_corr = du3s - 3*du1s*du2s**2 + 2*du1s**3
+
+    # Return
+    return rr1, du1s, du1LLs, du2s, du3s, du3_corr
+
+# Command line
+if __name__ == "__main__":
+
+    # Load data
+    qg, mSF_15 = load_qg()
+
+    calc_dus_limtime(mSF_15, 60, t0=100)

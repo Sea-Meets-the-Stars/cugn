@@ -592,7 +592,8 @@ def fig_examine_qg(outfile:str='fig_examine_qg.png'):
     qg, mSF_15 = qg_utils.load_qg()
 
     # Calculate the first order structure function
-    rr1, du1, du1LL, dull_mn, dull_25, dull_50, du2_mn = qg_utils.calc_dus(qg, mSF_15)
+    rr1, du1, du1LL, dull_mn, dull_25, dull_50, du2_mn, du3_mn, du3_corr = \
+        qg_utils.calc_dus(qg, mSF_15)
 
     rms = np.sqrt(du2_mn)
 
@@ -609,7 +610,8 @@ def fig_examine_qg(outfile:str='fig_examine_qg.png'):
     #ax.minorticks_on()
 
     # Plot the QG RMS from <delta u^2>
-    ax.semilogx(rr1*1e-3, du2_mn*1e3, 'b', linewidth=1, label=r'$\sqrt{<\delta u^2>}$')
+    ax.semilogx(rr1*1e-3, du2_mn*1e3, 'b', linewidth=1, 
+                label=r'$\sqrt{<\delta u^2>}$')
 
     # Plot a random set of 1 day averages
     c1 = 'red'
@@ -618,7 +620,8 @@ def fig_examine_qg(outfile:str='fig_examine_qg.png'):
 
     ax.semilogx(rr1*1e-3, du1LL.data.T[:,randi]*1e3, '-', color=c1,
             linewidth=0.5, alpha=0.1)
-    ax.semilogx(0, 0, '-', color=c1, linewidth=0.5, alpha=0.8, label='Daily $\\overline{\\delta u1_{L}}(r, t)$')
+    ax.semilogx(0, 0, '-', color=c1, linewidth=0.5, alpha=0.8, 
+                label='Daily $\\overline{\\delta u1_{L}}(r, t)$')
 
 
     # Plot the 2-month averages
@@ -639,6 +642,78 @@ def fig_examine_qg(outfile:str='fig_examine_qg.png'):
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
         
+def fig_compare_dus(dataset:str, outroot:str='fig_comp_dus',
+                  variables = 'duLduLduL',
+                  iz:int=5): 
+    """
+    Compare dus
+    """
+    # Load dataset
+    profilers = gliderdata.load_dataset(dataset)
+    outfile = f'{outroot}_z{(iz+1)*10}_{dataset}.png'
+
+    # Cut on valid velocity data 
+    nbins = 20
+    rbins = 10**np.linspace(0., np.log10(400), nbins) # km
+    # Generate pairs
+    #gData = gliderdata.load_dataset(dataset)
+    gPairs = profilerpairs.ProfilerPairs(
+        profilers, max_time=10.,
+        avoid_same_glider=True,
+        remove_nans=True,
+        debug=False, 
+        randomize=False)
+    # Isopycnals?
+    if iz < 0:
+        gPairs.prep_isopycnals('t')
+    #gData = gData.cut_on_good_velocity()
+    #gData = gData.cut_on_reltime(tcut)
+
+    gPairs.calc_delta(iz, variables, skip_velocity=False)
+    gPairs.calc_Sn(variables)
+
+    Sn_dict = gPairs.calc_Sn_vs_r(rbins, nboot=100)
+    gPairs.calc_corr_Sn(Sn_dict)
+    gPairs.add_meta(Sn_dict)
+
+    minN = 10
+    goodN = np.array(Sn_dict['config']['N']) > minN
+    Skeys = ['S1_duL', 'S2_duL**2', 'S3_'+variables]
+
+    u_rms = np.sqrt(Sn_dict[Skeys[1]][goodN])
+
+    # Start the figure
+    fig = plt.figure(figsize=(10,6))
+    plt.clf()
+    gs = gridspec.GridSpec(1,1)
+
+    ax = plt.subplot(gs[0])
+
+    # S1
+    Skey = Skeys[0]
+    ax.errorbar(Sn_dict['r'][goodN], 
+                Sn_dict[Skey][goodN], 
+                yerr=Sn_dict['err_'+Skey][goodN],
+                color='k', label=Sn_lbls[Skey],
+                fmt='o', capsize=5)  # fmt defines marker style, capsize sets error bar cap length
+
+    ax.plot(Sn_dict['r'][goodN], u_rms, color='b', 
+                label=r'$\sqrt{<\delta u^2>}$')
+
+    ax.axhline(0., color='gray', linestyle='--')
+
+    ax.legend(fontsize=15, loc='lower right')
+    ax.set_xscale('log')
+    ax.grid()
+
+    ax.set_xlabel(r'$r$ [km]')
+    ax.set_ylabel(r'Comparison of $\delta u$ and RMS [m/s]')
+
+    cugn_plotting.set_fontsize(ax, 15)
+
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
 
 def main(flg):
     if flg== 'all':
@@ -711,6 +786,11 @@ def main(flg):
     # QG uL and uL^2
     if flg == 9:
         fig_examine_qg()
+
+    # Compare RMS with uL
+    if flg == 10:
+        fig_compare_dus('Calypso2022')
+
 
 # Command line execution
 if __name__ == '__main__':
