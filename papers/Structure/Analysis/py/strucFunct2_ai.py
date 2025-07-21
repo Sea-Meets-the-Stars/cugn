@@ -16,6 +16,16 @@ def SF2_3(ull, utt):
     SF3 = ull*SF2
     return SF2, SF3
 
+def SF2_3_ul(ull):
+    ''' Estimates 2nd and 3rd order structure function
+        
+        Input:
+        
+        ull, utt: Longitudinal and transversal structure function components''' 
+    
+    SF2 = ull**2 #+ utt**2
+    SF3 = ull*SF2
+    return SF2, SF3
 
 def uv_ult(dU, dV, dx, dy):
     ''' Rotates velocity difference vector to longitudinal and transversal components (Balhwada 2022)
