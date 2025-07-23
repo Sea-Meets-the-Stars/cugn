@@ -355,8 +355,6 @@ def process_SF_samples(fs, rbins, mid_rbins):
 
     # Parallelize over the time dimension using Dask
     for ii in tqdm(range(len(fs.time))):  # You can modify the slicing here if needed
-        print(f"Working on {ii}")
-        
         # Isolate the data for the current time step and chunk along 'dcorr'
         data_slice = fs.isel(time=ii).chunk({'dcorr': 3000})  # Adjust chunk size if necessary
 

@@ -73,10 +73,9 @@ def test_full(ndays=15, maxcorr=60):
     with ProgressBar():
         data_avers = data_slice.mean(dim=('x','y'), skipna=True).compute()
 
-    embed(header='67 of qg_100km')
     # Defines distance bins 
     dr = 5000 # meters
-    rbins = np.arange(0, 1.8e5, dr) # 180 km
+    rbins = np.arange(0, 3.e5, dr) # 300 km (same as Miguel)
     mid_rbins = 0.5*(rbins[:-1] + rbins[1:])
 
     # Average over orientation
@@ -95,9 +94,42 @@ def run_one_region(xlim, ylim, ndays=15, maxcorr=60):
     iregion_x = np.where((qg.x >= xlim[0]*1e3) & (qg.x < xlim[1]*1e3))[0]
     iregion_y = np.where((qg.y >= ylim[0]*1e3) & (qg.y < ylim[1]*1e3))[0]
 
-    # 
+    # Cut down Usdn
+    Udsn = qg.isel(x=iregion_x, y=iregion_y, time=np.arange(0, ndays))
+
+    # Grab the last 15 days
+    SFtest = strucFunct2_ai.calculateSF_2(Udsn, maxcorr, shiftdim, grid)
+
+    # Higher order
+    SF2, SF3 = strucFunct2_ai.SF2_3_ul(SFtest.ulls)
+
+    # Slice the data to include the current chunk
+    data_slice = SFtest.isel(time=slice(0,ndays))
+        
+    # Calculates du1, du2 and du3
+    sf2, sf3 = strucFunct2_ai.SF2_3_ul(data_slice.ulls)#, data_slice.dut)
+    data_slice['du2'] = sf2
+    data_slice['du3'] = sf3
+        
+    # Averages over all $s$ positions
+    with ProgressBar():
+        data_avers = data_slice.mean(dim=('x','y'), skipna=True).compute()
+
+    # Defines distance bins 
+    dr = 5000 # meters
+    rbins = np.arange(0, 1.3e5, dr) # 130 km
+    mid_rbins = 0.5*(rbins[:-1] + rbins[1:])
+
+    # Average over orientation
+    dudlt_aver_angl = strucFunct2_ai.process_SF_samples(data_avers, rbins, mid_rbins)
+
+    # Save
+    outfile = 'test_full_grid_15days.nc'
+    dudlt_aver_angl.to_netcdf(outfile)
+    print(f'Saved: {outfile}')
 
     pass
 
 if __name__ == '__main__':
+    # Full
     test_full()
