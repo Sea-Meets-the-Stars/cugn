@@ -19,6 +19,8 @@ from strucFunct2_ai import timescale
 import qg_utils
 import strucFunct2_ai
 
+from IPython import embed
+
 # Calculates structure functions
 shiftdim = 'x','y'
 grid = 'm'
