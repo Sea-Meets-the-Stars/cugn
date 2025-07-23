@@ -340,11 +340,9 @@ def dult_mean_orientation(data, rbins, mid_rbins):
         # Ensure that dr_means is an xarray DataArray with mid_rbins as a coordinate
         dr_means.append(xr.DataArray(bin_value.mean(), coords=[('mid_rbins', [bin_value.mean()])]))
     
+    embed(header='343 of ai')
     # Concatenate the results along the 'mid_rbins' dimension
-    try:
-        mean_result = xr.concat(means, dim='mid_rbins')
-    except:
-        embed(header='347 of qg')
+    mean_result = xr.concat(means, dim='mid_rbins')
     
     # Concatenate the mean of 'dr' along the 'mid_rbins' dimension
     dr_mean_result = xr.concat(dr_means, dim='mid_rbins')
