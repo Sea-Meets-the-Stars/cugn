@@ -93,7 +93,7 @@ def run_one_region(xlim, ylim, ndays=15, maxcorr=60):
     qg, Udsn = load_last_6months()
 
     iregion_x = np.where((qg.x >= xlim[0]*1e3) & (qg.x < xlim[1]*1e3))[0]
-    iregion_y = np.where((qg.y >= ylim[0]1e3) & (qg.y < ylim[1]*1e3))[0]
+    iregion_y = np.where((qg.y >= ylim[0]*1e3) & (qg.y < ylim[1]*1e3))[0]
 
     # 
 
