@@ -338,9 +338,8 @@ def dult_mean_orientation(data, rbins, mid_rbins):
         
         # Compute the mean of 'dr' (Mean of the binned dr values)
         # Ensure that dr_means is an xarray DataArray with mid_rbins as a coordinate
-        dr_means.append(xr.DataArray(bin_value.mean(), coords=[('mid_rbins', [bin_value.mean()])]))
+        dr_means.append(xr.DataArray([bin_value.mean()], coords=[('mid_rbins', [bin_value.mean()])]))
     
-    embed(header='343 of ai')
     # Concatenate the results along the 'mid_rbins' dimension
     mean_result = xr.concat(means, dim='mid_rbins')
     
@@ -355,8 +354,7 @@ def process_SF_samples(fs, rbins, mid_rbins):
     dr_results = []
 
     # Parallelize over the time dimension using Dask
-    #for ii in tqdm(range(len(fs.time))):  # You can modify the slicing here if needed
-    for ii in range(len(fs.time)):  # You can modify the slicing here if needed
+    for ii in tqdm(range(len(fs.time))):  # You can modify the slicing here if needed
         print(f"Working on {ii}")
         
         # Isolate the data for the current time step and chunk along 'dcorr'
