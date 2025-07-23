@@ -64,6 +64,7 @@ def test_full(ndays=15, maxcorr=60):
     with ProgressBar():
         data_avers = data_slice.mean(dim=('x','y'), skipna=True).compute()
 
+    embed(header='67 of qg_100km')
     # Defines distance bins 
     dr = 5000 # meters
     rbins = np.arange(0, 1.8e5, dr) # 180 km
@@ -76,6 +77,9 @@ def test_full(ndays=15, maxcorr=60):
     outfile = 'test_full_grid_15days.nc'
     dudlt_aver_angl.to_netcdf(outfile)
     print(f'Saved: {outfile}')
+
+def run_one_region():
+    pass
 
 if __name__ == '__main__':
     test_full()
