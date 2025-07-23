@@ -633,6 +633,81 @@ def fig_region_dul(output_file:str, outfile:str,
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
+def fig_qg_duL_vs_time(x0:int,y0:int, outroot:str='fig_qg_duL_vs_time',
+                   title:str=None):
+    outfile = f'{outroot}_x{x0}_y{y0}.png'
+    output_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_5years.nc' 
+
+    # Load
+    SFds = xarray.load_dataset(output_file)
+
+    # Start the figure
+    fig = plt.figure(figsize=(10,10))
+    plt.clf()
+    ax = plt.gca()
+
+    ndays = [1, 60, 180, 365, 2*365, 5*365]
+    for nday in ndays:
+        ax.plot(SFds.dr.mean('time')*1e-3, 
+                SFds.ulls.isel(time=np.arange(nday)).T.mean('time'), 
+                '-', linewidth=1.5,
+                label=f'ndays={nday}')
+    ax.set_xlabel('$r$ [km]')
+    ax.set_ylabel('$\\delta u_L(r, t)$ [m s$^{-1}$]')
+
+    title=f'QG: x={x0}-{x0+100}km, y={x0}-{x0+100}km'
+    ax.set_title(title, fontsize=23.)
+
+    cugn_plotting.set_fontsize(ax, 20)
+
+    ax.axhline(0., color='gray', linestyle='--')
+    ax.legend(fontsize=20.)
+    ax.minorticks_on()
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+
+def fig_qg_duL_by_year(x0:int,y0:int, outroot:str='fig_qg_duL_yearly',
+                   title:str=None):
+    outfile = f'{outroot}_x{x0}_y{y0}.png'
+    output_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_5years.nc' 
+
+    # Load
+    SFds = xarray.load_dataset(output_file)
+
+    # Start the figure
+    fig = plt.figure(figsize=(10,10))
+    plt.clf()
+    ax = plt.gca()
+
+    #ndays = [1, 60, 180, 365, 2*365, 5*365]
+    #for nday in ndays:
+    #    ax.plot(SFds.dr.mean('time')*1e-3, 
+    #            SFds.ulls.isel(time=np.arange(nday)).T.mean('time'), 
+    #            '-', linewidth=1.5,
+    #            label=f'ndays={nday}')
+    for ss in range(5):
+        ax.plot(SFds.dr.mean('time')*1e-3, 
+                SFds.ulls.isel(time=np.arange(ss*365, (ss+1)*365)).T.mean('time'), 
+                '-', linewidth=1.5,
+                label=f'year={ss+1}')
+    ax.set_xlabel('$r$ [km]')
+    ax.set_ylabel('$\\delta u_L(r, t)$ [m s$^{-1}$]')
+
+    title=f'QG: x={x0}-{x0+100}km, y={x0}-{x0+100}km'
+    if title is not None:
+        ax.set_title(title, fontsize=23.)
+
+    cugn_plotting.set_fontsize(ax, 20)
+
+    ax.axhline(0., color='gray', linestyle='--')
+    ax.legend(fontsize=20.)
+    ax.minorticks_on()
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
 def fig_compare_duL_qg_data(dataset, outroot:str='fig_duL_QG_vs',
                    title:str=None):
     # Load
@@ -872,6 +947,11 @@ def main(flg):
     # Compare duL QG vs. dataset``
     if flg == 12:
         fig_compare_duL_qg_data('Calypso2022')
+    
+    # Compare duL QG vs. dataset``
+    if flg == 13:
+        fig_qg_duL_vs_time(300,300)
+        fig_qg_duL_by_year(300,300)
 
 
 # Command line execution
