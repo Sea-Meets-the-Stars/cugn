@@ -5,6 +5,8 @@ import xarray as xr
 from dask import delayed, compute  # <-- Importing the necessary Dask modules
 from dask.diagnostics import ProgressBar
 
+from IPython import embed
+
 def SF2_3(ull, utt):
     ''' Estimates 2nd and 3rd order structure function
         
@@ -339,7 +341,10 @@ def dult_mean_orientation(data, rbins, mid_rbins):
         dr_means.append(xr.DataArray(bin_value.mean(), coords=[('mid_rbins', [bin_value.mean()])]))
     
     # Concatenate the results along the 'mid_rbins' dimension
-    mean_result = xr.concat(means, dim='mid_rbins')
+    try:
+        mean_result = xr.concat(means, dim='mid_rbins')
+    except:
+        embed(header='347 of qg')
     
     # Concatenate the mean of 'dr' along the 'mid_rbins' dimension
     dr_mean_result = xr.concat(dr_means, dim='mid_rbins')

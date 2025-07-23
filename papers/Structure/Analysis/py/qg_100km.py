@@ -25,7 +25,7 @@ from IPython import embed
 shiftdim = 'x','y'
 grid = 'm'
 
-def test_full(ndays=15, maxcorr=60):
+def load_last_6months():
     # Load
     qg, _ = qg_utils.load_qg()
 
@@ -46,6 +46,13 @@ def test_full(ndays=15, maxcorr=60):
     # Selects the first level (surface)
     # Last 6 months
     Udsn = qg.isel(lev=0, time=time6m).chunk(chunks)
+
+    # Return
+    return qg, Udsn
+
+def test_full(ndays=15, maxcorr=60):
+
+    qg, Udsn = load_last_6months()
 
     # Grab the last 15 days
     SFtest = strucFunct2_ai.calculateSF_2(Udsn.isel(
@@ -80,7 +87,16 @@ def test_full(ndays=15, maxcorr=60):
     dudlt_aver_angl.to_netcdf(outfile)
     print(f'Saved: {outfile}')
 
-def run_one_region():
+def run_one_region(xlim, ylim, ndays=15, maxcorr=60):
+
+    # Load
+    qg, Udsn = load_last_6months()
+
+    iregion_x = np.where((qg.x >= xlim[0]*1e3) & (qg.x < xlim[1]*1e3))[0]
+    iregion_y = np.where((qg.y >= ylim[0]1e3) & (qg.y < ylim[1]*1e3))[0]
+
+    # 
+
     pass
 
 if __name__ == '__main__':
