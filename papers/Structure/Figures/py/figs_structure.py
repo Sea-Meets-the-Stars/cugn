@@ -4,10 +4,11 @@
 # imports
 import os
 import sys
+import glob
 from importlib import resources
 
 import numpy as np
-
+import xarray
 
 from matplotlib import pyplot as plt
 import matplotlib as mpl
@@ -29,6 +30,7 @@ from IPython import embed
 # Local
 sys.path.append(os.path.abspath("../Analysis/py"))
 import qg_utils
+import data_utils
 
 Sn_lbls = cugn_plotting.Sn_lbls
 
@@ -584,6 +586,101 @@ def fig_Sn_distribution(dataset:str, outfile:str,
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
+def fig_region_duls(outroot:str='fig_qg_region_dul'):
+    """
+    Examine the QG structure function
+    """
+
+    # Grab files
+    output_files = glob.glob('../Analysis/Output/SF_region_*')
+    output_files.sort()
+
+    # Loop on em
+    for ss, output_file in enumerate(output_files):
+        # Parse for x,y
+        ix = output_file.find('_x')
+        xval = int(output_file[ix+2:ix+5])
+        iy = output_file.find('_y')
+        yval = int(output_file[iy+2:iy+5])
+        # Outfile
+        outfile = f'{outroot}_x{xval}_y{yval}.png'
+        # Do it
+        fig_region_dul(output_file, outfile,
+                       title=f'QG: x={xval}-{xval+100}km, y={yval}-{yval+100}km')
+
+def fig_region_dul(output_file:str, outfile:str,
+                   title:str=None):
+    # Load
+    SFds = xarray.load_dataset(output_file)
+
+    # Start the figure
+    fig = plt.figure(figsize=(10,10))
+    plt.clf()
+    ax = plt.gca()
+
+    ax.plot(SFds.dr.values[0,:]*1e-3, SFds.ulls.T, '-k', linewidth=0.5, alpha=0.3)
+    ax.plot(SFds.dr.mean('time')*1e-3, SFds.ulls.T.mean('time'), '-r', linewidth=1.5)
+    ax.set_xlabel('$r$ [km]')
+    ax.set_ylabel('$\\delta u_L(r, t)$ [m s$^{-1}$]')
+
+    if title is not None:
+        ax.set_title(title, fontsize=23.)
+
+    cugn_plotting.set_fontsize(ax, 20)
+
+    ax.minorticks_on()
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+def fig_compare_duL_qg_data(dataset, outroot:str='fig_duL_QG_vs',
+                   title:str=None):
+    # Load
+    outfile = f'{outroot}_{dataset}.png'
+
+    # Data
+    rdict = data_utils.load_SF(dataset)
+    Sn_dict = rdict['Sn_dict']
+    gPairs = rdict['gPairs']
+    Skeys = rdict['Skeys']
+    goodN = rdict['goodN']
+
+    # Start the figure
+    fig = plt.figure(figsize=(10,7))
+    plt.clf()
+    ax = plt.gca()
+
+    # Dataset
+    Skey = Skeys[0]
+    ax.errorbar(Sn_dict['r'][goodN], 
+                Sn_dict[Skey][goodN], 
+                yerr=Sn_dict['err_'+Skey][goodN],
+                color='k', 
+                fmt='o', capsize=5,
+                label=dataset)
+    ax.axhline(0., color='gray', linestyle='--')
+
+    # Grab QG files
+    output_files = glob.glob('../Analysis/Output/SF_region_*')
+    output_files.sort()
+
+    for output_file in output_files:
+        SFds = xarray.load_dataset(output_file)
+        ax.plot(SFds.dr.mean('time')*1e-3, SFds.ulls.T.mean('time'), '-', linewidth=1.5)
+
+    ax.set_xlabel('$r$ [km]')
+    ax.set_ylabel('$\\delta u_L(r, t)$ [m s$^{-1}$]')
+    ax.set_xscale('log')
+
+    cugn_plotting.set_fontsize(ax, 20)
+
+    ax.minorticks_on()
+    ax.legend(fontsize=20.)
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+
 def fig_examine_qg(outfile:str='fig_examine_qg.png'):
     """
     Examine the QG structure function
@@ -648,37 +745,14 @@ def fig_compare_dus(dataset:str, outroot:str='fig_comp_dus',
     """
     Compare dus
     """
-    # Load dataset
-    profilers = gliderdata.load_dataset(dataset)
     outfile = f'{outroot}_z{(iz+1)*10}_{dataset}.png'
 
-    # Cut on valid velocity data 
-    nbins = 20
-    rbins = 10**np.linspace(0., np.log10(400), nbins) # km
-    # Generate pairs
-    #gData = gliderdata.load_dataset(dataset)
-    gPairs = profilerpairs.ProfilerPairs(
-        profilers, max_time=10.,
-        avoid_same_glider=True,
-        remove_nans=True,
-        debug=False, 
-        randomize=False)
-    # Isopycnals?
-    if iz < 0:
-        gPairs.prep_isopycnals('t')
-    #gData = gData.cut_on_good_velocity()
-    #gData = gData.cut_on_reltime(tcut)
-
-    gPairs.calc_delta(iz, variables, skip_velocity=False)
-    gPairs.calc_Sn(variables)
-
-    Sn_dict = gPairs.calc_Sn_vs_r(rbins, nboot=100)
-    gPairs.calc_corr_Sn(Sn_dict)
-    gPairs.add_meta(Sn_dict)
-
-    minN = 10
-    goodN = np.array(Sn_dict['config']['N']) > minN
-    Skeys = ['S1_duL', 'S2_duL**2', 'S3_'+variables]
+    # Data
+    rdict = data_utils.load_SF(dataset, variables=variables, iz=iz)
+    Sn_dict = rdict['Sn_dict']
+    gPairs = rdict['gPairs']
+    Skeys = rdict['Skeys']
+    goodN = rdict['goodN']
 
     u_rms = np.sqrt(Sn_dict[Skeys[1]][goodN])
 
@@ -790,6 +864,14 @@ def main(flg):
     # Compare RMS with uL
     if flg == 10:
         fig_compare_dus('Calypso2022')
+
+    # Generate du_L figures for QG
+    if flg == 11:
+        fig_region_duls()
+
+    # Compare duL QG vs. dataset``
+    if flg == 12:
+        fig_compare_duL_qg_data('Calypso2022')
 
 
 # Command line execution

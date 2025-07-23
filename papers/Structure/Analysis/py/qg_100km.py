@@ -86,7 +86,8 @@ def test_full(ndays=15, maxcorr=60):
     dudlt_aver_angl.to_netcdf(outfile)
     print(f'Saved: {outfile}')
 
-def run_one_region(xlim, ylim, ndays=15, maxcorr=60):
+def run_one_region(xlim:tuple, ylim:tuple, outfile:str,
+                   ndays:int=60, maxcorr:int=30):
 
     # Load
     qg, Udsn = load_last_6months()
@@ -95,7 +96,7 @@ def run_one_region(xlim, ylim, ndays=15, maxcorr=60):
     iregion_y = np.where((qg.y >= ylim[0]*1e3) & (qg.y < ylim[1]*1e3))[0]
 
     # Cut down Usdn
-    Udsn = qg.isel(x=iregion_x, y=iregion_y, time=np.arange(0, ndays))
+    Udsn = Udsn.isel(x=iregion_x, y=iregion_y, time=np.arange(0, ndays))
 
     # Grab the last 15 days
     SFtest = strucFunct2_ai.calculateSF_2(Udsn, maxcorr, shiftdim, grid)
@@ -115,7 +116,7 @@ def run_one_region(xlim, ylim, ndays=15, maxcorr=60):
     with ProgressBar():
         data_avers = data_slice.mean(dim=('x','y'), skipna=True).compute()
 
-    # Defines distance bins 
+    # Defines distance bins
     dr = 5000 # meters
     rbins = np.arange(0, 1.3e5, dr) # 130 km
     mid_rbins = 0.5*(rbins[:-1] + rbins[1:])
@@ -124,12 +125,17 @@ def run_one_region(xlim, ylim, ndays=15, maxcorr=60):
     dudlt_aver_angl = strucFunct2_ai.process_SF_samples(data_avers, rbins, mid_rbins)
 
     # Save
-    outfile = 'test_full_grid_15days.nc'
     dudlt_aver_angl.to_netcdf(outfile)
     print(f'Saved: {outfile}')
 
-    pass
-
 if __name__ == '__main__':
+
     # Full
-    test_full()
+    #test_full()
+
+    # Regions
+    for x0 in [300., 400, 500.]:
+        for y0 in [300., 400, 500.]:
+            run_one_region((x0, x0+100.), (y0, y0+100.), 
+                           f'Output/SF_region_x{int(x0)}_y{int(y0)}_60days.nc', 
+                           ndays=60, maxcorr=30)
