@@ -20,6 +20,7 @@ def SF2_3(ull, utt):
 
 def SF2_3_ul(ull):
     ''' Estimates 2nd and 3rd order structure function
+    for the longitudinal component only.
         
         Input:
         
