@@ -758,7 +758,7 @@ def fig_compare_duL_qg_data(dataset, outroot:str='fig_duL_QG_vs',
 
 def fig_examine_qg(outfile:str='fig_examine_qg.png'):
     """
-    Examine the QG structure function
+    Compare <duL> with sqrt<du^2>
     """
     # Load the data
     qg, mSF_15 = qg_utils.load_qg()
@@ -814,6 +814,62 @@ def fig_examine_qg(outfile:str='fig_examine_qg.png'):
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
         
+def fig_qg_SF(outfile:str='fig_qg_SF.png'):
+    """
+    QG Structure Function, duL and total
+    """
+    # Load the data
+    qg, mSF_15 = qg_utils.load_qg()
+
+    # Calculate the first order structure function
+    SF_dict = qg_utils.calc_dus(qg, mSF_15)
+
+    # Unpack a bit
+    rr1 = SF_dict['rr1']
+    du1 = SF_dict['du1']
+    du1LL = SF_dict['du1LL']
+    du1_mn = SF_dict['du1_mn']
+    dull_mn = SF_dict['dull_mn']
+    dutt_mn = SF_dict['dutt_mn']
+    du2_mn = SF_dict['du2_mn']
+
+    # Start the figure
+    fig = plt.figure(figsize=(10,4))
+    plt.clf()
+    gs = gridspec.GridSpec(1,3)
+
+    # du
+    ax0 = plt.subplot(gs[0])
+
+    ax0.semilogx(rr1*1e-3, du1_mn*1e3, 'k', linewidth=1, 
+                label=r'$<\delta u>$')
+    ax0.semilogx(rr1*1e-3, dull_mn*1e3, 'b', linewidth=1, 
+                label=r'$<\delta u_L>$')
+    ax0.semilogx(rr1*1e-3, dutt_mn*1e3, 'r', linewidth=1, 
+                label=r'$<\delta u_T>$')
+
+    ax0.legend(fontsize=15, loc='lower left')
+    ax0.set_xlabel(r'$r$ [km]')
+    ax0.set_ylabel(r'$<\delta u> \, 10^{-3}$ [m/s]')
+
+    # du2
+    ax2 = plt.subplot(gs[1])
+
+    ax2.loglog(rr1*1e-3, du2_mn, 'k', linewidth=1, 
+                label=r'$<\delta u^2>$')
+
+    #ax0.legend(fontsize=15, loc='lower left')
+    ax2.set_xlabel(r'$r$ [km]')
+    ax2.set_ylabel(r'$<\delta u^2> \, {\rm [m/s]^2}$')
+
+
+    for ax in [ax0, ax2]:
+        cugn_plotting.set_fontsize(ax, 15)
+
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
 def fig_compare_dus(dataset:str, outroot:str='fig_comp_dus',
                   variables = 'duLduLduL',
                   iz:int=5): 
@@ -952,6 +1008,10 @@ def main(flg):
     if flg == 13:
         fig_qg_duL_vs_time(300,300)
         fig_qg_duL_by_year(300,300)
+
+    # Compare duL QG vs. dataset``
+    if flg == 14:
+        fig_qg_SF()
 
 
 # Command line execution
