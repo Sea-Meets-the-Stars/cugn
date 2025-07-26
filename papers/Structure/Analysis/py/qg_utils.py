@@ -37,6 +37,32 @@ def load_qg():
 
 
 
+def load_last_time(ndays=6*30):
+    # Load
+    qg, _ = load_qg()
+
+    # Gets last 6 months of data
+    #nmonths = 6
+    #month = 30
+    #yr = 365
+
+    i1 = -2-ndays
+    all_time = np.arange(i1, i1 + ndays)
+
+    # Chunks data
+    chx = len(qg.x)
+    chy = len(qg.y)
+    cht = len(qg.time)
+    chunks = {'x': chx, 'y': chy, 'time': cht}
+
+    # Selects the first level (surface)
+    # Last 6 months
+    Udsn = qg.isel(lev=0, time=all_time).chunk(chunks)
+
+    # Return
+    return qg, Udsn
+
+
 def calc_dus(qg, mSF_15, indx:int=1, indf:int=40, 
              subsets:bool=False):
 

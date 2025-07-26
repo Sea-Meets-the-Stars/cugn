@@ -25,34 +25,9 @@ from IPython import embed
 shiftdim = 'x','y'
 grid = 'm'
 
-def load_last_time(ndays=6*30):
-    # Load
-    qg, _ = qg_utils.load_qg()
-
-    # Gets last 6 months of data
-    #nmonths = 6
-    #month = 30
-    #yr = 365
-
-    i1 = -2-ndays
-    all_time = np.arange(i1, i1 + ndays)
-
-    # Chunks data
-    chx = len(qg.x)
-    chy = len(qg.y)
-    cht = len(qg.time)
-    chunks = {'x': chx, 'y': chy, 'time': cht}
-
-    # Selects the first level (surface)
-    # Last 6 months
-    Udsn = qg.isel(lev=0, time=all_time).chunk(chunks)
-
-    # Return
-    return qg, Udsn
-
 def test_full(ndays=15, maxcorr=60):
 
-    qg, Udsn = load_last_time()
+    qg, Udsn = qg_utils.load_last_time()
 
     # Grab the last 15 days
     SFtest = strucFunct2_ai.calculateSF_2(Udsn.isel(
@@ -91,7 +66,7 @@ def run_one_region(xlim:tuple, ylim:tuple, outfile:str,
                    ndays:int=60, maxcorr:int=30):
 
     # Load
-    qg, Udsn = load_last_time(ndays=timelast)
+    qg, Udsn = qg_utils.load_last_time(ndays=timelast)
 
     iregion_x = np.where((qg.x >= xlim[0]*1e3) & (qg.x < xlim[1]*1e3))[0]
     iregion_y = np.where((qg.y >= ylim[0]*1e3) & (qg.y < ylim[1]*1e3))[0]
