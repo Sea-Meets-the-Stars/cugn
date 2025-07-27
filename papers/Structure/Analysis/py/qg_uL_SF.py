@@ -78,7 +78,6 @@ def calc_SF(dcorr=3599, chkx=256, chky=256):
     Ntot = len(dult.time)
     chunk_slic = {'time': tchunk_size, 'x': len(dult.x), 'y': len(dult.y), 'dcorr': dcorr}
     dult = dult.chunk(chunk_slic)
-    embed(header='Open raw data files 72')
 
     ii = 0
     for start_time in tqdm(range(0, Ntot, tchunk_size), desc="Time slice", position=2):
