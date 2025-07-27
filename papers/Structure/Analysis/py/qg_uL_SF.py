@@ -69,6 +69,7 @@ def calc_rawduLT(nyears=5, maxcorr=60):
 def calc_SF(dcorr=3599, chkx=256, chky=256):
     # Open the NetCDF files using xarray's open_mfdataset (multi-file dataset)
     nc_files = os.path.join(raw_path, '*.nc')  #
+    embed(header='Open raw data files 72')
     dult = xarray.open_mfdataset(nc_files, engine='netcdf4', combine='by_coords', 
                           chunks={'time': 100, 'x': chkx, 'y': chky, 'dcorr': 10}, 
                           parallel=True)
