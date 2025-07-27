@@ -94,7 +94,7 @@ def calc_SF(dcorr=3599, chkx=256, chky=256):
         data_slice = dult.isel(time=slice(start_time, end_time))
         
         # Calculates du1, du2 and du3
-        sf2, sf3 = strucFunct2_ai.SF2_3_ul(data_slice.dul)
+        sf2, sf3 = strucFunct2_ai.SF2_3_ul(data_slice.ulls)
         data_slice['du2'] = sf2
         data_slice['du3'] = sf3
         
@@ -131,7 +131,7 @@ def calc_SF_5years():
 if __name__ == '__main__':
 
     # raw dULT
-    calc_rawduLT()
+    #calc_rawduLT()
 
     # SF
     calc_SF()
