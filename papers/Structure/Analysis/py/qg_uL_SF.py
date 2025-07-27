@@ -69,16 +69,16 @@ def calc_rawduLT(nyears=5, maxcorr=60):
 def calc_SF(dcorr=3599, chkx=256, chky=256):
     # Open the NetCDF files using xarray's open_mfdataset (multi-file dataset)
     nc_files = os.path.join(raw_path, '*.nc')  #
-    embed(header='Open raw data files 72')
     dult = xarray.open_mfdataset(nc_files, engine='netcdf4', combine='by_coords', 
                           chunks={'time': 100, 'x': chkx, 'y': chky, 'dcorr': 10}, 
-                          parallel=True)
+                          parallel=False) # Was True, but seg faulting
     dult = dult.sortby('time')
 
     tchunk_size = 15 # time slice length
     Ntot = len(dult.time)
     chunk_slic = {'time': tchunk_size, 'x': len(dult.x), 'y': len(dult.y), 'dcorr': dcorr}
     dult = dult.chunk(chunk_slic)
+    embed(header='Open raw data files 72')
 
     ii = 0
     for start_time in tqdm(range(0, Ntot, tchunk_size), desc="Time slice", position=2):
