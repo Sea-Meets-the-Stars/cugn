@@ -133,4 +133,7 @@ if __name__ == '__main__':
     #calc_rawduLT()
 
     # SF
-    calc_SF()
+    #calc_SF()
+
+    # Lastly
+    calc_SF_5years()
