@@ -114,7 +114,7 @@ def calc_SF_5years():
 
     dult_aver = dult_aver.sortby('time').chunk({'time': 1825, 'dcorr': 2}).load()
 
-    # Defines distance bins 
+    # Defines distance bins
     dr = 5000 # meters
     rbins = np.arange(0, 3e5, dr)
     mid_rbins = 0.5*(rbins[:-1] + rbins[1:])

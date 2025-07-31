@@ -220,6 +220,8 @@ def fig_structure(dataset:str, outroot='fig_structure',
                   calculate:bool=True,
                   minN:int=10, avoid_same_glider:bool=True,
                   debug:bool=False,
+                  log_rbins:bool=True,
+                  max_time:float=10.,
                   skip_vel:bool=True,
                   show_correct:bool=False):
 
@@ -247,11 +249,14 @@ def fig_structure(dataset:str, outroot='fig_structure',
         raise NotImplementedError('Not ready for these variablaes')
     # Cut on valid velocity data 
     nbins = 20
-    rbins = 10**np.linspace(0., np.log10(400), nbins) # km
+    if log_rbins:
+        rbins = 10**np.linspace(0., np.log10(400), nbins) # km
+    else:
+        rbins = np.linspace(0., 200, nbins) # km
 
     #embed(header='fig_structure: 253')
     gPairs = profilerpairs.ProfilerPairs(
-        profilers, max_time=10., 
+        profilers, max_time=max_time, 
         avoid_same_glider=avoid_same_glider,
         remove_nans=True,
         debug=debug)
@@ -315,7 +320,8 @@ def fig_structure(dataset:str, outroot='fig_structure',
                     'x', color=clr)
 
 
-        ax.set_xscale('log')
+        if log_rbins:
+            ax.set_xscale('log')
     #
         ax.set_xlabel('Separation (km)')
         ax.set_ylabel(Sn_lbls[Skey])
@@ -772,7 +778,8 @@ def main(flg):
         #for skip in skip_assets:
         #    sub_assests.remove(skip)
         fig_structure('ARCTERX-Leg2', variables='duLduLduL',
-            assets=['Spray'])
+            assets=['Spray', 'Seaglider'],
+            log_rbins=False, max_time=7.)
 
 # Command line execution
 if __name__ == '__main__':
