@@ -8,7 +8,8 @@ from profiler import vmpdata
 from profiler import triaxusdata
 from profiler.specific import em_apex
 from profiler.specific import altos
-from profiler import profilers_io
+
+from IPython import embed
 
 dataset = 'ARCTERX-Leg2'
 apath = os.path.join(os.getenv('OS_ARCTERX'), '2025_IOP')
@@ -21,7 +22,7 @@ def load_vmp():
                                        missid=20000)
     return [vmp]
 
-def load_seagliders():
+def load_orig_seagliders():
     print("Loading Seagliders")
     datafiles = glob.glob(os.path.join(apath, 'gliders/Seagliders/sg*_level2.nc'))
     seagliders = []
@@ -33,11 +34,36 @@ def load_seagliders():
         seagliders.append(s)
     return seagliders
 
+def load_seagliders():
+    print("Loading Seagliders")
+    # Mat files prepared by Dan Rudnick
+    datafiles = glob.glob(os.path.join(apath, 'gliders/Seagliders/sg*.mat'))
+    seagliders = []
+    for datafile in datafiles:
+        print("Loading: ", datafile)
+        # Mission ID
+        base = os.path.basename(datafile).split('.')[0]
+        missid = int(base[2:])
+        #
+        s = gliderdata.SeagliderData.from_binned_file(
+            datafile, 'idg', dataset, 
+            missid=missid,
+            in_field=False,
+            extra_dict={'adcp_on': True})
+        seagliders.append(s)
+    return seagliders
+
+
 def load_slocum():
     print("Loading Slocum")
+    # Original
     datafile = os.path.join(apath, 'gliders/slocum/osu685.l3.nc')
+    # Dan Rudnick's 
+    #datafile = os.path.join(apath, 'gliders/slocum/osu685.mat')
     pData = gliderdata.SlocumData.from_binned_file(
-        datafile, 'slocum', dataset, missid=60000, in_field=True)
+        datafile, 'slocum', dataset, missid=60000, 
+        in_field=False)
+        #in_field=False, extra_dict={'adcp_on': True})
     return [pData]
 
 def load_sprays(in_field:bool=False, adcp_on:bool=False):
@@ -142,3 +168,13 @@ def load_by_asset(assets:list, **kwargs):
             raise IOError(f"Bad asset! {asset}")
     # Return
     return profilers
+
+# Command line for testing
+if __name__ == '__main__':
+    #assets = ['Spray', 'Solo', 'Flip', 'Alto', 'EMApex', 'VMP', 'Triaxus', 'Slocum', 'Seaglider']
+    assets = ['Slocum']
+    profilers = load_by_asset(assets)#, in_field=True, adcp_on=True)
+    print(f"Loaded {len(profilers)} profilers.")
+
+    # Check
+    embed(header='168 of load_profilers.py')

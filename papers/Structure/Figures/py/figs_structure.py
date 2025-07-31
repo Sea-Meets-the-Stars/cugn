@@ -31,6 +31,7 @@ from IPython import embed
 sys.path.append(os.path.abspath("../Analysis/py"))
 import qg_utils
 import data_utils
+import glider_io
 
 Sn_lbls = cugn_plotting.Sn_lbls
 
@@ -38,7 +39,7 @@ def fig_separations(dataset:str, outroot='fig_sep', max_time:float=10.):
     outfile = f'{outroot}_{dataset}.png'
 
     # Load dataset
-    profilers = gliderdata.load_dataset(dataset)
+    profilers = glider_io.load_dataset(dataset)
     
 
     # Generate pairs
@@ -98,7 +99,7 @@ def fig_dtimes(dataset:str, outroot='fig_dtime', max_time:float=10.):
     outfile = f'{outroot}_{dataset}.png'
 
     # Load dataset
-    gData = gliderdata.load_dataset(dataset)
+    gData = glider_io.load_dataset(dataset)
     
     # Cut on valid velocity data 
     gData = gData.cut_on_good_velocity()
@@ -141,7 +142,7 @@ def fig_dus(dataset:str, outroot='fig_du', max_time:float=10., iz:int=4):
     outfile = f'{outroot}_z{(iz+1)*10}_{dataset}.png'
 
     # Load dataset
-    gData = gliderdata.load_dataset(dataset)
+    gData = glider_io.load_dataset(dataset)
     
     # Cut on valid velocity data 
     gData = gData.cut_on_good_velocity()
@@ -196,7 +197,10 @@ def fig_structure(dataset:str, outroot='fig_structure',
                   variables = 'duLduLduL',
                   iz:int=5, tcut:tuple=None,
                   skip_vel:bool=False,
+                  stretch:bool=False,
                   gpair_file:str=None,
+                  use_xlim:tuple=None,
+                  use_ylim:tuple=None,
                   minN:int=10, avoid_same_glider:bool=True,
                   show_correct:bool=True):
 
@@ -208,13 +212,15 @@ def fig_structure(dataset:str, outroot='fig_structure',
     #    skip_vel = False
 
     # Load dataset
-    profilers = gliderdata.load_dataset(dataset)
+    profilers = glider_io.load_dataset(dataset)
 
     # Outfile
     if iz >= 0:
         outfile = f'{outroot}_z{(iz+1)*10}_{dataset}_{variables}.png'
     else:
         outfile = f'{outroot}_iso{np.abs(iz)}_{dataset}_{variables}.png'
+    if stretch:
+        outfile = outfile.replace('.png', '_stretch.png')
 
     # Load
     #gpair_file = cugn_io.gpair_filename(
@@ -254,7 +260,10 @@ def fig_structure(dataset:str, outroot='fig_structure',
     #embed(header='fig_structure: 215')
 
     # Start the figure
-    fig = plt.figure(figsize=(19,6))
+    if stretch:
+        fig = plt.figure(figsize=(19,4))
+    else:
+        fig = plt.figure(figsize=(19,6))
     plt.clf()
     gs = gridspec.GridSpec(1,3)
 
@@ -307,14 +316,25 @@ def fig_structure(dataset:str, outroot='fig_structure',
         # Label time separation
         if n == 2:
             same_glider = 'True' if avoid_same_glider else 'False'
-            ax.text(0.1, 0.8, 
-                    f'{dataset}\n depth = {(iz+1)*10} m, t<{int(Sn_dict['config']['max_time'])} hr\nAvoid same glider? {same_glider}\n {variables}', 
-                transform=ax.transAxes, fontsize=16, ha='left')
+            if stretch:
+                text = f'{dataset}'
+                ytxt = 0.9
+                tsz = 18.
+            else:
+                text = f'{dataset}\n depth = {(iz+1)*10} m, t<{int(Sn_dict['config']['max_time'])} hr\nAvoid same glider? {same_glider}\n {variables}' 
+                ytxt = 0.8
+                tsz = 16.
+            ax.text(0.1, ytxt, text,
+                transform=ax.transAxes, fontsize=tsz, ha='left')
         # 0 line
         ax.axhline(0., color='red', linestyle='--')
 
         plotting.set_fontsize(ax, 19) 
         ax.grid()
+        if use_xlim:
+            ax.set_xlim(use_xlim)
+        if n == 2 and use_ylim is not None:
+            ax.set_ylim(use_ylim)
         
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
@@ -1178,6 +1198,22 @@ def main(flg):
         fig_region_dus(outroot='fig_qg_region_du3_300days', 
                        calc_du3=True, Ndays=300)
 
+    # Figs for Pitch slide
+    if flg == 16:
+        avoid_same_glider = True
+        #fig_separations(dataset)
+        #fig_dtimes(dataset)
+        #fig_dus(dataset)
+
+        datasets = ['Calypso2019', 'Calypso2022', 'ARCTERX-2023']
+        #datasets = ['ARCTERX-2023']
+        for dataset in datasets:
+            if dataset == 'Calypso2019':
+                use_ylim = (-0.003,0.003)
+            else:
+                use_ylim=None
+            fig_structure(dataset, avoid_same_glider=avoid_same_glider,
+                      stretch=True, use_xlim=(1.,400.), use_ylim=use_ylim)
 
 # Command line execution
 if __name__ == '__main__':
