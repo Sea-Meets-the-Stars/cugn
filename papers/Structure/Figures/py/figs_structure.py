@@ -1090,6 +1090,78 @@ def fig_compare_dus(dataset:str, outroot:str='fig_comp_dus',
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
+def fig_arcterx_qg_f2f(outfile:str='fig_arcterx_qg_f2f.png', Ndays:int=None):
+    if Ndays is None:
+        Ndays = 90
+
+    # Load up
+    qg, mSF_15_duL = qg_utils.load_qg(use_SFduL=True)
+    SF_dict_duL = qg_utils.calc_dus(qg, mSF_15_duL, Ndays=Ndays)
+    du2_mn_duL = SF_dict_duL['du2_mn']
+    du3_mn_duL = SF_dict_duL['du3_mn']
+    dull_mn = SF_dict_duL['dull_mn']
+    rr1 = SF_dict_duL['rr1']
+
+    # Grab QG files
+    output_files = glob.glob('../Analysis/Output/SF_region_*5years.nc')
+    output_files.sort()
+
+    # Start the figure
+    fig = plt.figure(figsize=(7,10))
+    plt.clf()
+    gs = gridspec.GridSpec(2,1)
+
+    ax1 = plt.subplot(gs[0])
+    ax1.semilogx(rr1*1e-3, dull_mn, 'k', ls='--', linewidth=1, 
+                label=r'Full grid $<\delta u_L>$')
+
+    ax3 = plt.subplot(gs[1])
+    ax3.semilogx(rr1*1e-3, du3_mn_duL, '--k', linewidth=1, 
+                label=r'Full grid $<\delta u_L^3>$')
+
+    # Loop on files
+    for ss, output_file in enumerate(output_files):
+
+        SFds = xarray.load_dataset(output_file)
+        # Cut on time
+        i1 = -1*Ndays
+        times = np.arange(i1, i1 + Ndays)
+        SFds = SFds.isel(time=times)
+
+        # Correct the du3
+        du1 = SFds.ulls.T.mean('time')
+        du2 = SFds.du2.T.mean('time')
+        du3 = SFds.du3.T.mean('time')
+        du3_corr = du3 - 3*du1*du2 + 2*du1**3
+    
+        rrr1 = SFds.dr.mean('time')*1e-3 
+
+        # Plot the du1
+        lbl = f'QG: {Ndays} days; 100kmx100km region' if ss == 0 else None
+        ax1.semilogx(rrr1, du1, linewidth=1, label=lbl)
+
+        # Plot the du3
+        ax3.semilogx(rrr1, du3, linewidth=1, label=lbl)
+
+    # Suppress numbers on ax1 x-axis
+    ax1.xaxis.set_major_formatter(plt.NullFormatter())
+
+    # Labels
+    #ax1.set_xlabel(r'$r$ [km]')
+    ax1.set_ylabel(r'$<\delta u_L>$ [m/s]')
+    ax3.set_xlabel(r'$r$ [km]')
+    ax3.set_ylabel(r'$<\delta u_L^3(r)> \, \rm [m^{3} \, s^{-3}]$')
+    ax3.minorticks_on()
+
+    for ax in [ax1, ax3]:
+        cugn_plotting.set_fontsize(ax, 18)
+        ax.legend(fontsize=14., loc='lower left')
+
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+
 def main(flg):
     if flg== 'all':
         flg= np.sum(np.array([2 ** ii for ii in range(25)]))
@@ -1200,20 +1272,24 @@ def main(flg):
 
     # Figs for Pitch slide
     if flg == 16:
-        avoid_same_glider = True
-        #fig_separations(dataset)
-        #fig_dtimes(dataset)
-        #fig_dus(dataset)
+        if False:
+            avoid_same_glider = True
+            #fig_separations(dataset)
+            #fig_dtimes(dataset)
+            #fig_dus(dataset)
 
-        datasets = ['Calypso2019', 'Calypso2022', 'ARCTERX-2023']
-        #datasets = ['ARCTERX-2023']
-        for dataset in datasets:
-            if dataset == 'Calypso2019':
-                use_ylim = (-0.003,0.003)
-            else:
-                use_ylim=None
-            fig_structure(dataset, avoid_same_glider=avoid_same_glider,
-                      stretch=True, use_xlim=(1.,400.), use_ylim=use_ylim)
+            datasets = ['Calypso2019', 'Calypso2022', 'ARCTERX-2023']
+            #datasets = ['ARCTERX-2023']
+            for dataset in datasets:
+                if dataset == 'Calypso2019':
+                    use_ylim = (-0.003,0.003)
+                else:
+                    use_ylim=None
+                fig_structure(dataset, avoid_same_glider=avoid_same_glider,
+                        stretch=True, use_xlim=(1.,400.), use_ylim=use_ylim)
+
+        # QG
+        fig_arcterx_qg_f2f()
 
 # Command line execution
 if __name__ == '__main__':

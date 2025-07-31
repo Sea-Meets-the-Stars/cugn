@@ -65,9 +65,13 @@ def load_last_time(ndays=6*30):
 
 
 def calc_dus(qg, mSF_15, indx:int=1, indf:int=40, 
-             subsets:bool=False):
+             subsets:bool=False, Ndays:int=None):
 
     out_dict = {}
+
+    # Cut on time
+    if Ndays is not None:
+        mSF_15 = mSF_15.isel(time=np.arange(mSF_15.time.size-Ndays, mSF_15.time.size))
 
     # First order structure function
     #sf1_mn = mSF_15.du1.mean(dim='time')[indx:indf]
@@ -78,7 +82,8 @@ def calc_dus(qg, mSF_15, indx:int=1, indf:int=40,
     #du2 = mSF_15.du2.isel(mid_rbins=np.arange(indx, indf)).chunk({'mid_rbins':len(mSF_15.mid_rbins), 'time': 100})
 
     # LL only
-    du1LL = mSF_15.ulls.isel(mid_rbins=np.arange(indx, indf)).chunk({'mid_rbins':len(mSF_15.mid_rbins), 'time': 100})
+    du1LL = mSF_15.ulls.isel(mid_rbins=np.arange(indx, indf)).chunk({'mid_rbins':len(mSF_15.mid_rbins), 
+                                                                     'time': 100})
 
 
     in1 = 2
