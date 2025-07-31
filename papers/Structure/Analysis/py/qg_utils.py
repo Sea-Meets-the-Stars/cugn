@@ -21,15 +21,16 @@ from strucFunct2_ai import timescale
 
 from IPython import embed
 
-def load_qg():
+def load_qg(use_SFduL:bool=False):
     qg_file = os.path.join(os.getenv('OS_DATA'), 'QG', 'QGModelOutput20years.nc')
     qg = xarray.open_dataset(qg_file)
 
     #### Loads 15 years time series
     chunksSF15 = {'time': 100, 'mid_rbins': 53}
 
-    mSF_15 = xarray.open_dataset(os.path.join(os.getenv('OS_DATA'), 'QG', 'SFQG_aver_pos_orien_5yearb.nc'), 
-                                chunks=chunksSF15)
+    SF_file = os.path.join(os.getenv('OS_DATA'), 'QG', 'SFQG_aver_pos_orien_5yearb.nc') if not use_SFduL else \
+        os.path.join(os.getenv('OS_DATA'), 'QG', 'SFQG_aver_pos_orien_5yearb_duL.nc') 
+    mSF_15 = xarray.open_dataset(SF_file, chunks=chunksSF15)
     mSF_15['time'] = mSF_15.time/86400
     mSF_15['du1'] = mSF_15.ulls + mSF_15.utts
 

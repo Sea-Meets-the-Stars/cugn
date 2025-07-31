@@ -586,13 +586,16 @@ def fig_Sn_distribution(dataset:str, outfile:str,
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
-def fig_region_duls(outroot:str='fig_qg_region_dul'):
+def fig_region_dus(outroot:str='fig_qg_region_dul', 
+                   calc_du3:bool=False,
+                   Ndays:int=None,
+                   tot_time='5years'):
     """
     Examine the QG structure function
     """
 
     # Grab files
-    output_files = glob.glob('../Analysis/Output/SF_region_*')
+    output_files = glob.glob(f'../Analysis/Output/SF_region_*_{tot_time}.nc')
     output_files.sort()
 
     # Loop on em
@@ -605,13 +608,60 @@ def fig_region_duls(outroot:str='fig_qg_region_dul'):
         # Outfile
         outfile = f'{outroot}_x{xval}_y{yval}.png'
         # Do it
-        fig_region_dul(output_file, outfile,
-                       title=f'QG: x={xval}-{xval+100}km, y={yval}-{yval+100}km')
+        if calc_du3:
+            fig_region_dul3(output_file, outfile,
+                       title=f'QG: x={xval}-{xval+100}km, y={yval}-{yval+100}km',
+                       Ndays=Ndays)
+        else:
+            fig_region_dul(output_file, outfile,
+                       title=f'QG: x={xval}-{xval+100}km, y={yval}-{yval+100}km',
+                       Ndays=Ndays)
 
-def fig_region_dul(output_file:str, outfile:str,
-                   title:str=None):
+def fig_region_dul(output_file:str, outfile:str, title:str=None,
+                   Ndays:int=None):
+    """
+    Generate and save a plot of the <du_L> in the structure function region
+    for daily and total time series (5 years).
+
+    Parameters:
+    -----------
+    output_file : str
+        Path to the input NetCDF file containing the dataset.
+    outfile : str
+        Path to save the generated figure.
+    title : str, optional
+        Title of the plot. If None, no title will be displayed.
+
+    Description:
+    ------------
+    This function loads a dataset from the specified NetCDF file, 
+    generates a plot of the structure function region, and saves 
+    the figure to the specified output file. The plot includes 
+    individual time series as well as the mean over time. The x-axis 
+    represents the radial distance in kilometers, and the y-axis 
+    represents the longitudinal velocity difference.
+
+    Notes:
+    ------
+    - The function uses the `xarray` library to load the dataset.
+    - The `cugn_plotting.set_fontsize` function is used to adjust 
+        the font size of the plot.
+    - The figure is saved with a resolution of 300 DPI.
+
+    Returns:
+    --------
+    None
+    """
+    if Ndays is None:
+        Ndays = 60
     # Load
     SFds = xarray.load_dataset(output_file)
+    #embed(header='fig_region_dul: 648')
+
+    # Cut on time
+    i1 = -1*Ndays
+    times = np.arange(i1, i1 + Ndays)
+    SFds = SFds.isel(time=times)
 
     # Start the figure
     fig = plt.figure(figsize=(10,10))
@@ -620,13 +670,91 @@ def fig_region_dul(output_file:str, outfile:str,
 
     ax.plot(SFds.dr.values[0,:]*1e-3, SFds.ulls.T, '-k', linewidth=0.5, alpha=0.3)
     ax.plot(SFds.dr.mean('time')*1e-3, SFds.ulls.T.mean('time'), '-r', linewidth=1.5)
-    ax.set_xlabel('$r$ [km]')
-    ax.set_ylabel('$\\delta u_L(r, t)$ [m s$^{-1}$]')
+    ax.set_xlabel(r'$r$ [km]')
+    ax.set_ylabel(r'$\delta u_L(r, t)$ [m s$^{-1}$]')
 
     if title is not None:
         ax.set_title(title, fontsize=23.)
 
     cugn_plotting.set_fontsize(ax, 20)
+
+    ax.minorticks_on()
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+def fig_region_dul3(output_file:str, outfile:str,
+                   title:str=None, Ndays:int=None):
+    if Ndays is None:
+        Ndays = 90
+    # Load
+    SFds = xarray.load_dataset(output_file)
+    qg, mSF_15_duL = qg_utils.load_qg(use_SFduL=True)
+    SF_dict_duL = qg_utils.calc_dus(qg, mSF_15_duL)
+    du2_mn_duL = SF_dict_duL['du2_mn']
+    du3_mn_duL = SF_dict_duL['du3_mn']
+    dull_mn = SF_dict_duL['dull_mn']
+    rr1 = SF_dict_duL['rr1']
+
+    # Cut on time
+    i1 = -1*Ndays
+    times = np.arange(i1, i1 + Ndays)
+    SFds = SFds.isel(time=times)
+
+    # Correct the du3
+    du1 = SFds.ulls.T.mean('time')
+    du2 = SFds.du2.T.mean('time')
+    du3 = SFds.du3.T.mean('time')
+    du3_corr = du3 - 3*du1*du2 + 2*du1**3
+    
+    rrr1 = SFds.dr.mean('time')*1e-3 
+
+
+    # Start the figure
+    fig = plt.figure(figsize=(10,3))
+    plt.clf()
+    gs = gridspec.GridSpec(1,3)
+
+    # ################################################3
+    # du
+    ax1 = plt.subplot(gs[0])
+
+    ax1.semilogx(rrr1, du1, 'k', linewidth=1)
+    ax1.semilogx(rr1*1e-3, dull_mn, 'r', linewidth=1, 
+                label=r'Full grid $<\delta u_L>$')
+    ax1.set_xlabel(r'$r$ [km]')
+    ax1.set_ylabel(r'$<\delta u_L>$ [m/s]')
+    ax1.text(0.1, 0.1, f'{Ndays} days', transform=ax1.transAxes, fontsize=12.)
+
+    # ################################################3
+    # du2
+    ax2 = plt.subplot(gs[1])
+    ax2.loglog(rr1*1e-3, du2_mn_duL, 'r', linewidth=1, 
+                label=r'Full grid $<\delta u_L^2>$')
+    ax2.loglog(SFds.dr.mean('time')*1e-3, du2, '-k', linewidth=1.5, 
+                label=r'Region $<\delta u_L^2>$')
+    lsz = 10.
+    ax2.legend(fontsize=lsz, loc='lower right')
+    ax2.set_xlabel(r'$r$ [km]')
+    ax2.set_ylabel(r'$<\delta u^2> \, {\rm [m/s]^2}$')
+
+    # ################################################3
+    # du3
+    ax3 = plt.subplot(gs[2])
+    ax3.semilogx(SFds.dr.mean('time')*1e-3, du3, '-k', linewidth=1.5, 
+                label=r'$<\delta u_L^3>$')
+    ax3.semilogx(SFds.dr.mean('time')*1e-3, du3_corr, 'x', color='b', 
+                label=r'Corrected $<\delta u_L^3>$')
+    ax3.semilogx(rr1*1e-3, du3_mn_duL, '-r', linewidth=1, 
+                label=r'Full grid $<\delta u_L^3>$')
+    ax3.set_xlabel(r'$r$ [km]')
+    ax3.set_ylabel(r'$<\delta u_L^3(r)> \, \rm [m^{3} \, s^{-3}]$')
+
+    if title is not None:
+        ax2.set_title(title, fontsize=15.)
+
+    for ax in [ax1, ax2, ax3]:
+        cugn_plotting.set_fontsize(ax, 11)
 
     ax.minorticks_on()
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
@@ -820,9 +948,11 @@ def fig_qg_SF(outfile:str='fig_qg_SF.png'):
     """
     # Load the data
     qg, mSF_15 = qg_utils.load_qg()
+    _, mSF_15_duL = qg_utils.load_qg(use_SFduL=True)
 
     # Calculate the first order structure function
     SF_dict = qg_utils.calc_dus(qg, mSF_15)
+    SF_dict_duL = qg_utils.calc_dus(qg, mSF_15_duL)
 
     # Unpack a bit
     rr1 = SF_dict['rr1']
@@ -832,12 +962,18 @@ def fig_qg_SF(outfile:str='fig_qg_SF.png'):
     dull_mn = SF_dict['dull_mn']
     dutt_mn = SF_dict['dutt_mn']
     du2_mn = SF_dict['du2_mn']
+    du3_mn = SF_dict['du3_mn']
+
+    du2_mn_duL = SF_dict_duL['du2_mn']
+    du3_mn_duL = SF_dict_duL['du3_mn']
+
 
     # Start the figure
     fig = plt.figure(figsize=(10,4))
     plt.clf()
     gs = gridspec.GridSpec(1,3)
 
+    # ################################################3
     # du
     ax0 = plt.subplot(gs[0])
 
@@ -848,22 +984,36 @@ def fig_qg_SF(outfile:str='fig_qg_SF.png'):
     ax0.semilogx(rr1*1e-3, dutt_mn*1e3, 'r', linewidth=1, 
                 label=r'$<\delta u_T>$')
 
-    ax0.legend(fontsize=15, loc='lower left')
+    lsz = 13.
+    ax0.legend(fontsize=lsz, loc='lower left')
     ax0.set_xlabel(r'$r$ [km]')
     ax0.set_ylabel(r'$<\delta u> \, 10^{-3}$ [m/s]')
 
+    # ################################################3
     # du2
     ax2 = plt.subplot(gs[1])
 
     ax2.loglog(rr1*1e-3, du2_mn, 'k', linewidth=1, 
-                label=r'$<\delta u^2>$')
-
-    #ax0.legend(fontsize=15, loc='lower left')
+                label=r'$<\delta u_L^2 + \delta u_T^2>$')
+    ax2.loglog(rr1*1e-3, du2_mn_duL, 'b', linewidth=1, 
+                label=r'$<\delta u_L^2>$')
+    ax2.legend(fontsize=lsz, loc='lower right')
     ax2.set_xlabel(r'$r$ [km]')
     ax2.set_ylabel(r'$<\delta u^2> \, {\rm [m/s]^2}$')
 
+    # ################################################3
+    # du3
+    ax3 = plt.subplot(gs[2])
 
-    for ax in [ax0, ax2]:
+    ax3.semilogx(rr1*1e-3, du3_mn, 'k', linewidth=1, 
+                label=r'$<\delta u_L(\delta u_L^2 + \delta u_T^2)>$')
+    ax3.semilogx(rr1*1e-3, du3_mn_duL, 'b', linewidth=1, 
+                label=r'$<\delta u_L^3>$')
+    ax3.legend(fontsize=lsz, loc='lower left')
+    ax3.set_xlabel(r'$r$ [km]')
+    ax3.set_ylabel(r'$<\delta u^3> \, {\rm [m/s]^2}$')
+
+    for ax in [ax0, ax2, ax3]:
         cugn_plotting.set_fontsize(ax, 15)
 
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
@@ -998,20 +1148,35 @@ def main(flg):
 
     # Generate du_L figures for QG
     if flg == 11:
-        fig_region_duls()
+        fig_region_dus()
+        #fig_region_duls(tot_time='60days')
 
     # Compare duL QG vs. dataset``
     if flg == 12:
         fig_compare_duL_qg_data('Calypso2022')
     
-    # Compare duL QG vs. dataset``
+    # Compare duL QG vs. dataset
     if flg == 13:
         fig_qg_duL_vs_time(300,300)
         fig_qg_duL_by_year(300,300)
 
-    # Compare duL QG vs. dataset``
+    # Compare duL vs. total QG SF
     if flg == 14:
         fig_qg_SF()
+
+    # Generate du_L figures for QG
+    if flg == 15:
+        #fig_region_dul3('../Analysis/Output/SF_region_x300_y300_5years.nc',
+        #                'fig_region_dul3_x300_y300.png',
+        #                title='QG duL3: x=300-400km, y=300-400km')
+        #fig_region_dul3('../Analysis/Output/SF_region_x400_y400_5years.nc',
+        #                'fig_region_dul3_x400_y400.png',
+        #                title='QG duL3: x=400-500km, y=400-500km')
+
+        #fig_region_dus(outroot='fig_qg_region_du3', 
+        #               calc_du3=True)
+        fig_region_dus(outroot='fig_qg_region_du3_300days', 
+                       calc_du3=True, Ndays=300)
 
 
 # Command line execution
