@@ -252,7 +252,9 @@ def fig_structure(dataset:str, outroot='fig_structure',
     if log_rbins:
         rbins = 10**np.linspace(0., np.log10(400), nbins) # km
     else:
-        rbins = np.linspace(0., 200, nbins) # km
+        rbins = np.linspace(0,100*np.sqrt(2),nbins);
+        #rbins = np.linspace(0., 200, nbins) # km
+        #embed(header='257 of figs')
 
     #embed(header='fig_structure: 253')
     gPairs = profilerpairs.ProfilerPairs(
@@ -266,7 +268,7 @@ def fig_structure(dataset:str, outroot='fig_structure',
     gPairs.calc_delta(iz, variables, skip_velocity=skip_vel)
     gPairs.calc_Sn(variables)
 
-    Sn_dict = gPairs.calc_Sn_vs_r(rbins, nboot=100)
+    Sn_dict = gPairs.calc_Sn_vs_r(rbins)#, nboot=100)
     gPairs.calc_corr_Sn(Sn_dict) 
     gPairs.add_meta(Sn_dict)
 
@@ -778,7 +780,7 @@ def main(flg):
         #for skip in skip_assets:
         #    sub_assests.remove(skip)
         fig_structure('ARCTERX-Leg2', variables='duLduLduL',
-            assets=['Spray', 'Seaglider'],
+            assets=['Spray', 'Seaglider'], iz=9,
             log_rbins=False, max_time=7., show_correct=True)
 
 # Command line execution
