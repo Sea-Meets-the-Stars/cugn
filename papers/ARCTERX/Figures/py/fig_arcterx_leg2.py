@@ -779,7 +779,7 @@ def main(flg):
         #    sub_assests.remove(skip)
         fig_structure('ARCTERX-Leg2', variables='duLduLduL',
             assets=['Spray', 'Seaglider'],
-            log_rbins=False, max_time=7.)
+            log_rbins=False, max_time=7., show_correct=True)
 
 # Command line execution
 if __name__ == '__main__':
