@@ -12,6 +12,10 @@ from load_profilers import load_by_asset
 
 from IPython import embed
 
+# Center of the box
+lat_box=20.3333 
+lon_box=129.9167
+
 def calc_structure(dataset, variables:str, assets:list,
                    iz:int, max_time:float,
                    log_rbins:bool=False,
@@ -50,6 +54,7 @@ def calc_structure(dataset, variables:str, assets:list,
     gPairs = profilerpairs.ProfilerPairs(
         profilers, max_time=max_time, 
         avoid_same_glider=avoid_same_glider,
+        cen_latlon=(lat_box, lon_box),
         remove_nans=True, #randomize=False,
         debug=debug)
     # Isopycnals?
@@ -66,9 +71,10 @@ def calc_structure(dataset, variables:str, assets:list,
     return profilers, Sn_dict, gPairs, rbins
 
 def restrict_to_arcterx_box(profilers:list, 
-                            boxsize:float=50.,
-                 lat_box:float=20.3333, 
-                 lon_box:float=129.9167):
+    in_latlon:tuple=None, boxsize:float=50.):
+
+    if in_latlon is not None:
+        lat_box, lon_box = in_latlon
 
     # Restrict to a box
     for profiler in profilers:
