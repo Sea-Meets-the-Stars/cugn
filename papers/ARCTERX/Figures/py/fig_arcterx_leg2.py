@@ -33,6 +33,7 @@ from cugn import plotting as cugn_plotting
 sys.path.append(os.path.abspath("../Analysis/py"))
 import build_data
 from load_profilers import load_by_asset
+import arcterx_utils
 
 
 from IPython import embed
@@ -232,6 +233,9 @@ def fig_structure(dataset:str, outroot='fig_structure',
         kwargs['adcp_on'] = True
         skip_vel = False
     profilers = load_by_asset(assets, **kwargs)
+
+    # Restrict to the box
+    arcterx_utils.restrict_to_arcterx_box(profilers)
 
     # Outfile
     if iz >= 0:
