@@ -1,10 +1,69 @@
 """ Routines for ARCTERX analysis."""
 
+import os
 import numpy as np
 
 from profiler.utils import offsets
+from profiler import profilerpairs
+
+from cugn import io as cugn_io
+
+from load_profilers import load_by_asset
+
 from IPython import embed
 
+def calc_structure(dataset, variables:str, assets:list,
+                   iz:int, max_time:float,
+                   log_rbins:bool=False,
+                   avoid_same_glider:bool=True,
+                   skip_vel:bool=True, debug:bool=False):
+    """ Calculate structure functions for ARCTERX data.
+    """
+
+    # Set in_field=True to load in-field data
+    kwargs = {}
+    if variables in ['duLduLduL']:
+        kwargs['in_field'] = True
+        kwargs['adcp_on'] = True
+        skip_vel = False
+    profilers = load_by_asset(assets, **kwargs)
+
+    # Load
+    if iz >= 0:
+        gpair_file = cugn_io.gpair_filename(
+            dataset, iz, not avoid_same_glider)
+        gpair_file = os.path.join('..', 'Analysis', 'Outputs', gpair_file)
+
+    if variables not in ['duLduLduL', 'dTdTdT']:
+        raise NotImplementedError('Not ready for these variablaes')
+
+    # Cut on valid velocity data 
+    nbins = 20
+    if log_rbins:
+        rbins = 10**np.linspace(0., np.log10(400), nbins) # km
+    else:
+        rbins = np.linspace(0,100*np.sqrt(2),nbins);
+        #rbins = np.linspace(0., 200, nbins) # km
+        #embed(header='257 of figs')
+
+    #embed(header='fig_structure: 253')
+    gPairs = profilerpairs.ProfilerPairs(
+        profilers, max_time=max_time, 
+        avoid_same_glider=avoid_same_glider,
+        remove_nans=True, #randomize=False,
+        debug=debug)
+    # Isopycnals?
+    if iz < 0:
+        gPairs.prep_isopycnals('t')
+    gPairs.calc_delta(iz, variables, skip_velocity=skip_vel)
+    gPairs.calc_Sn(variables)
+
+    Sn_dict = gPairs.calc_Sn_vs_r(rbins)#, nboot=100)
+    gPairs.calc_corr_Sn(Sn_dict) 
+    gPairs.add_meta(Sn_dict)
+
+    # Return
+    return profilers, Sn_dict, gPairs, rbins
 
 def restrict_to_arcterx_box(profilers:list, 
                             boxsize:float=50.,

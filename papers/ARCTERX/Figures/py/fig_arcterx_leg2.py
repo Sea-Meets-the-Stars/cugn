@@ -17,13 +17,7 @@ import matplotlib.gridspec as gridspec
 import seaborn as sns
 
 from profiler import gliderdata
-from profiler import floatdata
-from profiler import vmpdata
-from profiler import triaxusdata
 from profiler import profilerpairs
-from profiler.specific import em_apex
-from profiler.specific import altos
-from profiler import profilers_io
 
 from cugn import io as cugn_io
 from cugn import plotting as cugn_plotting
@@ -226,16 +220,6 @@ def fig_structure(dataset:str, outroot='fig_structure',
                   skip_vel:bool=True,
                   show_correct:bool=False):
 
-    # Set in_field=True to load in-field data
-    kwargs = {}
-    if variables in ['duLduLduL']:
-        kwargs['in_field'] = True
-        kwargs['adcp_on'] = True
-        skip_vel = False
-    profilers = load_by_asset(assets, **kwargs)
-
-    # Restrict to the box
-    arcterx_utils.restrict_to_arcterx_box(profilers)
 
     # Outfile
     if iz >= 0:
@@ -243,6 +227,7 @@ def fig_structure(dataset:str, outroot='fig_structure',
     else:
         outfile = f'{outroot}_iso{np.abs(iz)}_{dataset}_{variables}.png'
 
+    '''
     # Load
     if iz >= 0:
         gpair_file = cugn_io.gpair_filename(
@@ -264,7 +249,7 @@ def fig_structure(dataset:str, outroot='fig_structure',
     gPairs = profilerpairs.ProfilerPairs(
         profilers, max_time=max_time, 
         avoid_same_glider=avoid_same_glider,
-        remove_nans=True,
+        remove_nans=True, #randomize=False,
         debug=debug)
     # Isopycnals?
     if iz < 0:
@@ -276,7 +261,14 @@ def fig_structure(dataset:str, outroot='fig_structure',
     gPairs.calc_corr_Sn(Sn_dict) 
     gPairs.add_meta(Sn_dict)
 
-    #embed(header='fig_structure: 215')
+    embed(header='fig_structure: 215')
+    '''
+    profilers, Sn_dict, gPairs, rbins = arcterx_utils.calc_structure(
+        dataset, variables, assets,
+        iz, max_time,
+        log_rbins=log_rbins,
+        avoid_same_glider=avoid_same_glider,
+        skip_vel=skip_vel, debug=debug)
 
     # Start the figure
     fig = plt.figure(figsize=(19,6))
@@ -356,6 +348,56 @@ def fig_structure(dataset:str, outroot='fig_structure',
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
+def fig_chk_dan(dataset:str, outfile='fig_chk_duL.png',
+                  variables = 'duLduLduL',
+                  assets:list=['Spray', 'Seaglider'],
+                  iz: int|float=9, 
+                  minN:int=10, avoid_same_glider:bool=True,
+                  debug:bool=False,
+                  log_rbins:bool=False,
+                  max_time:float=7.,
+                  skip_vel:bool=True,
+                  show_correct:bool=False):
+
+    # Calcualte
+    profilers, Sn_dict, gPairs, rbins = arcterx_utils.calc_structure(
+        dataset, variables, assets,
+        iz, max_time,
+        log_rbins=log_rbins,
+        avoid_same_glider=avoid_same_glider,
+        skip_vel=skip_vel, debug=debug)
+
+    # Isolate the ~25km bin
+    ss = 3
+    in_r = (gPairs.r > rbins[ss]) & (gPairs.r <= rbins[ss+1])
+
+    # Histogram me
+    fig = plt.figure(figsize=(10,6))
+    plt.clf()
+    ax= plt.gca()
+
+    _ = sns.histplot(x=gPairs.S1[in_r], bins=50, ax=ax, color='green')
+
+    # Vertical line at 0
+    ax.axvline(0., color='k', linestyle='--')
+    
+    ax.axvline(np.nanmean(gPairs.S1[in_r]), color='k', linestyle=':')
+
+    # Label
+    ax.set_xlabel(r'$\delta u_L$ at 25km [m/s]')
+    ax.set_ylabel('Counts')
+
+    ax.grid()
+    ax.minorticks_on()
+
+    cugn_plotting.set_fontsize(ax, 15)
+
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+    # Save data
+    print(f'Ngood = {np.sum(in_r & np.isfinite(gPairs.S1))}')
 
 def fig_dT2_vs_depth(dataset:str='ARCTERX-Leg2', 
                      outfile='fig_dT2_vs_depth.png',
@@ -786,6 +828,10 @@ def main(flg):
         fig_structure('ARCTERX-Leg2', variables='duLduLduL',
             assets=['Spray', 'Seaglider'], iz=9,
             log_rbins=False, max_time=7., show_correct=True)
+    
+    # Quick check
+    if flg == 5:
+        fig_chk_dan('ARCTERX-Leg2') 
 
 # Command line execution
 if __name__ == '__main__':
