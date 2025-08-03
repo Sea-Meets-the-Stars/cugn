@@ -19,6 +19,7 @@ lon_box=129.9167
 def calc_structure(dataset, variables:str, assets:list,
                    iz:int, max_time:float,
                    log_rbins:bool=False,
+                   randomize:bool=True,
                    avoid_same_glider:bool=True,
                    skip_vel:bool=True, debug:bool=False):
     """ Calculate structure functions for ARCTERX data.
@@ -55,7 +56,7 @@ def calc_structure(dataset, variables:str, assets:list,
         profilers, max_time=max_time, 
         avoid_same_glider=avoid_same_glider,
         cen_latlon=(lat_box, lon_box),
-        remove_nans=True, #randomize=False,
+        remove_nans=True, randomize=randomize,
         debug=debug)
     # Isopycnals?
     if iz < 0:
