@@ -832,6 +832,17 @@ def main(flg):
     # Quick check
     if flg == 5:
         fig_chk_dan('ARCTERX-Leg2') 
+    
+    # Two Sprays only
+    if flg == 6:
+        #skip_assets = []#'Alto', 'Flip', 'Solo']#, 'Slocumb', 'Spray', 'Solo', 'EMApex', 'VMP', 'Triaxus']
+        #sub_assests = all_assets.copy()
+        #for skip in skip_assets:
+        #    sub_assests.remove(skip)
+        fig_structure('ARCTERX-Leg2', variables='duLduLduL',
+            outroot='fig_struct_Spray',
+            assets=['Spray'], iz=9,
+            log_rbins=False, max_time=7., show_correct=True)
 
 # Command line execution
 if __name__ == '__main__':
