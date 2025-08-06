@@ -1240,8 +1240,8 @@ def main(flg):
 
     # Generate du_L figures for QG
     if flg == 11:
-        fig_region_dus()
-        #fig_region_duls(tot_time='60days')
+        #fig_region_dus()
+        fig_region_dus(tot_time='60days')
 
     # Compare duL QG vs. dataset``
     if flg == 12:
