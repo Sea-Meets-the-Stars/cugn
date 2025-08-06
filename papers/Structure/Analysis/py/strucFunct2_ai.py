@@ -82,7 +82,8 @@ def distx_dlon(xdata, ydata, kwargs, grid):
     lat0 = ydata
     
     if grid == "m":
-        dlon = (lon0 - lon1)
+        #dlon = (lon0 - lon1)
+        dlon = (lon1 - lon0)
         return dlon
     elif grid == "deg":
         dlon = (lon0 - lon1)*np.cos(0.5*(lat1 + lat0)*np.pi/180.)
@@ -101,7 +102,7 @@ def disty_dlat(ydata, kwargs, grid):
         dlat = (ydata.shift(**kwargs) - ydata)
     elif grid =="deg":
         dlat = (ydata.shift(**kwargs) - ydata)
-        dlat = dnp.pi/180.* 6371e3 * dlat
+        dlat = np.pi/180.* 6371e3 * dlat
     return dlat
 
 def diff_vel(udata, vdata, kwargs):
@@ -144,6 +145,7 @@ def process_dcorr(dcorr1, dcorr2, Udata, Vdata, Xg, Yg, grid):
     dx = distx_dlon(Xg, Yg, kwargs, grid)
     dr = (dx**2 + dy**2)**(1/2)
 
+    #import pdb; pdb.set_trace()
     ull, utt = uv_ult(dU, dV, dx, dy)
 #     sf2, sf3 = SF2_3(ull, utt)
     
