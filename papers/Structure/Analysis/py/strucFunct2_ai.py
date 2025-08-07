@@ -82,11 +82,12 @@ def distx_dlon(xdata, ydata, kwargs, grid):
     lat0 = ydata
     
     if grid == "m":
-        #dlon = (lon0 - lon1)
-        dlon = (lon1 - lon0)
+        #dlon = (lon0 - lon1)  # Original
+        dlon = (lon1 - lon0)  # JXP
         return dlon
     elif grid == "deg":
-        dlon = (lon0 - lon1)*np.cos(0.5*(lat1 + lat0)*np.pi/180.)
+        #dlon = (lon0 - lon1)*np.cos(0.5*(lat1 + lat0)*np.pi/180.)  # Original
+        dlon = (lon1 - lon0)*np.cos(0.5*(lat1 + lat0)*np.pi/180.)
         return (np.cos(np.pi/180*ydata) * np.pi/180.*6371e3*dlon)
 
 

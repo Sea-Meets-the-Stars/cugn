@@ -110,7 +110,7 @@ if __name__ == '__main__':
     #test_full()
 
     # Regions for 60 days
-    if True:
+    if False:
         for x0 in [300., 400, 500.]:
             for y0 in [300., 400, 500.]:
                 run_one_region((x0, x0+100.), (y0, y0+100.), 
@@ -118,7 +118,7 @@ if __name__ == '__main__':
                             ndays=60, maxcorr=30)
 
     # Regions for 5 years
-    if False:
+    if True:
         for x0 in [300., 400, 500.]:
             for y0 in [300., 400, 500.]:
                 run_one_region((x0, x0+100.), (y0, y0+100.), 

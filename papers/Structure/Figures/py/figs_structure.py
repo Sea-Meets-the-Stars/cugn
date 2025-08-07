@@ -705,6 +705,44 @@ def fig_region_dul(output_file:str, outfile:str, title:str=None,
 
 def fig_region_dul3(output_file:str, outfile:str,
                    title:str=None, Ndays:int=None):
+    """
+    Generate and save a figure illustrating the structure functions of a region 
+    over a specified number of days.
+
+    Parameters
+    ----------
+    output_file : str
+        Path to the input dataset file containing structure function data.
+    outfile : str
+        Path to save the generated figure.
+    title : str, optional
+        Title of the figure. If None, no title will be added. Default is None.
+    Ndays : int, optional
+        Number of days to consider for the analysis. If None, defaults to 90 days.
+    Notes
+    -----
+    - The function loads the dataset from `output_file` and computes the 
+        structure functions (du1, du2, du3) and their corrected versions.
+    - The figure consists of three subplots:
+        1. Mean longitudinal velocity differences (`<δu_L>`).
+        2. Mean squared longitudinal velocity differences (`<δu_L^2>`).
+        3. Mean cubed longitudinal velocity differences (`<δu_L^3>`) and its corrected version.
+    - The x-axis represents the spatial separation `r` in kilometers, and the y-axes 
+        represent the respective structure function values.
+    - The function uses data from both the full grid and the specified region for comparison.
+    Outputs
+    -------
+    - A figure saved to the specified `outfile` in PNG format with a resolution of 300 DPI.
+    - Prints a confirmation message with the saved file path.
+    Example
+    -------
+    fig_region_dul3(
+        output_file="/path/to/input.nc",
+        outfile="/path/to/output.png",
+        title="Structure Functions",
+        Ndays=90
+    )
+    """
     if Ndays is None:
         Ndays = 90
     # Load
@@ -781,9 +819,48 @@ def fig_region_dul3(output_file:str, outfile:str,
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
-def fig_qg_duL_vs_time(x0:int,y0:int, outroot:str='fig_qg_duL_vs_time',
-                   title:str=None):
+def fig_qg_duL_vs_time(x0:int,y0:int, outroot:str='fig_qg_duL_vs_time', title:str=None,
+                       show_du3:bool=False):
+    """
+    Generate and save a plot of the time-averaged longitudinal velocity difference 
+    ($\\delta u_L$) as a function of distance ($r$) for a quasi-geostrophic (QG) 
+    simulation.
+
+    Plot it for different time intervals (1 day, 60 days, 180 days, 1 year,
+
+    Parameters:
+    -----------
+    x0 : int
+        The starting x-coordinate (in km) for the region of interest.
+    y0 : int
+        The starting y-coordinate (in km) for the region of interest.
+    outroot : str, optional
+        The root name for the output file. Default is 'fig_qg_duL_vs_time'.
+    title : str, optional
+        The title of the plot. If not provided, a default title is generated 
+        based on the x0 and y0 values.
+    show_du3 : bool, optional
+        If True, the plot will show the third-order structure function
+
+    Notes:
+    ------
+    - The function loads a dataset from a NetCDF file located at 
+        '../Analysis/Output/SF_region_x{x0}_y{y0}_5years.nc'.
+    - The plot shows $\\delta u_L(r, t)$ averaged over different time intervals 
+        (1 day, 60 days, 180 days, 1 year, 2 years, and 5 years).
+    - The x-axis represents the distance $r$ in kilometers, and the y-axis 
+        represents $\\delta u_L(r, t)$ in meters per second.
+    - The plot is saved as a PNG file with a name formatted as 
+        '{outroot}_x{x0}_y{y0}.png'.
+
+    Outputs:
+    --------
+    - A PNG file containing the generated plot.
+    - A message is printed to the console indicating the location of the saved file.
+    """
     outfile = f'{outroot}_x{x0}_y{y0}.png'
+    if show_du3:
+        outfile = outfile.replace('duL', 'duL3')
     output_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_5years.nc' 
 
     # Load
@@ -796,14 +873,20 @@ def fig_qg_duL_vs_time(x0:int,y0:int, outroot:str='fig_qg_duL_vs_time',
 
     ndays = [1, 60, 180, 365, 2*365, 5*365]
     for nday in ndays:
-        ax.plot(SFds.dr.mean('time')*1e-3, 
-                SFds.ulls.isel(time=np.arange(nday)).T.mean('time'), 
+        if show_du3:
+            yvals = SFds.du3.isel(time=np.arange(nday)).T.mean('time')
+        else:
+            yvals = SFds.ulls.isel(time=np.arange(nday)).T.mean('time') 
+        ax.plot(SFds.dr.mean('time')*1e-3, yvals,
                 '-', linewidth=1.5,
                 label=f'ndays={nday}')
     ax.set_xlabel('$r$ [km]')
-    ax.set_ylabel('$\\delta u_L(r, t)$ [m s$^{-1}$]')
+    if show_du3:
+        ax.set_ylabel('$<\\delta u_L^3(r, t)>$ [m s$^{-1}]^3$')
+    else:
+        ax.set_ylabel('$<\\delta u_L(r, t)>$ [m s$^{-1}$]')
 
-    title=f'QG: x={x0}-{x0+100}km, y={x0}-{x0+100}km'
+    title=f'QG: x={x0}-{x0+100}km, y={y0}-{y0+100}km'
     ax.set_title(title, fontsize=23.)
 
     cugn_plotting.set_fontsize(ax, 20)
@@ -1031,7 +1114,7 @@ def fig_qg_SF(outfile:str='fig_qg_SF.png'):
                 label=r'$<\delta u_L^3>$')
     ax3.legend(fontsize=lsz, loc='lower left')
     ax3.set_xlabel(r'$r$ [km]')
-    ax3.set_ylabel(r'$<\delta u^3> \, {\rm [m/s]^2}$')
+    ax3.set_ylabel(r'$<\delta u^3> \, {\rm [m/s]^3}$')
 
     for ax in [ax0, ax2, ax3]:
         cugn_plotting.set_fontsize(ax, 15)
@@ -1103,7 +1186,11 @@ def fig_arcterx_qg_f2f(outfile:str='fig_arcterx_qg_f2f.png', Ndays:int=None):
     rr1 = SF_dict_duL['rr1']
 
     # Grab QG files
-    output_files = glob.glob('../Analysis/Output/SF_region_*5years.nc')
+    #output_files = glob.glob('../Analysis/Output/SF_region_*5years.nc')
+    if Ndays == 60:
+        output_files = glob.glob('../Analysis/Output/SF_region_*60days.nc')
+    else:
+        output_files = glob.glob('../Analysis/Output/SF_region_*5years.nc')
     output_files.sort()
 
     # Start the figure
@@ -1249,8 +1336,11 @@ def main(flg):
     
     # Compare duL QG vs. dataset
     if flg == 13:
-        fig_qg_duL_vs_time(300,300)
-        fig_qg_duL_by_year(300,300)
+        ix, iy = 300, 500
+        #fig_qg_duL_vs_time(ix,iy)
+        #fig_qg_duL_by_year(ix,iy)
+        # duL3
+        fig_qg_duL_vs_time(ix,iy, show_du3=True)
 
     # Compare duL vs. total QG SF
     if flg == 14:
@@ -1289,7 +1379,7 @@ def main(flg):
                         stretch=True, use_xlim=(1.,400.), use_ylim=use_ylim)
 
         # QG
-        fig_arcterx_qg_f2f()
+        fig_arcterx_qg_f2f()#Ndays=60)
 
 # Command line execution
 if __name__ == '__main__':

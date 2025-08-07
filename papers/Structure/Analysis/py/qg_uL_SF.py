@@ -30,7 +30,7 @@ qg_path = os.path.join(os.getenv('OS_DATA'), 'QG')
 raw_path = os.path.join(qg_path, 'rawduLT')
 SFavg_path = os.path.join(qg_path, 'SF_spatialav')
 
-def calc_rawduLT(nyears=5, maxcorr=60):
+def calc_rawduLT(nyears=5, maxcorr=60, clobber:bool=False):
 
     ndays = nyears * 365
     qg, Udsn = qg_utils.load_last_time(ndays=ndays)
@@ -46,7 +46,7 @@ def calc_rawduLT(nyears=5, maxcorr=60):
     # Loop over the time indices in chunks of 15
     for start in tqdm(range(0, len(time_indices), chunk_size), desc="Processing Chunks: "):
         filessv = os.path.join(raw_path, str(start)+'.nc')
-        if os.path.exists(filessv):
+        if os.path.exists(filessv) and not clobber:
             print(f'File {filessv} already exists, skipping...')
             continue
         # 
@@ -130,10 +130,10 @@ def calc_SF_5years():
 if __name__ == '__main__':
 
     # raw dULT
-    #calc_rawduLT()
+    calc_rawduLT(clobber=True)
 
     # SF
     #calc_SF()
 
     # Lastly
-    calc_SF_5years()
+    #calc_SF_5years()
