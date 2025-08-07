@@ -66,7 +66,7 @@ def calc_rawduLT(nyears=5, maxcorr=60, clobber:bool=False):
         SFQG.to_netcdf(filessv)
 
 
-def calc_SF(dcorr=3599, chkx=256, chky=256):
+def calc_SF(dcorr=3599, chkx=256, chky=256, clobber:bool=False):
     # Open the NetCDF files using xarray's open_mfdataset (multi-file dataset)
     nc_files = os.path.join(raw_path, '*.nc')  #
     dult = xarray.open_mfdataset(nc_files, engine='netcdf4', combine='by_coords', 
@@ -82,7 +82,7 @@ def calc_SF(dcorr=3599, chkx=256, chky=256):
     ii = 0
     for start_time in tqdm(range(0, Ntot, tchunk_size), desc="Time slice", position=2):
         fileSp = os.path.join(SFavg_path, str(ii)+'.nc')
-        if os.path.exists(fileSp):
+        if os.path.exists(fileSp) and not clobber:
             print(f'File {fileSp} already exists, skipping...')
             ii += 1
             continue
@@ -130,10 +130,10 @@ def calc_SF_5years():
 if __name__ == '__main__':
 
     # raw dULT
-    calc_rawduLT(clobber=True)
+    #calc_rawduLT(clobber=True)
 
     # SF
-    #calc_SF()
+    calc_SF(clobber=True)
 
     # Lastly
     #calc_SF_5years()
