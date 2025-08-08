@@ -130,7 +130,7 @@ def calc_SF_5years():
 if __name__ == '__main__':
 
     # raw dULT
-    calc_rawduLT(clobber=True)
+    calc_rawduLT()#clobber=True)
 
     # SF
     #calc_SF()
