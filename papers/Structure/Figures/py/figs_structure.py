@@ -899,6 +899,87 @@ def fig_qg_duL_vs_time(x0:int,y0:int, outroot:str='fig_qg_duL_vs_time', title:st
     print(f"Saved: {outfile}")
 
 
+def fig_frac_duL3_vs_time(
+    x0:int,y0:int, outroot:str='fig_frac_duL3_vs_time', 
+    title:str=None, factor:float=2.):
+    """
+    Generate and save a plot of the fraction of time-averaged 
+    3rd order structure function is larger than its correction term
+    ($\\delta u_L^3$) 
+
+    Plot it for different time intervals (1 day, 60 days, 180 days, 1 year,
+
+    Parameters:
+    -----------
+    x0 : int
+        The starting x-coordinate (in km) for the region of interest.
+    y0 : int
+        The starting y-coordinate (in km) for the region of interest.
+    outroot : str, optional
+        The root name for the output file. Default is 'fig_qg_duL_vs_time'.
+    title : str, optional
+        The title of the plot. If not provided, a default title is generated 
+        based on the x0 and y0 values.
+    show_du3 : bool, optional
+        If True, the plot will show the third-order structure function
+
+    Outputs:
+    --------
+    - A PNG file containing the generated plot.
+    """
+    outfile = f'{outroot}_x{x0}_y{y0}.png'
+    output_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_5years.nc' 
+
+    # Load
+    SFds = xarray.load_dataset(output_file)
+
+    # Start the figure
+    fig = plt.figure(figsize=(10,10))
+    plt.clf()
+    ax = plt.gca()
+
+    frac_total = []
+    frac_70 = []
+    rvals = SFds.dr.mean('time')*1e-3
+    r_70 = rvals < 70.
+    ndays = [1, 10, 60, 180, 365, 2*365, 3*365, 5*365]
+    for nday in ndays:
+        du1 = SFds.ulls.isel(time=np.arange(nday)).T.mean('time')
+        du2 = SFds.du2.isel(time=np.arange(nday)).T.mean('time')
+        du3 = SFds.du3.isel(time=np.arange(nday)).T.mean('time')
+        du3_correction = 3*du1*du2 - 2*du1**3
+
+        # Frac du3 > du3_corr
+        ok_du3 = np.abs(du3) > factor*np.abs(du3_correction)
+        fract = np.sum(ok_du3)/len(du3)
+        frac_total.append(fract)
+
+        # 70km
+        frac70 = np.sum(ok_du3[r_70])/np.sum(r_70)
+        frac_70.append(frac70)
+
+    # 
+    ax.plot(ndays, frac_total, 'o', linewidth=1.5,
+                label='All rbins')
+    ax.plot(ndays, frac_70, 'rs', linewidth=1.5,
+                label='r<70km')
+    ax.set_xlabel('Ndays')
+    ax.set_ylim(0., 1.05)
+    ax.set_xscale('log')
+    ax.set_ylabel(r'Fraction $|<\delta uL^3>|  >  '+f'{factor}'+r'|3 <\delta uL> <\delta uL^2> - 2 <\delta uL>^3|$')
+
+    title=f'QG: x={x0}-{x0+100}km, y={y0}-{y0+100}km'
+    ax.set_title(title, fontsize=23.)
+
+    cugn_plotting.set_fontsize(ax, 20)
+
+    #ax.axhline(0., color='gray', linestyle='--')
+    ax.legend(fontsize=20., loc='upper left')
+    ax.minorticks_on()
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
 def fig_qg_duL_by_year(x0:int,y0:int, outroot:str='fig_qg_duL_yearly',
                    title:str=None):
     outfile = f'{outroot}_x{x0}_y{y0}.png'
@@ -1334,10 +1415,10 @@ def main(flg):
     if flg == 12:
         fig_compare_duL_qg_data('Calypso2022')
     
-    # Compare duL QG vs. dataset
+    # Examine how duL, duL^3 average down with time
     if flg == 13:
-        ix, iy = 300, 500
-        #fig_qg_duL_vs_time(ix,iy)
+        ix, iy = 300, 300
+        fig_qg_duL_vs_time(ix,iy)
         #fig_qg_duL_by_year(ix,iy)
         # duL3
         fig_qg_duL_vs_time(ix,iy, show_du3=True)
@@ -1380,6 +1461,12 @@ def main(flg):
 
         # QG
         fig_arcterx_qg_f2f()#Ndays=60)
+
+    # Examine how duL, duL^3 average down with time
+    if flg == 17:
+        ix, iy = 300, 300
+        fig_frac_duL3_vs_time(ix,iy)
+
 
 # Command line execution
 if __name__ == '__main__':
