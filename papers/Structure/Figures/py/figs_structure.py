@@ -1289,7 +1289,7 @@ def fig_orig_vs_new_qg_SF(outfile:str='fig_qg_SF_orig_vs_new.png'):
                 label=r'New $<\delta u_L(\delta u_L^2 + \delta u_T^2)>$')
     ax3.semilogx(rr1*1e-3, du3_mn_duL, 'b', linewidth=1, 
                 label=r'New $<\delta u_L^3>$')
-    ax3.legend(fontsize=lsz, loc='lower left')
+    ax3.legend(fontsize=lsz, loc='upper left')
     ax3.set_xlabel(r'$r$ [km]')
     ax3.set_ylabel(r'$<\delta u^3> \, {\rm [m/s]^3}$')
 
