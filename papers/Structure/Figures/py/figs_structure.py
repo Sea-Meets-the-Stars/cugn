@@ -1259,7 +1259,7 @@ def fig_orig_vs_new_qg_SF(outfile:str='fig_qg_SF_orig_vs_new.png'):
     #ax0.semilogx(rr1*1e-3, dutt_mn*1e3, 'r', linewidth=1, 
     #            label=r'$<\delta u_T>$')
 
-    lsz = 9.
+    lsz = 7.
     ax0.legend(fontsize=lsz, loc='lower left')
     ax0.set_xlabel(r'$r$ [km]')
     ax0.set_ylabel(r'$<\delta u> \, 10^{-3}$ [m/s]')
