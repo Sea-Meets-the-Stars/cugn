@@ -28,7 +28,12 @@ grid = 'm'
 
 qg_path = os.path.join(os.getenv('OS_DATA'), 'QG')
 raw_path = os.path.join(qg_path, 'rawduLT')
-SFavg_path = os.path.join(qg_path, 'SF_spatialav')
+
+def grab_path(use_duL:bool):
+    if use_duL:
+        return os.path.join(qg_path, 'SF_spatialav_duL')
+    else:
+        return os.path.join(qg_path, 'SF_spatialav')
 
 def calc_rawduLT(nyears=5, maxcorr=60, clobber:bool=False):
 
@@ -66,7 +71,10 @@ def calc_rawduLT(nyears=5, maxcorr=60, clobber:bool=False):
         SFQG.to_netcdf(filessv)
 
 
-def calc_SF(dcorr=3599, chkx=256, chky=256, clobber:bool=False):
+def calc_SF(dcorr=3599, chkx=256, chky=256, clobber:bool=False, use_dLT:bool=True):
+    # duL?
+    SFavg_path = grab_path(use_dLT)
+    
     # Open the NetCDF files using xarray's open_mfdataset (multi-file dataset)
     nc_files = os.path.join(raw_path, '*.nc')  #
     dult = xarray.open_mfdataset(nc_files, engine='netcdf4', combine='by_coords', 
@@ -93,7 +101,10 @@ def calc_SF(dcorr=3599, chkx=256, chky=256, clobber:bool=False):
         data_slice = dult.isel(time=slice(start_time, end_time))
         
         # Calculates du1, du2 and du3
-        sf2, sf3 = strucFunct2_ai.SF2_3_ul(data_slice.ulls)
+        if use_dLT:
+            sf2, sf3 = strucFunct2_ai.SF2_3_ul(data_slice.ulls)
+        else:
+            sf2, sf3 = strucFunct2_ai.SF2_3(data_slice.ulls, data_slice.utts)
         data_slice['du2'] = sf2
         data_slice['du3'] = sf3
         
@@ -106,7 +117,12 @@ def calc_SF(dcorr=3599, chkx=256, chky=256, clobber:bool=False):
         
         ii = ii + 1
 
-def calc_SF_5years():
+def calc_SF_5years(use_dLT:bool=True):
+    SFavg_path = grab_path(use_dLT)
+    if use_dLT:
+        outfile = os.path.join(qg_path, 'SFQG_aver_pos_orien_5yearb_duL.nc')
+    else:
+        outfile = os.path.join(qg_path, 'SFQG_aver_pos_orien_5yearb_new.nc')
 
     # Open the NetCDF files using xarray's open_mfdataset (multi-file dataset)
     nc_files3 = os.path.join(SFavg_path,'*.nc')  #
@@ -121,7 +137,7 @@ def calc_SF_5years():
 
     # Average over orientation
     dudlt_aver_angl = strucFunct2_ai.process_SF_samples(dult_aver, rbins, mid_rbins)
-    outfile = os.path.join(qg_path, 'SFQG_aver_pos_orien_5yearb_duL.nc')
+    outfile = os.path.join(qg_path, outfile)
     dudlt_aver_angl.to_netcdf(outfile)
     print(f'Saved: {outfile}')
 
@@ -130,10 +146,12 @@ def calc_SF_5years():
 if __name__ == '__main__':
 
     # raw dULT
-    calc_rawduLT()#clobber=True)
+    #calc_rawduLT()#clobber=True)
 
     # SF
-    calc_SF(clobber=True)
+    #calc_SF(clobber=True)
+    calc_SF(use_dLT=False, clobber=True)
 
     # Lastly
-    #calc_SF_5years()
+    #calc_SF_5years(use_dLT=True)
+    calc_SF_5years(use_dLT=False)
