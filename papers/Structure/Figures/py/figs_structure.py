@@ -820,7 +820,7 @@ def fig_region_dul3(output_file:str, outfile:str,
     print(f"Saved: {outfile}")
 
 def fig_qg_duL_vs_time(x0:int,y0:int, outroot:str='fig_qg_duL_vs_time', 
-                       title:str=None,
+                       title:str=None, dx:int=100,
                        show_du3:bool=False):
     """
     Generate and save a plot of the time-averaged longitudinal velocity difference 
@@ -1602,7 +1602,7 @@ def main(flg):
     if flg == 13:
         ix, iy = 300, 300
         ix, iy = 0, 0
-        fig_qg_duL_vs_time(ix,iy)
+        fig_qg_duL_vs_time(ix,iy, dx=200)
         #fig_qg_duL_by_year(ix,iy)
 
         # duL3
