@@ -118,10 +118,19 @@ if __name__ == '__main__':
                             ndays=60, maxcorr=30)
 
     # Regions for 5 years
-    if True:
+    if False:
         for x0 in [300., 400, 500.]:
             for y0 in [300., 400, 500.]:
                 run_one_region((x0, x0+100.), (y0, y0+100.), 
+                            f'Output/SF_region_x{int(x0)}_y{int(y0)}_5years.nc', 
+                            timelast=int(365*5.1),
+                            ndays=365*5, maxcorr=30)
+
+    # 200km regions for 5 years
+    if True:
+        for x0 in [200., 400, 600.]:
+            for y0 in [200., 400, 600.]:
+                run_one_region((x0, x0+200.), (y0, y0+200.), 
                             f'Output/SF_region_x{int(x0)}_y{int(y0)}_5years.nc', 
                             timelast=int(365*5.1),
                             ndays=365*5, maxcorr=30)

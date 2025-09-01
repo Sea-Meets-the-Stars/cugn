@@ -6,18 +6,7 @@ import os
 import xarray
 
 import numpy as np
-from scipy.stats import skew, kurtosis
-from scipy.stats import norm
 
-# import fsspec
-import matplotlib
-import matplotlib.pyplot as plt
-import gsw_xarray as gsw
-from xhistogram.xarray import histogram
-
-from dask.diagnostics import ProgressBar
-
-from strucFunct2_ai import timescale
 
 from IPython import embed
 
@@ -33,7 +22,7 @@ def load_qg(use_SFduL:bool=False, orig:bool=False):
     elif orig:
         SF_file = os.path.join(os.getenv('OS_DATA'), 'QG', 'SFQG_aver_pos_orien_5yearb.nc') 
     else:
-        SF_file = os.path.join(os.getenv('OS_DATA'), 'QG', 'SFQG_aver_pos_orien_5yearb_new.nc') 
+        SF_file = os.path.join(os.getenv('OS_DATA'), 'QG', 'SFQG_aver_pos_orien_5yearb_new.nc')
     print(f'Loading structure function from {SF_file}')
     mSF_15 = xarray.open_dataset(SF_file, chunks=chunksSF15)
     mSF_15['time'] = mSF_15.time/86400

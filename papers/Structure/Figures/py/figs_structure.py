@@ -819,7 +819,8 @@ def fig_region_dul3(output_file:str, outfile:str,
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
-def fig_qg_duL_vs_time(x0:int,y0:int, outroot:str='fig_qg_duL_vs_time', title:str=None,
+def fig_qg_duL_vs_time(x0:int,y0:int, outroot:str='fig_qg_duL_vs_time', 
+                       title:str=None,
                        show_du3:bool=False):
     """
     Generate and save a plot of the time-averaged longitudinal velocity difference 
@@ -861,10 +862,13 @@ def fig_qg_duL_vs_time(x0:int,y0:int, outroot:str='fig_qg_duL_vs_time', title:st
     outfile = f'{outroot}_x{x0}_y{y0}.png'
     if show_du3:
         outfile = outfile.replace('duL', 'duL3')
-    output_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_5years.nc' 
 
-    # Load
-    SFds = xarray.load_dataset(output_file)
+    # Load file
+    if x0 == 0:
+        _, SFds = qg_utils.load_qg()#use_SFduL=True)
+    else:
+        output_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_5years.nc' 
+        SFds = xarray.load_dataset(output_file)
 
     # Start the figure
     fig = plt.figure(figsize=(10,10))
@@ -886,7 +890,10 @@ def fig_qg_duL_vs_time(x0:int,y0:int, outroot:str='fig_qg_duL_vs_time', title:st
     else:
         ax.set_ylabel('$<\\delta u_L(r, t)>$ [m s$^{-1}$]')
 
-    title=f'QG: x={x0}-{x0+100}km, y={y0}-{y0+100}km'
+    if x0 == 0:
+        title='QG: Full grid'
+    else:
+        title=f'QG: x={x0}-{x0+100}km, y={y0}-{y0+100}km'
     ax.set_title(title, fontsize=23.)
 
     cugn_plotting.set_fontsize(ax, 20)
@@ -969,6 +976,86 @@ def fig_frac_duL3_vs_time(
     ax.set_ylabel(r'Fraction $|<\delta uL^3>|  >  '+f'{factor}'+r'|3 <\delta uL> <\delta uL^2> - 2 <\delta uL>^3|$')
 
     title=f'QG: x={x0}-{x0+100}km, y={y0}-{y0+100}km'
+    ax.set_title(title, fontsize=23.)
+
+    cugn_plotting.set_fontsize(ax, 20)
+
+    #ax.axhline(0., color='gray', linestyle='--')
+    ax.legend(fontsize=20., loc='upper left')
+    ax.minorticks_on()
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+
+def fig_duL3corr_vs_time(
+    x0:int,y0:int, outroot:str='fig_duL3corr_vs_time', 
+    title:str=None, factor:float=2.):
+    """
+    Generate and save a plot of the fraction of time-averaged 
+    3rd order structure function is larger than its correction term
+    ($\\delta u_L^3$) 
+
+    Plot it for different time intervals (1 day, 60 days, 180 days, 1 year,
+
+    Parameters:
+    -----------
+    x0 : int
+        The starting x-coordinate (in km) for the region of interest.
+    y0 : int
+        The starting y-coordinate (in km) for the region of interest.
+    outroot : str, optional
+        The root name for the output file. Default is 'fig_qg_duL_vs_time'.
+    title : str, optional
+        The title of the plot. If not provided, a default title is generated 
+        based on the x0 and y0 values.
+    show_du3 : bool, optional
+        If True, the plot will show the third-order structure function
+
+    Outputs:
+    --------
+    - A PNG file containing the generated plot.
+    """
+    outfile = f'{outroot}_x{x0}_y{y0}.png'
+    output_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_5years.nc' 
+
+    # Load
+    SFds = xarray.load_dataset(output_file)
+
+    # r for evaluation
+    rvals = SFds.dr.mean('time').values*1e-3
+    idx_r = np.arange(25)[::6]
+    sv_dict = {}
+    for ir in idx_r:
+        sv_dict[ir] = []
+
+
+    ndays = [1, 10, 30, 90, 180, 365, 2*365, 3*365, 5*365]
+    for nday in ndays:
+        du1 = SFds.ulls.isel(time=np.arange(nday)).T.mean('time')
+        du2 = SFds.du2.isel(time=np.arange(nday)).T.mean('time')
+        du3 = SFds.du3.isel(time=np.arange(nday)).T.mean('time')
+        du3_correction = 3*du1*du2 - 2*du1**3
+
+        # Save
+        for ir in idx_r:
+            sv_dict[ir].append(du3_correction[ir])
+
+    # Plot 
+    # Start the figure
+    fig = plt.figure(figsize=(10,10))
+    plt.clf()
+    ax = plt.gca()
+
+    for ir in idx_r:
+        ax.plot(ndays, sv_dict[ir], linewidth=1.5,
+                label=r'$r=$'+f'{rvals[ir]:.1f}'+r' km')
+    ax.set_xlabel('Ndays')
+    #ax.set_ylim(0., 1.05)
+    ax.set_xscale('log')
+    ax.set_ylabel(r'$3 <\delta uL> <\delta uL^2> - 2 <\delta uL>^3$')
+
+    title=f'QG du3 correction: x={x0}-{x0+100}km, y={y0}-{y0+100}km'
     ax.set_title(title, fontsize=23.)
 
     cugn_plotting.set_fontsize(ax, 20)
@@ -1514,10 +1601,12 @@ def main(flg):
     # Examine how duL, duL^3 average down with time
     if flg == 13:
         ix, iy = 300, 300
+        ix, iy = 0, 0
         fig_qg_duL_vs_time(ix,iy)
         #fig_qg_duL_by_year(ix,iy)
+
         # duL3
-        fig_qg_duL_vs_time(ix,iy, show_du3=True)
+        #fig_qg_duL_vs_time(ix,iy, show_du3=True)
 
     # Compare duL vs. total QG SF in the original outputs
     if flg == 14:
@@ -1566,6 +1655,12 @@ def main(flg):
     # Examine how duL, duL^3 average down with time
     if flg == 18:
         fig_orig_vs_new_qg_SF()
+
+    # Correction term vs. time
+    if flg == 19:
+        ix, iy = 300, 300
+        ix, iy = 400, 400
+        fig_duL3corr_vs_time(ix,iy)
 
 # Command line execution
 if __name__ == '__main__':
