@@ -859,15 +859,21 @@ def fig_qg_duL_vs_time(x0:int,y0:int, outroot:str='fig_qg_duL_vs_time',
     - A PNG file containing the generated plot.
     - A message is printed to the console indicating the location of the saved file.
     """
-    outfile = f'{outroot}_x{x0}_y{y0}.png'
     if show_du3:
         outfile = outfile.replace('duL', 'duL3')
 
     # Load file
     if x0 == 0:
+        outfile = f'{outroot}_x{x0}_y{y0}.png'
         _, SFds = qg_utils.load_qg()#use_SFduL=True)
     else:
-        output_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_5years.nc' 
+        outfile = f'{outroot}_x{x0}_y{y0}_dx{dx}.png'
+        if dx == 200:
+            output_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_200km_5years.nc' 
+        elif dx == 300:
+            output_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_300km_5years.nc' 
+        else:
+            output_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_5years.nc' 
         SFds = xarray.load_dataset(output_file)
 
     # Start the figure
@@ -893,7 +899,7 @@ def fig_qg_duL_vs_time(x0:int,y0:int, outroot:str='fig_qg_duL_vs_time',
     if x0 == 0:
         title='QG: Full grid'
     else:
-        title=f'QG: x={x0}-{x0+100}km, y={y0}-{y0+100}km'
+        title=f'QG: x={x0}-{x0+dx}km, y={y0}-{y0+dx}km'
     ax.set_title(title, fontsize=23.)
 
     cugn_plotting.set_fontsize(ax, 20)
@@ -1600,9 +1606,10 @@ def main(flg):
     
     # Examine how duL, duL^3 average down with time
     if flg == 13:
-        ix, iy = 300, 300
         ix, iy = 0, 0
-        fig_qg_duL_vs_time(ix,iy, dx=200)
+        ix, iy = 300, 300
+        ix, iy = 200, 200
+        fig_qg_duL_vs_time(ix,iy, dx=300)
         #fig_qg_duL_by_year(ix,iy)
 
         # duL3
