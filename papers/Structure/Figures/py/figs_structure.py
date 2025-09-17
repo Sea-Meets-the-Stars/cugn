@@ -1,4 +1,4 @@
-""" Figures for the structure function paper. """
+""" Figures for development of the structure function paper. """
 
 
 # imports

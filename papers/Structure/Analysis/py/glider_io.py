@@ -1,10 +1,13 @@
-import os
-import glob
+import os, sys
 
 import numpy as np
 
 from profiler.loading.pymatreader import pymatreader
 from profiler.gliderdata import SprayData
+
+# Local
+sys.path.append(os.path.abspath("../../ARCTERX/Analysis/py"))
+import arcterx_utils
 
 def load_dataset(dataset:str):
     """
@@ -29,6 +32,19 @@ def load_dataset(dataset:str):
     elif dataset == 'ARCTERX-2023':
         dfile = os.path.join(
             os.getenv('OS_DATA'), 'ARCTERX', '2023_IOP', 'arcterx_ctd.mat')
+    elif dataset == 'ARCTERX-2025':
+        assets=['Spray'] 
+        iz = 5
+        skip_vel=True
+        variables = 'duLduLduL'
+        max_time = 10.
+        profilers, Sn_dict, gPairs, rbins = arcterx_utils.calc_structure(
+            dataset, variables, assets,
+            iz, max_time,
+            log_rbins=True,
+            avoid_same_glider=True,
+            skip_vel=skip_vel)
+        return profilers
     else:
         raise ValueError(f"Dataset {dataset} not supported.")
 
