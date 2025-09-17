@@ -87,6 +87,50 @@ def fig_experiments(outfile='fig_experiments.png',
     print(f"Saved: {outfile}")
 
 
+def fig_histogram_dr(outfile='fig_histogram_dr.png', 
+                    max_time:float=10., log_rbins:bool=False):
+
+    # Start the figure
+    fig = plt.figure(figsize=(10,10))
+    plt.clf()
+    gs = gridspec.GridSpec(2,2)
+
+    datasets = ['Calypso2019', 'Calypso2022', 'ARCTERX-2023',
+                'ARCTERX-2025']
+    clrs = ['blue', 'orange', 'green', 'red']
+    for ss, dataset in enumerate(datasets):
+
+        # Axis
+        ax_r = plt.subplot(gs[ss])
+
+        # Load dataset
+        profilers = glider_io.load_dataset(dataset)
+    
+        # Generate pairs
+        gPairs = profilerpairs.ProfilerPairs(profilers, 
+                                          max_time=max_time,
+                                          debug=False,
+                                          randomize=True)
+        _ = sns.histplot(gPairs.r, bins=20, 
+                         log_scale=log_rbins, 
+                         ax=ax_r, color=clrs[ss])
+
+        ax_r.text(0.95, 0.95, dataset, transform=ax_r.transAxes,
+                     fontsize=17, ha='right', va='top')
+        ax_r.set_xlabel('Separation [km]')
+        ax_r.set_ylabel('Count')
+        #if dataset == 'ARCTERX-2023':
+        #    ssz = 1.0
+        #elif dataset == 'ARCTERX-2025':
+        #    ssz = 0.25
+        #else: 
+        #    ssz = 0.5
+        plotting.set_fontsize(ax_r, 15) 
+
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
 def main(flg):
     if flg== 'all':
         flg= np.sum(np.array([2 ** ii for ii in range(25)]))
@@ -96,6 +140,10 @@ def main(flg):
     # Figure 1  (Profile tracks)
     if flg == 1:
         fig_experiments()
+
+    # Figure 2  (Separation histogram)
+    if flg == 2:
+        fig_histogram_dr(log_rbins=False)
 
 
 # Command line execution
