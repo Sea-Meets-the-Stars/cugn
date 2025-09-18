@@ -1518,6 +1518,58 @@ def fig_arcterx_qg_f2f(outfile:str='fig_arcterx_qg_f2f.png', Ndays:int=None):
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
+def fig_Npairs_vs_Dt(outfile='fig_Npairs_vs_Dt.png'):
+
+    # Start the figure
+    fig = plt.figure(figsize=(10,10))
+    plt.clf()
+    gs = gridspec.GridSpec(1,1)
+    ax = plt.subplot(gs[0])
+
+    datasets = ['Calypso2019', 'Calypso2022', 'ARCTERX-2023',
+                'ARCTERX-2025']
+    Dts = [1, 2, 3, 6, 10]
+    
+    alphas = []
+    for ss, dataset in enumerate(datasets):
+        Npairs = []
+
+
+        # Load dataset
+        profilers = glider_io.load_dataset(dataset)
+    
+        # Generate pairs
+        for Dt in Dts:
+            gPairs = profilerpairs.ProfilerPairs(profilers, 
+                                          max_time=Dt,
+                                          debug=False,
+                                          randomize=True)
+            # Npairs
+            Npairs.append(gPairs.npairs)
+
+        # Plot
+        ax.plot(Dts, Npairs, 'o-', label=dataset)
+
+        # Measure the power law index
+        p = np.polyfit(np.log10(Dts), np.log10(Npairs), 1)
+        alphas.append(p[0])
+        #embed(header=f'fig_Npairs_vs_Dt: 823 {dataset}, alpha={p[0]:.2f}')
+    
+
+    ax.set_xlabel(r'$\Delta t$ [hours]')
+    ax.set_ylabel(r'Number of pairs')
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    ax.legend(fontsize=15.)
+    ax.minorticks_on()
+    cugn_plotting.set_fontsize(ax, 15)
+
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+    for ss, dataset in enumerate(datasets):
+        print(f"{dataset}: Npairs ~ Dt^{alphas[0]:.2f}")
 
 def main(flg):
     if flg== 'all':
@@ -1668,6 +1720,10 @@ def main(flg):
         ix, iy = 300, 300
         ix, iy = 400, 400
         fig_duL3corr_vs_time(ix,iy)
+
+    # Npairs vs. Dt
+    if flg == 20:
+        fig_Npairs_vs_Dt()
 
 # Command line execution
 if __name__ == '__main__':
