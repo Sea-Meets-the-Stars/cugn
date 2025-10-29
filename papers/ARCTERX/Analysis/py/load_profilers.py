@@ -78,6 +78,9 @@ def load_sprays(in_field:bool=False, adcp_on:bool=False):
         s = gliderdata.SprayData.from_binned_file(
             datafile, 'idg', dataset, in_field=in_field,
             extra_dict={'adcp_on': adcp_on})
+        # Cut on 200m
+        gd = np.all(np.isfinite(s.t[:,:20]), axis=1)
+        s = s.profile_subset(gd, init=True)
         sprays.append(s)
     return sprays
 
