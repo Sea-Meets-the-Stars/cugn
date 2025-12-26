@@ -13,8 +13,8 @@ from load_profilers import load_by_asset
 from IPython import embed
 
 # Center of the box
-lat_box=20.3333 
-lon_box=129.9167
+Leg2_lat_box=20.3333 
+Leg2_lon_box=129.9167
 
 def calc_structure(dataset, variables:str, assets:list,
                    iz:int, max_time:float,
@@ -76,6 +76,8 @@ def restrict_to_arcterx_box(profilers:list,
 
     if in_latlon is not None:
         lat_box, lon_box = in_latlon
+    else:
+        lat_box, lon_box = Leg2_lat_box, Leg2_lon_box
 
     # Restrict to a box
     for profiler in profilers:

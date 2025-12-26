@@ -30,6 +30,7 @@ def calc_temperature_structure(assets: list,
                                max_time: float = 10.,
                                log_rbins: bool = True,
                                avoid_same_glider: bool = True,
+                               restrict: bool = True,
                                debug: bool = False):
     """
     Calculate temperature structure functions for the given assets.
@@ -40,6 +41,7 @@ def calc_temperature_structure(assets: list,
         max_time (float): Maximum time separation in hours. Default 10.
         log_rbins (bool): Use logarithmic radial bins. Default True.
         avoid_same_glider (bool): Avoid pairing same glider with itself. Default True.
+        restrict (bool): Restrict the gliders to lie in 100km box
         debug (bool): Enable debug mode. Default False.
 
     Returns:
@@ -49,6 +51,10 @@ def calc_temperature_structure(assets: list,
 
     # Load profilers
     profilers = load_by_asset(assets)
+
+    # Restrict in box
+    if restrict:
+        arcterx_utils.restrict_to_arcterx_box(profilers)
 
     # Set up radial bins
     nbins = 20
@@ -61,7 +67,7 @@ def calc_temperature_structure(assets: list,
     gPairs = profilerpairs.ProfilerPairs(
         profilers, max_time=max_time,
         avoid_same_glider=avoid_same_glider,
-        cen_latlon=(arcterx_utils.lat_box, arcterx_utils.lon_box),
+        cen_latlon=(arcterx_utils.Leg2_lat_box, arcterx_utils.Leg2_lon_box),
         remove_nans=True, randomize=True,
         debug=debug)
 
@@ -84,6 +90,7 @@ def fig_temperature_structure(outfile: str = 'fig_bams_temp_structure.png',
                               log_rbins: bool = True,
                               avoid_same_glider: bool = True,
                               minN: int = 10,
+                              ylog: bool = False,
                               debug: bool = False):
     """
     Plot temperature structure functions (S1, S2, S3) for the given assets.
@@ -96,6 +103,7 @@ def fig_temperature_structure(outfile: str = 'fig_bams_temp_structure.png',
         log_rbins (bool): Use logarithmic radial bins. Default True.
         avoid_same_glider (bool): Avoid pairing same glider with itself. Default True.
         minN (int): Minimum number of pairs per bin for plotting. Default 10.
+        ylog (bool): Use log10 on y-axis
         debug (bool): Enable debug mode. Default False.
     """
     if assets is None:
@@ -150,7 +158,7 @@ def fig_temperature_structure(outfile: str = 'fig_bams_temp_structure.png',
         ax.grid()
 
         # Log scale for S2
-        if n == 1:
+        if n == 1 and ylog:
             ax.set_yscale('log')
             ax.set_ylim(1e-3, 1.)
 
@@ -294,7 +302,7 @@ def main(flg):
 
     # Combined Spray, Slocum, Seaglider temperature structure
     if flg == 0:
-        fig_temperature_structure()
+        fig_temperature_structure(log_rbins=False)
 
     # Individual asset temperature structure functions
     if flg == 1:
