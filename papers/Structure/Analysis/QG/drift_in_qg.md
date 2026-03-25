@@ -90,3 +90,12 @@ The QG output file is located at `$OS_DATA/QG/QGModelOutput20years.nc` (~23 GB).
 1. I have updated the Claude.md for the Drfiters.jl package.  Examine that package and consider how to use it to advect virtual drifters in the QG model output via MeshArrays.jl.  Generate a plan and write it down in Overleaf.  Do not execute any code yet.
 
 2. I am happy with your plan.  Please generate the julia script and notebook to test it.  Include several figures and, as always, record your notes in the Overleaf project.
+
+
+## Python wrapper
+
+1. Can you generate a Python module that will allow me to run the julia script for a specified number of drifters, days, etc.?  Generate the plan in Overleaf but do not create any code yet.
+
+2. Please proceed to generate the code and test it.  Include several figures and, as always, record your notes in the Overleaf project.
+
+3. Please generate a Jupyter notebook to test the Python module.  Include several figures and, as always, record your notes in the Overleaf project.
