@@ -84,3 +84,9 @@ The QG output file is located at `$OS_DATA/QG/QGModelOutput20years.nc` (~23 GB).
 2. Generate a Julia script to load the QG model output file into a MeshArrays.jl grid.  Only load the first 100 time steps.  Build a julia notebook to test the script.
 
 3. Add a few figures to the julia Notebook and then tell me how to run it myself.
+
+## Drifters
+
+1. I have updated the Claude.md for the Drfiters.jl package.  Examine that package and consider how to use it to advect virtual drifters in the QG model output via MeshArrays.jl.  Generate a plan and write it down in Overleaf.  Do not execute any code yet.
+
+2. I am happy with your plan.  Please generate the julia script and notebook to test it.  Include several figures and, as always, record your notes in the Overleaf project.

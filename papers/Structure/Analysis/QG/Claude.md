@@ -34,6 +34,7 @@ papers/Structure/Analysis/QG/
 ## Julia Packages
 
 - [MeshArrays.jl](https://github.com/JuliaClimate/MeshArrays.jl) — grid/mesh data structures.  A fork of the package is found here: /home/xavier/Projects/Oceanography/julia/MeshArrays.jl
+- [Drifers.jl](https://github.com/JuliaClimate/Drifers.jl) — Lagrangian particle tracking.  A fork of the package is found here: /home/xavier/Projects/Oceanography/julia/Drifers.jl
 
 
 ## LaTeX / Overleaf Conventions
