@@ -76,3 +76,11 @@ The QG output file is located at `$OS_DATA/QG/QGModelOutput20years.nc` (~23 GB).
 ## Understanding the QG model output file
 
 1. Examine the QG model output file and understand the variables and their dimensions.  Write a summary of its contents in the QG output file description above.
+
+## MeshArrays
+
+1. Examine the MeshArrays.jl package and consider how to integrate the QG model output file into the package.  Generate a plan and write it down in Overleaf.  Do not execute any code yet.
+
+2. Generate a Julia script to load the QG model output file into a MeshArrays.jl grid.  Only load the first 100 time steps.  Build a julia notebook to test the script.
+
+3. Add a few figures to the julia Notebook and then tell me how to run it myself.
