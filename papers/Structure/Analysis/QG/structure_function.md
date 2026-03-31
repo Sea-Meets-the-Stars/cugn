@@ -96,6 +96,60 @@ Provide a function `compare_approaches(traj, meta)` that runs both approaches an
 
 # Testing
 
+Tests should be in `profiler/profiler/tests/test_drifter.py` and use pytest. Use the test dataset at `papers/Structure/Analysis/QG/data/test_small_box_drifters.csv` (121 drifters, 10 days, 11 time steps).
+
+## T1: DrifterData construction
+
+### T1.1: `test_single_drifter`
+Load the test CSV via `qg_io.load_trajectories()`. Construct a single `DrifterData` instance via `DrifterData.from_trajectory(traj, meta, drifter_id=1.0)`. Assert:
+- `time` is a 1D numpy array with 11 elements (one per time step).
+- `lat` and `lon` are 1D arrays with 11 elements and contain finite values.
+- `udop` and `vdop` are 2D arrays of shape `(11, 1)` with finite values.
+- `depth` is `[0.]`.
+- `missid` equals `1` (integer drifter ID).
+- `dataset` is a non-empty string.
+
+### T1.2: `test_all_drifters`
+Call `DrifterData.all_from_trajectory(traj, meta)`. Assert:
+- Returns a list of length 121.
+- Each element is a `DrifterData` instance.
+- All `missid` values are unique.
+
+## T2: Time-offset handling
+
+### T2.1: `test_time_offsets_unique`
+Construct all 121 `DrifterData` objects. Assert that no two drifters share the exact same time value at any nominal time step (i.e., the per-drifter offsets produce distinct timestamps).
+
+### T2.2: `test_time_offsets_small`
+Assert that the maximum time offset across all drifters is less than 1 second (negligible compared to the 86400 s recording interval).
+
+## T3: ProfilerPairs compatibility
+
+### T3.1: `test_profilepairs_construction`
+Construct `DrifterData` objects for the first 5 drifters only (to keep runtime manageable). Instantiate `ProfilerPairs(drifter_list, max_time=1.0, avoid_same_glider=True)`. Assert:
+- `ProfilerPairs` object is created without error.
+- `npairs > 0` — pairs were successfully generated.
+- No self-pairs: for every pair index, the two profiles come from different drifters.
+
+### T3.2: `test_calc_delta_and_Sn`
+Using the 5-drifter `ProfilerPairs` from T3.1:
+1. Call `calc_delta(iz=0, variables='duLduLduL')`.
+2. Assert `duL` and `duT` arrays exist and have length `npairs`.
+3. Call `calc_Sn(variables='duLduLduL')`.
+4. Assert `S1`, `S2`, `S3` arrays exist and have length `npairs`.
+5. Call `calc_Sn_vs_r(rbins)` with 10 log-spaced bins from 5 km to 200 km.
+6. Assert the returned dict contains keys `'r'`, `'S2_duL**2'` and that `'r'` has 10 elements.
+
+## T4: Velocity sanity check
+
+### T4.1: `test_velocity_magnitude`
+For any single `DrifterData` object, assert that all velocity values (`udop`, `vdop`) have magnitude less than 1 m/s. The QG model has typical velocities of O(0.1) m/s; values exceeding 1 m/s would indicate a finite-differencing or unit error.
+
+## T5: Structure function comparison (approach 1 vs approach 2)
+
+### T5.1: `test_approaches_qualitative_agreement`
+Run both approaches on the test dataset (or a small subset). Assert that D_LL from Approach 2 (`S2_duL**2`) and D_LL from Approach 1 are within a factor of 3 at overlapping separation bins. Exact agreement is not expected because Approach 1 uses periodic BCs and Approach 2 does not, but they should be in the same ballpark.
+
 # Prompts
 
 ## Plan
@@ -109,9 +163,11 @@ Provide a function `compare_approaches(traj, meta)` that runs both approaches an
 - We are stuck with daily snapshots 
 - Add drifter support for the profiler package as a DrifterData object (Option A).  We will then use the ProfilerPairs class to calculate the structure function of the velocity field for a drifter.
 
+3. Add to the Testing section a set of tests to verify that the code satisfies the Requirements.
+
 ## Code
 
-1. Generate the code to satisfy the Requirements.  Place the Python code in the py/small_box_drifters.py module.
+1. Generate the code to satisfy the Requirements and perform the Tests.
 
 
 ## Tests
