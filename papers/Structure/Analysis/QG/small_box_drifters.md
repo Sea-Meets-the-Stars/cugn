@@ -112,6 +112,14 @@ All changes to existing files must be backward compatible. The full-domain deplo
 
 The JSON metadata sidecar must include box parameters when they are used, so cached results can be distinguished from full-domain runs.
 
+# Testing
+
+1. Generate a method in the plot the output from the test_small_box_drifters() method in small_box_drifters.py. Follow the "Drifter trajectories over speed field" figure in the test_python_wrapper.ipynb notebook.  Put the method in the py/plotting.py module.  Add a small method in the small_box_drifters.py module to generate the plot.
+
+# Analysis
+
+1. Move the pair separations and structure functions methods from the small_box_drifters.py module to the py/analysis.py module.  For velocities, compute these from the drifter trajectories, not from the QG model output.  Also, add a method to py/io.py to load the drifter trajectories from the CSV file.
+
 # Prompts
 
 ## Plan
@@ -122,3 +130,11 @@ The JSON metadata sidecar must include box parameters when they are used, so cac
 ## Code
 
 1. Generate the code to satisfy the Requirements.  Place the Python code in the py/small_box_drifters.py module.
+
+## Tests
+
+1. Reread this doc. Perform the first step under Testing above.
+
+## Analysis
+
+1. Reread this doc. Perform the first step under Analysis above.

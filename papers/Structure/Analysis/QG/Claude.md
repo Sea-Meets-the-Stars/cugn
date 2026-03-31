@@ -14,6 +14,8 @@ This project investigates Lagrangian drifter trajectories within a 2D quasigeost
 - **Python** may be used for plotting and post-processing. Conda environment: `ocean14`.
 - Separate analysis scripts from figure scripts so figures can be regenerated without rerunning analysis.
 - Reuse existing utilities in `papers/Structure/Analysis/py/qg_utils.py` where applicable.
+- Include inline comments in the code to explain what is happening.
+- Put import statements at the top of the file.
 
 ## Directory Structure
 
