@@ -46,6 +46,10 @@ def run_drifters(
     n_per_side=16,
     lev=1,
     record_interval=1,
+    box_center_x=None,
+    box_center_y=None,
+    box_size_km=None,
+    drifter_spacing_km=None,
     output_path=None,
     cache=True,
     verbose=True,
@@ -60,10 +64,19 @@ def run_drifters(
         Number of days to advect.
     n_per_side : int
         Drifters per side of the deployment grid (total = n_per_side^2).
+        Ignored when box_size_km is specified.
     lev : int
         Vertical level (1=upper, 2=lower).
     record_interval : int
         Record positions every N days.
+    box_center_x : float, optional
+        Center x of deployment box in grid units. Default: domain center.
+    box_center_y : float, optional
+        Center y of deployment box in grid units. Default: domain center.
+    box_size_km : float, optional
+        Side length of deployment box in km. If None, uses full-domain deployment.
+    drifter_spacing_km : float, optional
+        Spacing between drifters in km. Default: 10 km (only used with box_size_km).
     output_path : str or Path, optional
         Path for the output CSV. Defaults to /tmp/qg_drifters/<params>.csv.
     cache : bool
@@ -81,7 +94,13 @@ def run_drifters(
     # Determine output path
     if output_path is None:
         _DEFAULT_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-        fname = f"traj_t{t_start}_d{n_days}_n{n_per_side}_l{lev}_r{record_interval}.csv"
+        if box_size_km is not None:
+            bcx = box_center_x if box_center_x is not None else "c"
+            bcy = box_center_y if box_center_y is not None else "c"
+            dsp = drifter_spacing_km if drifter_spacing_km is not None else 10
+            fname = f"traj_t{t_start}_d{n_days}_box{box_size_km}km_sp{dsp}km_cx{bcx}_cy{bcy}_l{lev}_r{record_interval}.csv"
+        else:
+            fname = f"traj_t{t_start}_d{n_days}_n{n_per_side}_l{lev}_r{record_interval}.csv"
         output_path = _DEFAULT_OUTPUT_DIR / fname
     output_path = Path(output_path)
     meta_path = Path(str(output_path) + ".meta.json")
@@ -106,6 +125,14 @@ def run_drifters(
         "--record_interval", str(record_interval),
         "--output", str(output_path),
     ]
+    if box_size_km is not None:
+        cmd.extend(["--box_size_km", str(box_size_km)])
+    if box_center_x is not None:
+        cmd.extend(["--box_center_x", str(box_center_x)])
+    if box_center_y is not None:
+        cmd.extend(["--box_center_y", str(box_center_y)])
+    if drifter_spacing_km is not None:
+        cmd.extend(["--drifter_spacing_km", str(drifter_spacing_km)])
 
     if verbose:
         print(f"Running: {' '.join(cmd[:3])} ...")

@@ -36,6 +36,10 @@ n_per_side = parse(Int, get(params, "n_per_side", "16"))
 lev = parse(Int, get(params, "lev", "1"))
 record_interval = parse(Int, get(params, "record_interval", "1"))
 output_path = get(params, "output", "/tmp/qg_drifter_traj.csv")
+box_center_x = parse(Float64, get(params, "box_center_x", "NaN"))
+box_center_y = parse(Float64, get(params, "box_center_y", "NaN"))
+box_size_km = parse(Float64, get(params, "box_size_km", "NaN"))
+drifter_spacing_km = parse(Float64, get(params, "drifter_spacing_km", "NaN"))
 
 # Include the drifter modules
 script_dir = @__DIR__
@@ -46,13 +50,20 @@ include(joinpath(script_dir, "qg_drifters.jl"))
 println("Parameters:")
 println("  t_start=$t_start, n_days=$n_days, n_per_side=$n_per_side, lev=$lev")
 println("  record_interval=$record_interval, output=$output_path")
+if !isnan(box_size_km)
+    println("  box: $(box_size_km)km at center ($box_center_x, $box_center_y), spacing=$(drifter_spacing_km)km")
+end
 
 results = run_drifters(;
     t_start=t_start,
     n_days=n_days,
     n_per_side=n_per_side,
     lev=lev,
-    record_interval=record_interval
+    record_interval=record_interval,
+    box_center_x=box_center_x,
+    box_center_y=box_center_y,
+    box_size_km=box_size_km,
+    drifter_spacing_km=drifter_spacing_km
 )
 
 # Write trajectories to CSV (manual to avoid CSV.jl dependency)
@@ -68,6 +79,11 @@ println("Trajectories written to $output_path")
 # Write metadata as JSON sidecar
 meta_path = output_path * ".meta.json"
 open(meta_path, "w") do f
-    write(f, """{"dx": $(results.dx), "nx": $(results.nx), "n_drifters": $(results.n_drifters), "t_start": $t_start, "n_days": $n_days, "n_per_side": $n_per_side, "lev": $lev}""")
+    meta_str = """{"dx": $(results.dx), "nx": $(results.nx), "n_drifters": $(results.n_drifters), "t_start": $t_start, "n_days": $n_days, "n_per_side": $n_per_side, "lev": $lev"""
+    if !isnan(box_size_km)
+        meta_str *= """, "box_center_x": $box_center_x, "box_center_y": $box_center_y, "box_size_km": $box_size_km, "drifter_spacing_km": $drifter_spacing_km"""
+    end
+    meta_str *= "}"
+    write(f, meta_str)
 end
 println("Metadata written to $meta_path")

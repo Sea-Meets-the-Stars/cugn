@@ -42,29 +42,66 @@ function load_uv_arrays(nc_path::String, t_idx::Int, dx::Float64, dy::Float64; l
 end
 
 """
-    deploy_drifters(n_per_side::Int, nx::Int)
+    deploy_drifters(n_per_side::Int, nx::Int;
+        box_center_x::Float64=NaN, box_center_y::Float64=NaN,
+        box_size_km::Float64=NaN, drifter_spacing_km::Float64=NaN,
+        dx::Float64=3906.25)
 
 Create initial drifter positions on a regular sub-grid.
 Positions are in grid-index coordinates (0 to nx).
 
+If box_size_km is specified (not NaN), deploys drifters in a box centered at
+(box_center_x, box_center_y) with the given spacing. Otherwise, deploys
+uniformly across the full domain (original behavior).
+
 Returns: (x0::Vector{Float64}, y0::Vector{Float64})
 """
-function deploy_drifters(n_per_side::Int, nx::Int)
-    spacing = nx / n_per_side
-    offsets = range(spacing/2, stop=nx - spacing/2, length=n_per_side)
+function deploy_drifters(n_per_side::Int, nx::Int;
+    box_center_x::Float64=NaN, box_center_y::Float64=NaN,
+    box_size_km::Float64=NaN, drifter_spacing_km::Float64=NaN,
+    dx::Float64=3906.25)
 
-    x0 = Float64[]
-    y0 = Float64[]
-    for yy in offsets, xx in offsets
-        push!(x0, xx)
-        push!(y0, yy)
+    if !isnan(box_size_km)
+        # Box deployment mode
+        isnan(box_center_x) && (box_center_x = nx / 2.0)
+        isnan(box_center_y) && (box_center_y = nx / 2.0)
+        isnan(drifter_spacing_km) && (drifter_spacing_km = 10.0)
+
+        spacing_grid = drifter_spacing_km * 1000.0 / dx
+        box_size_grid = box_size_km * 1000.0 / dx
+        n_side = Int(floor(box_size_km / drifter_spacing_km)) + 1
+
+        half_extent = (n_side - 1) * spacing_grid / 2.0
+        offsets_x = range(box_center_x - half_extent, step=spacing_grid, length=n_side)
+        offsets_y = range(box_center_y - half_extent, step=spacing_grid, length=n_side)
+
+        x0 = Float64[]
+        y0 = Float64[]
+        for yy in offsets_y, xx in offsets_x
+            push!(x0, mod(xx, nx))
+            push!(y0, mod(yy, nx))
+        end
+        return x0, y0
+    else
+        # Full-domain deployment (original behavior)
+        spacing = nx / n_per_side
+        offsets = range(spacing/2, stop=nx - spacing/2, length=n_per_side)
+
+        x0 = Float64[]
+        y0 = Float64[]
+        for yy in offsets, xx in offsets
+            push!(x0, xx)
+            push!(y0, yy)
+        end
+        return x0, y0
     end
-    return x0, y0
 end
 
 """
     run_drifters(; nc_path=nothing, t_start=5001, n_days=30,
-                   n_per_side=64, lev=1, record_interval=1)
+                   n_per_side=64, lev=1, record_interval=1,
+                   box_center_x=NaN, box_center_y=NaN,
+                   box_size_km=NaN, drifter_spacing_km=NaN)
 
 Run drifter advection through the QG flow field.
 
@@ -75,6 +112,9 @@ Arguments:
 - n_per_side: drifters per side of the deployment grid (total = n_per_side^2)
 - lev: vertical level (1=upper, 2=lower)
 - record_interval: record positions every N days
+- box_center_x, box_center_y: center of deployment box in grid units (NaN = full domain)
+- box_size_km: box side length in km (NaN = full domain)
+- drifter_spacing_km: spacing between drifters in km (NaN = default 10 km)
 
 Returns: NamedTuple with fields:
 - trajectories: DataFrame with (ID, x, y, t, x_m, y_m) columns
@@ -83,7 +123,9 @@ Returns: NamedTuple with fields:
 - n_drifters: total number of drifters
 """
 function run_drifters(; nc_path=nothing, t_start::Int=5001, n_days::Int=30,
-                       n_per_side::Int=64, lev::Int=1, record_interval::Int=1)
+                       n_per_side::Int=64, lev::Int=1, record_interval::Int=1,
+                       box_center_x::Float64=NaN, box_center_y::Float64=NaN,
+                       box_size_km::Float64=NaN, drifter_spacing_km::Float64=NaN)
     if isnothing(nc_path)
         nc_path = joinpath(ENV["OS_DATA"], "QG", "QGModelOutput20years.nc")
     end
@@ -99,9 +141,15 @@ function run_drifters(; nc_path=nothing, t_start::Int=5001, n_days::Int=30,
     dt_seconds = 86400.0  # 1 day between snapshots
 
     # Deploy drifters
-    x0, y0 = deploy_drifters(n_per_side, nx)
+    x0, y0 = deploy_drifters(n_per_side, nx;
+        box_center_x=box_center_x, box_center_y=box_center_y,
+        box_size_km=box_size_km, drifter_spacing_km=drifter_spacing_km, dx=dx)
     n_drifters = length(x0)
-    println("Deploying $n_drifters drifters on $(n_per_side)x$(n_per_side) grid")
+    if !isnan(box_size_km)
+        println("Deploying $n_drifters drifters in $(box_size_km)km box")
+    else
+        println("Deploying $n_drifters drifters on $(n_per_side)x$(n_per_side) grid")
+    end
 
     # Initialize trajectory storage
     traj = DataFrame(ID=Int[], x=Float64[], y=Float64[], t=Float64[])
