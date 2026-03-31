@@ -167,12 +167,11 @@ Run both approaches on the test dataset (or a small subset). Assert that D_LL fr
 
 ## Code
 
-1. Generate the code to satisfy the Requirements and perform the Tests.
-
+1. Generate the code to satisfy the Requirements.  Do not create the tests yet.
 
 ## Tests
 
-1. Reread this doc. Perform the first step under Testing above.
+1. Reread this doc. Generate the code to perform the Tests.  Put them in a new module named tests.py in the QG/py directory.  Make sure to generate figures as part of the tests.
 
 ## Analysis
 
