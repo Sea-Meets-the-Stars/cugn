@@ -1708,8 +1708,10 @@ def main(flg):
 
         #fig_region_dus(outroot='fig_qg_region_du3', 
         #               calc_du3=True)
-        fig_region_dus(outroot='fig_qg_region_du3_300days', 
-                       calc_du3=True, Ndays=300)
+        #fig_region_dus(outroot='fig_qg_region_du3_300days', 
+        #               calc_du3=True, Ndays=300)
+        fig_region_dus(outroot='fig_qg_region_du3_100days', 
+                       calc_du3=True, Ndays=100, tot_time='100days')
 
     # Figs for Pitch slide
     if flg == 16:
