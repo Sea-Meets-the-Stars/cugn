@@ -21,6 +21,7 @@ from ocpy.utils import plotting
 
 from profiler import gliderdata
 from profiler import profilerpairs
+from profiler import io as p_io
 from cugn import io as cugn_io
 from cugn import utils as cugn_utils
 from cugn import plotting as cugn_plotting
@@ -29,6 +30,7 @@ from IPython import embed
 
 # Local
 sys.path.append(os.path.abspath("../Analysis/py"))
+sys.path.append(os.path.abspath("../Analysis/QG/py"))
 import qg_utils
 import data_utils
 import glider_io
@@ -196,8 +198,10 @@ def fig_dus(dataset:str, outroot='fig_du', max_time:float=10., iz:int=4):
 def fig_structure(dataset:str, outroot='fig_structure',
                   variables = 'duLduLduL',
                   iz:int=5, tcut:tuple=None,
+                  outfile:str=None,
                   skip_vel:bool=False,
                   stretch:bool=False,
+                  Sn_dict:dict=None,
                   gpair_file:str=None,
                   use_xlim:tuple=None,
                   use_ylim:tuple=None,
@@ -212,22 +216,26 @@ def fig_structure(dataset:str, outroot='fig_structure',
     #    skip_vel = False
 
     # Load dataset
-    profilers = glider_io.load_dataset(dataset)
+    if Sn_dict is None:
+        profilers = glider_io.load_dataset(dataset)
 
     # Outfile
-    if iz >= 0:
-        outfile = f'{outroot}_z{(iz+1)*10}_{dataset}_{variables}.png'
-    else:
-        outfile = f'{outroot}_iso{np.abs(iz)}_{dataset}_{variables}.png'
-    if stretch:
-        outfile = outfile.replace('.png', '_stretch.png')
+    if outfile is None:
+        if iz >= 0:
+            outfile = f'{outroot}_z{(iz+1)*10}_{dataset}_{variables}.png'
+        else:
+            outfile = f'{outroot}_iso{np.abs(iz)}_{dataset}_{variables}.png'
+        if stretch:
+            outfile = outfile.replace('.png', '_stretch.png')
 
     # Load
     #gpair_file = cugn_io.gpair_filename(
     #    dataset, iz, not avoid_same_glider)
     #gpair_file = os.path.join('..', 'Analysis', 'Outputs', gpair_file)
 
-    if gpair_file is not None:
+    if Sn_dict is not None:
+        print(f'Loaded: {Sn_dict}')
+    elif gpair_file is not None:
         Sn_dict = gliderpairs.load_Sndict(gpair_file)
         print(f'Loaded: {gpair_file}')
     else:
@@ -269,6 +277,7 @@ def fig_structure(dataset:str, outroot='fig_structure',
 
     goodN = np.array(Sn_dict['config']['N']) > minN
     
+    #embed(header='280 of figs')
 
     # Generate the keys
     if variables == 'duLduLduL':
@@ -617,6 +626,10 @@ def fig_region_dus(outroot:str='fig_qg_region_dul',
     # Grab files
     output_files = glob.glob(f'../Analysis/Output/SF_region_*_{tot_time}.nc')
     output_files.sort()
+
+    if len(output_files) == 0:
+        print(f'No output files found for {tot_time}')
+        return
 
     # Loop on em
     for ss, output_file in enumerate(output_files):
@@ -1571,6 +1584,19 @@ def fig_Npairs_vs_Dt(outfile='fig_Npairs_vs_Dt.png'):
     for ss, dataset in enumerate(datasets):
         print(f"{dataset}: Npairs ~ Dt^{alphas[0]:.2f}")
 
+def fig_qg_structure_from_drifters(drifter_SF_file:str, outfile:str):
+
+    # Load up
+    Sn_LL = p_io.loadjson(drifter_SF_file)
+    # Conert lists to np.ndarray
+    for key in Sn_LL.keys():
+        if isinstance(Sn_LL[key], list):
+            Sn_LL[key] = np.array(Sn_LL[key])
+
+    # Start the figure
+    fig_structure(None, Sn_dict=Sn_LL, outfile=outfile, iz=0,
+        show_correct=False)
+
 def main(flg):
     if flg== 'all':
         flg= np.sum(np.array([2 ** ii for ii in range(25)]))
@@ -1724,6 +1750,13 @@ def main(flg):
     # Npairs vs. Dt
     if flg == 20:
         fig_Npairs_vs_Dt()
+
+    # QG structure function from drifters
+    if flg == 21:
+        fig_qg_structure_from_drifters(
+            drifter_SF_file='../Analysis/QG/data/small_box_drifters_ts5001_nd100_sf.json',
+            outfile='fig_qg_structure_from_drifters.png'
+        )
 
 # Command line execution
 if __name__ == '__main__':

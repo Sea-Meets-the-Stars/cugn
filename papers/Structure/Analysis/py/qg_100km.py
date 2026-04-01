@@ -64,6 +64,18 @@ def test_full(ndays=15, maxcorr=60):
 def run_one_region(xlim:tuple, ylim:tuple, outfile:str,
                    timelast=180,
                    ndays:int=60, maxcorr:int=30):
+    """ 
+    Calculate the structure function for a region of the QG model output.
+
+    Args:
+        xlim: tuple of (xmin, xmax) in km
+        ylim: tuple of (ymin, ymax) in km
+        outfile: path to save the structure function
+        timelast: last time index to load
+        ndays: number of days to calculate the structure function
+        maxcorr: maximum correlation time
+    """
+
     # Clobber?
     if os.path.exists(outfile):
         print(f'File {outfile} exists. Skipping')
@@ -88,11 +100,13 @@ def run_one_region(xlim:tuple, ylim:tuple, outfile:str,
     data_slice = SFtest.isel(time=slice(0,ndays))
         
     # Calculates du1, du2 and du3
+    print(f'Calculating du2 and du3 for {outfile}')
     sf2, sf3 = strucFunct2_ai.SF2_3_ul(data_slice.ulls)#, data_slice.dut)
     data_slice['du2'] = sf2
     data_slice['du3'] = sf3
         
     # Averages over all $s$ positions
+    print(f'Averaging over all $s$ positions for {outfile}')
     with ProgressBar():
         data_avers = data_slice.mean(dim=('x','y'), skipna=True).compute()
 
@@ -102,6 +116,7 @@ def run_one_region(xlim:tuple, ylim:tuple, outfile:str,
     mid_rbins = 0.5*(rbins[:-1] + rbins[1:])
 
     # Average over orientation
+    print(f'Averaging over orientation for {outfile}')
     dudlt_aver_angl = strucFunct2_ai.process_SF_samples(data_avers, rbins, mid_rbins)
 
     # Save
@@ -140,10 +155,18 @@ if __name__ == '__main__':
                             ndays=365*5, maxcorr=30)
 
     # 300km regions for 5 years
-    if True:
+    if False:
         for x0 in [200., 500]:
             for y0 in [200., 500]:
                 run_one_region((x0, x0+300.), (y0, y0+300.),
                             f'Output/SF_region_x{int(x0)}_y{int(y0)}_300km_5years.nc',
                             timelast=int(365*5.1),
                             ndays=365*5, maxcorr=30)
+
+    # Drifter regions for 100 days
+    if True:
+        x0, y0 = 450., 450.
+        run_one_region((x0, x0+100.), (y0, y0+100.), 
+            f'Output/SF_region_x{int(x0)}_y{int(y0)}_100days.nc',
+            timelast=int(2199), # Starts at 5001, like the drifter analysis
+            ndays=100, maxcorr=30)

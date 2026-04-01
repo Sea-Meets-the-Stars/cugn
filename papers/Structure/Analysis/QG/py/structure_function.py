@@ -88,10 +88,12 @@ def run_profiler_approach(traj, meta, r_bins_km=None, max_time=1.0):
     pairs.calc_delta(iz=0, variables='duLduLduL')
     pairs.calc_Sn(variables='duLduLduL')
     Sn_LL = pairs.calc_Sn_vs_r(r_bins_km)
+    pairs.add_meta(Sn_LL)
 
     # --- Transverse structure function (D_TT = S2 of duT) ---
     pairs.calc_Sn(variables='duTduTduT')
     Sn_TT = pairs.calc_Sn_vs_r(r_bins_km)
+    pairs.add_meta(Sn_TT)
 
     return Sn_LL, Sn_TT
 
