@@ -121,7 +121,8 @@ class TestTrajectoryOutput:
         nx = meta['nx']
         t_start = meta['t_start']
 
-        nc_path = os.path.join(os.environ['OS_DATA'], 'QG', 'QGModelOutput20years.nc')
+        nc_path = os.path.join(os.environ['OS_DATA'], 'QG', 
+            'QGModelOutput20years.nc')
         qg = xr.open_dataset(nc_path)
         u0 = qg.u.isel(lev=0, time=t_start - 1).values
         v0 = qg.v.isel(lev=0, time=t_start - 1).values
@@ -131,7 +132,8 @@ class TestTrajectoryOutput:
         qg.close()
 
         fig, ax = plt.subplots(1, 1, figsize=(8, 7))
-        ax.pcolormesh(x_km, y_km, speed.T, cmap='viridis', alpha=0.3, shading='auto')
+        # speed has shape (y, x) from xarray — correct for pcolormesh(x, y, C)
+        ax.pcolormesh(x_km, y_km, speed, cmap='viridis', alpha=0.3, shading='auto')
 
         # Plot each glider trajectory
         for mid in sorted(df.missid.unique()):
@@ -244,7 +246,8 @@ class TestVelocityInterpolation:
         fig, axes = plt.subplots(1, 2, figsize=(14, 6))
 
         # Left: u-field with glider-sampled u overlaid
-        im0 = axes[0].pcolormesh(x_km, y_km, u_field.T, cmap='RdBu_r',
+        # u_field has shape (y, x) from xarray — correct for pcolormesh(x, y, C)
+        im0 = axes[0].pcolormesh(x_km, y_km, u_field, cmap='RdBu_r',
                                   vmin=-0.2, vmax=0.2, shading='auto')
         sc0 = axes[0].scatter(snap.x_m / 1000, snap.y_m / 1000, c=snap.u_qg,
                                cmap='RdBu_r', vmin=-0.2, vmax=0.2,
@@ -256,7 +259,8 @@ class TestVelocityInterpolation:
         plt.colorbar(im0, ax=axes[0], shrink=0.7)
 
         # Right: v-field with glider-sampled v overlaid
-        im1 = axes[1].pcolormesh(x_km, y_km, v_field.T, cmap='RdBu_r',
+        # v_field has shape (y, x) from xarray — correct for pcolormesh(x, y, C)
+        im1 = axes[1].pcolormesh(x_km, y_km, v_field, cmap='RdBu_r',
                                   vmin=-0.2, vmax=0.2, shading='auto')
         sc1 = axes[1].scatter(snap.x_m / 1000, snap.y_m / 1000, c=snap.v_qg,
                                cmap='RdBu_r', vmin=-0.2, vmax=0.2,

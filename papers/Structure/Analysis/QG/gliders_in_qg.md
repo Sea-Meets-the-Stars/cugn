@@ -149,7 +149,6 @@ These are the following tests to generate:
 
 Place the testing code in a py/test_gliders.py module.
 
-# Analysis
 
 # Prompts
 
@@ -165,6 +164,7 @@ Place the testing code in a py/test_gliders.py module.
 ## Tests
 
 1. Reread this doc. Create the tests described in the Testing section above.
+2. Examining the test_glider_velocity_field.png figure, the velocities of the gliders do not appear to match the underlying velocity field.  Please investigate. 
 
 ## Modifications
 
