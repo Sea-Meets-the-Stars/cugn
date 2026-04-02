@@ -34,35 +34,42 @@ Here are answers to the open questions in the planning doc:
 
 # Requirements
 
-## R1: New classmethod on DrifterData for glider-sampled velocities
+## R1: New classmethod on SprayData for glider-sampled velocities
 
-Add a classmethod `from_QG_glider()` to `profiler.drifterdata.DrifterData` that builds a DrifterData instance from one glider's QG-sampled velocity output.  This is analogous to `from_QG_trajectory()` but uses the pre-sampled `u_qg, v_qg` columns directly instead of computing velocities via finite differences.
+Add a classmethod `from_QG_glider()` to `profiler.gliderdata.SprayData` that builds a SprayData instance from one glider's QG-sampled velocity output.  Using SprayData (rather than DrifterData) is natural because real Spray gliders are SprayData objects, and SprayData inherits from ADCPData which natively provides `udop, vdop` attributes.
 
 **Signature:**
+
 ```python
 @classmethod
 def from_QG_glider(cls, glider_df, meta, missid)
 ```
 
 **Input:**
+
 - `glider_df`: DataFrame with columns `x, y, time, missid, x_m, y_m, u_qg, v_qg` (output of `qg_gliders.run_gliders()`)
 - `meta`: metadata dict (must contain `dx`, `nx`)
 - `missid`: integer glider ID to extract
 
 **Behavior:**
+
 - Extract rows for the given `missid`, sorted by `time`
 - Set `udop = u_qg` and `vdop = v_qg` (shape `(Ntime, 1)`) — no finite differencing
-- Set `lat, lon` from `y_m, x_m` converted to degrees (same `_M_PER_DEG` convention as existing code)
+- Set `lat, lon` from `y_m, x_m` converted to degrees (use `_M_PER_DEG = 111_000`)
 - Set `time` from the `time` column (seconds), with a small per-glider offset for ProfilerPairs
 - Set `depth = [0.0]` (single level)
 - Set `obj.missid = missid` for `avoid_same_glider` filtering
+- Set array declarations: `profile_arrays = ['time', 'lat', 'lon']`, `depth_arrays = ['depth']`, `profile_depth_arrays = ['udop', 'vdop']`
+- Set `has_adcp = True`, `adcp_on = True`, `in_field = False`
 
 Also add a batch classmethod:
+
 ```python
 @classmethod
 def all_from_QG_glider(cls, glider_df, meta)
 ```
-Returns a list of DrifterData, one per unique `missid`.
+
+Returns a list of SprayData, one per unique `missid`.
 
 ## R2: Module `py/glider_analysis.py`
 
@@ -75,7 +82,7 @@ Create `papers/Structure/Analysis/QG/py/glider_analysis.py` modeled on `small_bo
 - Returns `(DataFrame, metadata)`
 
 **`compute_glider_sf(glider_df, meta, r_bins_km=None, variables='duLduLduL')`**
-- Builds `DrifterData` objects from glider output via `DrifterData.all_from_QG_glider()`
+- Builds `SprayData` objects from glider output via `SprayData.all_from_QG_glider()`
 - Constructs `ProfilerPairs` with `max_time=1.0`, `avoid_same_glider=True`
 - Computes structure functions up to 3rd order using `pairs.calc_delta()`, `pairs.calc_Sn()`, `pairs.calc_Sn_vs_r()`
 - Computes both longitudinal (`duLduLduL`) and transverse (`duTduTduT`) components
@@ -111,7 +118,7 @@ Save the structure function results to JSON using `profiler.io.savejson()`, foll
 ## R7: Backward compatibility
 
 - Do not modify existing drifter or glider pipeline code (`qg_drifters.py`, `qg_gliders.py`, `analysis.py`, `structure_function.py`)
-- The new `DrifterData.from_QG_glider()` classmethod is an addition to the profiler package, not a modification of existing methods
+- The new `SprayData.from_QG_glider()` classmethod is an addition to the profiler package, not a modification of existing methods
 - Reuse existing imports and patterns from `structure_function.py` and `calc_sf.py`
 
 # Prompts
@@ -120,6 +127,7 @@ Save the structure function results to JSON using `profiler.io.savejson()`, foll
 
 1. Read this document and develop a plan for the analysis.  Write it down in Overleaf.  Append it to the claude_gliders_in_qg_plan.tex file. Do not execute any code yet.
 2. Turn the plan into a set of requirements for the code and put them in the Requirements section above.  Answers to the open questions in the claude_gliders_in_qg_plan.tex doc are given in the Planning section above.
+3. Instead of using the DrifterData class, use the SprayData class to read the gliders into the Profiler package.  Modify the planning doc and Requirements section above to reflect this.
 
 ## Code
 
