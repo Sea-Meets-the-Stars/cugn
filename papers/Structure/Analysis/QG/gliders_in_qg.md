@@ -131,6 +131,13 @@ The sidecar JSON must include: `dx`, `nx`, `t_start`, `lev`, `n_gliders`, `offse
 
 `t_start` must be a user-configurable parameter at all levels (Julia function, CLI, Python wrapper). This allows testing sensitivity of structure functions to the QG flow realization by running the same glider trajectories at different QG start times.
 
+# Modifications
+
+## Modification 1
+
+- The x,y units of the glider trajectories provided are in km.  Be sure they are converted to grid units correctly.
+- Offset the tests to occur at the center of the QG domain.
+
 # Testing
 
 We will need several tests to ensure the code is working correctly.
@@ -158,3 +165,7 @@ Place the testing code in a py/test_gliders.py module.
 ## Tests
 
 1. Reread this doc. Create the tests described in the Testing section above.
+
+## Modifications
+
+1. Reread this doc. Create the modifications described in the Modifications/Modification 1 section above.

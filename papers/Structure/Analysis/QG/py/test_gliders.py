@@ -43,6 +43,12 @@ _TEST_OUTPUT = Path('/tmp/qg_gliders_test/test_output.csv')
 #  Fixture: run the pipeline once for all tests
 # ---------------------------------------------------------------------------
 
+# Offset to center gliders on the QG domain.
+# Glider CSV starts at (50, 50) km = 12.8 grid units.
+# Domain center = 128 grid units. So offset = 128 - 12.8 = 115.2.
+_CENTER_OFFSET = 128.0 - 50.0 / 3.90625  # 115.2 grid units
+
+
 @pytest.fixture(scope='module')
 def glider_result():
     """Run the glider pipeline once and return (df, meta)."""
@@ -51,8 +57,9 @@ def glider_result():
         str(_GLIDER_CSV),
         t_start=5001,
         lev=1,
-        offset_x=0.0,
-        offset_y=0.0,
+        offset_x=_CENTER_OFFSET,
+        offset_y=_CENTER_OFFSET,
+        coords_km=True,
         output_path=str(_TEST_OUTPUT),
         cache=False,
         verbose=False,
@@ -302,8 +309,8 @@ class TestOutputFile:
         _, meta = glider_result
         assert meta['t_start'] == 5001
         assert meta['lev'] == 1
-        assert meta['offset_x'] == 0.0
-        assert meta['offset_y'] == 0.0
+        assert meta['offset_x'] == pytest.approx(_CENTER_OFFSET)
+        assert meta['offset_y'] == pytest.approx(_CENTER_OFFSET)
         assert meta['n_gliders'] == 10
         assert meta['dx'] == pytest.approx(3906.25)
         assert meta['nx'] == 256

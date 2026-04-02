@@ -49,6 +49,7 @@ t_start = parse(Int, get(params, "t_start", "5001"))
 lev = parse(Int, get(params, "lev", "1"))
 offset_x = parse(Float64, get(params, "offset_x", "0.0"))
 offset_y = parse(Float64, get(params, "offset_y", "0.0"))
+coords_km = parse(Bool, get(params, "coords_km", "true"))
 output_path = get(params, "output", "/tmp/qg_glider_velocities.csv")
 
 # Include the glider modules (qg_grid.jl is a dependency of qg_gliders.jl)
@@ -60,7 +61,7 @@ include(joinpath(script_dir, "qg_gliders.jl"))
 println("Parameters:")
 println("  glider_csv=$glider_csv")
 println("  t_start=$t_start, lev=$lev")
-println("  offset=($offset_x, $offset_y)")
+println("  offset=($offset_x, $offset_y), coords_km=$coords_km")
 println("  output=$output_path")
 
 # Default NetCDF path
@@ -72,7 +73,7 @@ glider_df = load_glider_trajectories(glider_csv)
 # Run interpolation
 result, dx, nx, n_gliders = interpolate_velocity(
     nc_path, glider_df, t_start;
-    lev=lev, offset_x=offset_x, offset_y=offset_y
+    lev=lev, offset_x=offset_x, offset_y=offset_y, coords_km=coords_km
 )
 
 # Write output CSV (manual to avoid CSV.jl write overhead)
@@ -88,6 +89,6 @@ println("Output written to $output_path")
 # Write metadata JSON sidecar
 meta_path = output_path * ".meta.json"
 open(meta_path, "w") do f
-    write(f, """{"dx": $dx, "nx": $nx, "t_start": $t_start, "lev": $lev, "n_gliders": $n_gliders, "offset_x": $offset_x, "offset_y": $offset_y, "glider_csv": "$glider_csv"}""")
+    write(f, """{"dx": $dx, "nx": $nx, "t_start": $t_start, "lev": $lev, "n_gliders": $n_gliders, "offset_x": $offset_x, "offset_y": $offset_y, "coords_km": $coords_km, "glider_csv": "$glider_csv"}""")
 end
 println("Metadata written to $meta_path")

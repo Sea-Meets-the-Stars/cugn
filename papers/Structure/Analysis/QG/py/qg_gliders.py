@@ -44,6 +44,7 @@ def run_gliders(
     lev=1,
     offset_x=0.0,
     offset_y=0.0,
+    coords_km=True,
     output_path=None,
     cache=True,
     verbose=True,
@@ -62,6 +63,9 @@ def run_gliders(
         Translation of glider positions in grid units (x-direction).
     offset_y : float
         Translation of glider positions in grid units (y-direction).
+    coords_km : bool
+        If True (default), input CSV x,y are in km and will be converted
+        to grid-index units. If False, x,y are already in grid units.
     output_path : str or Path, optional
         Path for the output CSV. Defaults to /tmp/qg_gliders/<params>.csv.
     cache : bool
@@ -81,10 +85,11 @@ def run_gliders(
     # Auto-generate output path from parameters
     if output_path is None:
         _DEFAULT_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+        km_tag = "km" if coords_km else "gu"
         fname = (
             f"glider_vel_t{t_start}_l{lev}"
             f"_ox{offset_x}_oy{offset_y}"
-            f"_{glider_csv.stem}.csv"
+            f"_{km_tag}_{glider_csv.stem}.csv"
         )
         output_path = _DEFAULT_OUTPUT_DIR / fname
     output_path = Path(output_path)
@@ -108,6 +113,7 @@ def run_gliders(
         "--lev", str(lev),
         "--offset_x", str(offset_x),
         "--offset_y", str(offset_y),
+        "--coords_km", str(coords_km).lower(),
         "--output", str(output_path),
     ]
 

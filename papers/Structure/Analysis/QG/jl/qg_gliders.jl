@@ -113,7 +113,8 @@ end
 
 """
     interpolate_velocity(nc_path::String, glider_df::DataFrame, t_start::Int;
-                         lev::Int=1, offset_x::Float64=0.0, offset_y::Float64=0.0)
+                         lev::Int=1, offset_x::Float64=0.0, offset_y::Float64=0.0,
+                         coords_km::Bool=true)
 
 Interpolate QG velocity field (u, v) at each glider position.
 
@@ -123,15 +124,20 @@ interpolation to obtain the velocity in m/s.
 
 Arguments:
 - nc_path: path to QGModelOutput20years.nc
-- glider_df: DataFrame with columns x, y, time, missid (x, y in grid units)
+- glider_df: DataFrame with columns x, y, time, missid
 - t_start: QG time index at which glider time=0 begins (1-based)
 - lev: vertical level (1=upper, 2=lower)
 - offset_x, offset_y: translation of glider positions in grid units
+- coords_km: if true (default), input x,y are in km and will be converted
+  to grid-index units using dx from the NetCDF file
 
-Returns: DataFrame with columns x, y, time, missid, x_m, y_m, u_qg, v_qg
+Returns: (result DataFrame, dx, nx, n_gliders)
+  - result has columns x, y, time, missid, x_m, y_m, u_qg, v_qg
+  - x, y in the output are in grid units (after km conversion + offset)
 """
 function interpolate_velocity(nc_path::String, glider_df::DataFrame, t_start::Int;
-                              lev::Int=1, offset_x::Float64=0.0, offset_y::Float64=0.0)
+                              lev::Int=1, offset_x::Float64=0.0, offset_y::Float64=0.0,
+                              coords_km::Bool=true)
     # Get grid info
     ds = NCDataset(nc_path, "r")
     x_coord = ds["x"][:]
@@ -141,8 +147,20 @@ function interpolate_velocity(nc_path::String, glider_df::DataFrame, t_start::In
     close(ds)
 
     n_records = nrow(glider_df)
+    dx_km = dx / 1000.0  # grid spacing in km
+
+    # Convert input coordinates from km to grid-index units if needed
+    if coords_km
+        println("Converting glider coordinates from km to grid units (dx=$(dx_km) km)...")
+        glider_x_grid = glider_df.x ./ dx_km
+        glider_y_grid = glider_df.y ./ dx_km
+    else
+        glider_x_grid = glider_df.x
+        glider_y_grid = glider_df.y
+    end
+
     println("Interpolating velocity for $n_records glider records...")
-    println("  t_start=$t_start, lev=$lev, offset=($offset_x, $offset_y)")
+    println("  t_start=$t_start, lev=$lev, offset=($offset_x, $offset_y), coords_km=$coords_km")
 
     # Sort by time for efficient snapshot loading
     sorted_idx = sortperm(glider_df.time)
@@ -197,9 +215,9 @@ function interpolate_velocity(nc_path::String, glider_df::DataFrame, t_start::In
             current_t_lo = t_lo
         end
 
-        # Apply spatial offset and periodic wrap
-        xg = mod(glider_df.x[idx] + offset_x, nx)
-        yg = mod(glider_df.y[idx] + offset_y, nx)
+        # Apply spatial offset and periodic wrap (using grid-unit coordinates)
+        xg = mod(glider_x_grid[idx] + offset_x, nx)
+        yg = mod(glider_y_grid[idx] + offset_y, nx)
 
         # Bilinear interpolation at both time steps
         u_at_lo = bilinear_periodic(u_lo, xg, yg, nx)
@@ -213,9 +231,9 @@ function interpolate_velocity(nc_path::String, glider_df::DataFrame, t_start::In
     end
 
     # Build output DataFrame
-    # Apply offset to positions for output
-    x_out = mod.(glider_df.x .+ offset_x, nx)
-    y_out = mod.(glider_df.y .+ offset_y, nx)
+    # Apply offset to converted grid-unit positions for output
+    x_out = mod.(glider_x_grid .+ offset_x, nx)
+    y_out = mod.(glider_y_grid .+ offset_y, nx)
 
     result = DataFrame(
         x = x_out,
