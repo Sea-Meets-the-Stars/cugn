@@ -42,6 +42,7 @@ def fig_separations(dataset:str, outroot='fig_sep', max_time:float=10.):
 
     # Load dataset
     profilers = glider_io.load_dataset(dataset)
+    embed(header='45 of figs_structure')
     
 
     # Generate pairs
@@ -1605,7 +1606,7 @@ def main(flg):
 
     # Separations
     if flg == 1:
-        fig_separations('ARCTERX')
+        fig_separations('ARCTERX-2023')
         fig_separations('Calypso2019', max_time=10.)
 
     # Delta times

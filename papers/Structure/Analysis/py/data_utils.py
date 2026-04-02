@@ -4,6 +4,7 @@ import numpy as np
 from profiler import gliderdata
 from profiler import profilerpairs
 
+from IPython import embed
 
 def load_SF(dataset:str, variables = 'duLduLduL', iz:int=5, 
     minN:int=10):

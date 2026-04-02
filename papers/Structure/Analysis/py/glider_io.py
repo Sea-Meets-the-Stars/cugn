@@ -31,7 +31,7 @@ def load_dataset(dataset:str):
             os.getenv('OS_SPRAY'), 'Calypso', 'calypso2022_ctd.mat')
     elif dataset == 'ARCTERX-2023':
         dfile = os.path.join(
-            os.getenv('OS_DATA'), 'ARCTERX', '2023_IOP', 'arcterx_ctd.mat')
+            os.getenv('OS_SPRAY'), 'ARCTERX', '2023_IOP', 'arcterx_ctd.mat')
     elif dataset == 'ARCTERX-2025':
         assets=['Spray'] 
         iz = 5
