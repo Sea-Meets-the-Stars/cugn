@@ -56,7 +56,7 @@ def run_one(qg_xt:dict):
     dx_grid = 1000./256
 
     ## Gliders
-    if False:
+    if True:
         glider_csv = 'QG/data/100km100day10gliders3h.csv'
         glider_traj, glider_sf = file_names(qg_xt, 'glider')
         glider_df, meta = glider_analysis.run_single(glider_csv, t_start=qg_xt['ts'], lev=1,
@@ -67,7 +67,7 @@ def run_one(qg_xt:dict):
         glider_analysis.save_sf(Sn_LL, glider_sf)
 
     ## Drifters
-    if False:
+    if True:
         drifter_traj, drifter_sf = file_names(qg_xt, 'drifter')
         traj, meta = small_box_drifters.run_small_box(
             t_start=qg_xt['ts'], 
@@ -80,6 +80,13 @@ def run_one(qg_xt:dict):
         Sn_LL, Sn_TT = calc_sf.calc_drifter_sf(drifter_traj, drifter_sf)
     
     ## Eulerian
+    root = qg_root(qg_xt)
+    eulerian_file = f'Output/qg_eulerian_SF_{root}.nc'
+    qg_100km.run_one_region((qg_xt['x'], qg_xt['x']+qg_xt['dx']), 
+        (qg_xt['y'], qg_xt['y']+qg_xt['dx']),
+            eulerian_file,
+            timelast=7200-qg_xt['ts'],
+            ndays=qg_xt['nd'], maxcorr=30)
 
 # Command line
 if __name__ == '__main__':
