@@ -100,7 +100,7 @@ def run_one_region(xlim:tuple, ylim:tuple, outfile:str,
     # Calculate structure function
     SFtest = strucFunct2_ai.calculateSF_2(Udsn, maxcorr, shiftdim, grid)
 
-    embed(header='103 of run_one_region')
+    #embed(header='103 of run_one_region')
 
     # Higher order
     SF2, SF3 = strucFunct2_ai.SF2_3_ul(SFtest.ulls)
