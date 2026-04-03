@@ -183,7 +183,7 @@ if __name__ == '__main__':
     # Testing
     if True:
         x0, y0 = 450., 450.
-        run_one_region((x0, x0+12.), (y0, y0+12.), 
+        run_one_region((x0, x0+8.), (y0, y0+8.), 
             f'Output/test_me.nc',
             timelast=int(2199)-2, # Starts at 5001, like the drifter analysis
             ndays=100, maxcorr=4, clobber=True)
