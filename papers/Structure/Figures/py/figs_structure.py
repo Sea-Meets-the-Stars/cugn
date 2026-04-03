@@ -1704,6 +1704,92 @@ def fig_compare_drifters_gliders_eulerian(
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
+
+def fig_test_stationary_gliders(
+    outfile:str='fig_test_stationary_gliders.png',
+    minN:int=100):
+    
+    # Filenames
+    glider_sf = '../Analysis/QG/data/stationary_gliders_ts5001_nd100_sf_LL.json'
+    anly_path = '../Analysis'
+    eulerian_file = os.path.join(anly_path, 
+                                 'Output', 'qg_eulerian_SF_ts5001_nd100_x450_y450_dx100.nc')
+
+    # Gliders
+    Sn_LL_g = p_io.loadjson(glider_sf)
+
+    # Convert lists to np.ndarray
+    for Sn_LL in [Sn_LL_g]:
+        for key in Sn_LL.keys():
+            if isinstance(Sn_LL[key], list):
+                Sn_LL[key] = np.array(Sn_LL[key])
+
+    # Good
+    goodN_g = np.array(Sn_LL_g['config']['N']) > minN
+    
+    # Eulerian
+    Ndays = 100
+    rr1, rrr1, du1, du2, du3, du3_corr, dull_mn, du2_mn_duL, du3_mn_duL = \
+        qg_uL_SF.parse_SF(eulerian_file, Ndays)
+    variables = 'duLduLduL'
+    Skeys = ['S1_duL', 'S2_duL**2', 'S3_'+variables]
+    
+    # Figure
+    fig = plt.figure(figsize=(19,6))
+    plt.clf()
+    gs = gridspec.GridSpec(1,3)
+
+
+    for n in range(3):
+        ax = plt.subplot(gs[n])
+        Skey = Skeys[n] 
+
+        # Drifters and gliders
+        for lbl, goodN, Sn_dict, clr in zip(
+            ['Drifters', 'Gliders'], [goodN_g, goodN_g], [Sn_LL_g, Sn_LL_g], ['r', 'b']):
+            if lbl == 'Drifters':
+                continue
+            if n == 1:
+                ilbl = lbl
+            else:
+                ilbl = None
+            ax.errorbar(Sn_dict['r'][goodN], 
+                    Sn_dict[Skey][goodN], 
+                    yerr=Sn_dict['err_'+Skey][goodN],
+                    color=clr, label=ilbl,
+                    fmt='x', capsize=5)  # fmt defines marker style, capsize sets error bar cap length
+
+        # Eulerian
+        if n == 0:
+            ax.plot(rrr1, du1, 'ko')
+        elif n == 1:
+            ax.plot(rrr1, du2, 'ko', label='Eulerian') 
+        elif n == 2:
+            ax.plot(rrr1, du3, 'ko')
+
+        ax.set_xscale('log')
+    #
+        ax.set_xlabel('Separation (km)')
+        ax.set_ylabel(Sn_lbls[Skey])
+
+        # 0 line
+        ax.axhline(0., color='gray', linestyle='--')
+
+        plotting.set_fontsize(ax, 19) 
+        ax.grid()
+        #if use_xlim:
+        #    ax.set_xlim(use_xlim)
+        #if n == 2 and use_ylim is not None:
+        #    ax.set_ylim(use_ylim)
+
+        # Legend
+        if n == 1:
+            ax.legend(fontsize=16)#, loc='lower right')
+        
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
 def main(flg):
     if flg== 'all':
         flg= np.sum(np.array([2 ** ii for ii in range(25)]))
@@ -1884,6 +1970,10 @@ def main(flg):
             'dx': 100,
         }
         fig_compare_drifters_gliders_eulerian(qg_xt=qg_xt)
+
+    # Test stationary gliders
+    if flg == 23:
+        fig_test_stationary_gliders()
 
 # Command line execution
 if __name__ == '__main__':

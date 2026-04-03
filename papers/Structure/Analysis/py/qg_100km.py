@@ -67,7 +67,7 @@ def test_full(ndays=15, maxcorr=60):
     print(f'Saved: {outfile}')
 
 def run_one_region(xlim:tuple, ylim:tuple, outfile:str,
-                   timelast=180,
+                   timelast=180, clobber:bool=False,
                    ndays:int=60, maxcorr:int=30):
     """ 
     Calculate the structure function for a region of the QG model output.
@@ -82,7 +82,7 @@ def run_one_region(xlim:tuple, ylim:tuple, outfile:str,
     """
 
     # Clobber?
-    if os.path.exists(outfile):
+    if os.path.exists(outfile) and not clobber:
         print(f'File {outfile} exists. Skipping')
         return
 
@@ -99,6 +99,8 @@ def run_one_region(xlim:tuple, ylim:tuple, outfile:str,
 
     # Calculate structure function
     SFtest = strucFunct2_ai.calculateSF_2(Udsn, maxcorr, shiftdim, grid)
+
+    embed(header='103 of run_one_region')
 
     # Higher order
     SF2, SF3 = strucFunct2_ai.SF2_3_ul(SFtest.ulls)
@@ -170,10 +172,10 @@ if __name__ == '__main__':
                             timelast=int(365*5.1),
                             ndays=365*5, maxcorr=30)
 
-    # Drifter regions for 100 days
+    # Drifter region for 100 days
     if True:
         x0, y0 = 450., 450.
         run_one_region((x0, x0+100.), (y0, y0+100.), 
             f'Output/SF_region_x{int(x0)}_y{int(y0)}_100days.nc',
-            timelast=int(2199), # Starts at 5001, like the drifter analysis
-            ndays=100, maxcorr=30)
+            timelast=int(2199)-2, # Starts at 5001, like the drifter analysis
+            ndays=100, maxcorr=30, clobber=True)
