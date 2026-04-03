@@ -6,9 +6,25 @@ from profiler import profilerpairs
 
 from IPython import embed
 
-def load_SF(dataset:str, variables = 'duLduLduL', iz:int=5, 
+def load_SF(dataset:str, variables = 'duLduLduL', iz:int=5,
     minN:int=10):
+    """Load glider data and compute structure functions for a given dataset.
 
+    Loads profiler data, generates profile pairs, computes velocity differences
+    and structure functions (Sn) binned by separation distance.
+
+    Args:
+        dataset: Name of the dataset (e.g. 'Calypso2019', 'Calypso2022', 'ARCTERX-2023').
+        variables: Structure function variable specification string.
+        iz: Depth index for computing velocity differences. Negative values
+            trigger isopycnal coordinate analysis.
+        minN: Minimum number of pairs required per radial bin.
+
+    Returns:
+        dict: Keys 'gPairs' (ProfilerPairs object), 'Sn_dict' (structure function
+            results with bootstrapped errors), 'goodN' (boolean mask for bins
+            with sufficient pairs), 'Skeys' (list of structure function key names).
+    """
    # Load dataset
     profilers = gliderdata.load_dataset(dataset)
 

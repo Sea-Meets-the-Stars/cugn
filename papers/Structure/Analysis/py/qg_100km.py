@@ -26,7 +26,12 @@ shiftdim = 'x','y'
 grid = 'm'
 
 def test_full(ndays=15, maxcorr=60):
+    """Compute and save structure functions over the full QG domain for a short period.
 
+    Args:
+        ndays: Number of days to process from the end of the time series.
+        maxcorr: Maximum number of grid shifts for pair separations.
+    """
     qg, Udsn = qg_utils.load_last_time()
 
     # Grab the last 15 days

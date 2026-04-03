@@ -30,13 +30,31 @@ qg_path = os.path.join(os.getenv('OS_DATA'), 'QG')
 raw_path = os.path.join(qg_path, 'rawduLT')
 
 def grab_path(use_duL:bool):
+    """Return the directory path for spatially averaged SF files.
+
+    Args:
+        use_duL: If True, return path for longitudinal-only (duL) SF averages;
+            otherwise return the standard SF spatial average path.
+
+    Returns:
+        str: Absolute directory path.
+    """
     if use_duL:
         return os.path.join(qg_path, 'SF_spatialav_duL')
     else:
         return os.path.join(qg_path, 'SF_spatialav')
 
 def calc_rawduLT(nyears=5, maxcorr=60, clobber:bool=False):
+    """Compute raw duL/duT structure functions in 15-day chunks and save to disk.
 
+    Processes the last nyears of QG model data, computing velocity structure
+    functions for each 15-day chunk and writing individual NetCDF files.
+
+    Args:
+        nyears: Number of years of data to process from the end of the time series.
+        maxcorr: Maximum number of grid shifts for pair separations.
+        clobber: If True, overwrite existing output files.
+    """
     ndays = nyears * 365
     qg, Udsn = qg_utils.load_last_time(ndays=ndays)
 
@@ -72,6 +90,19 @@ def calc_rawduLT(nyears=5, maxcorr=60, clobber:bool=False):
 
 
 def calc_SF(dcorr=3599, chkx=256, chky=256, clobber:bool=False, use_dLT:bool=True):
+    """Compute spatially averaged 2nd and 3rd order structure functions.
+
+    Reads raw duLT files, computes du2 and du3, averages over spatial
+    dimensions (x, y), and saves per-chunk NetCDF files.
+
+    Args:
+        dcorr: Number of correlation shifts for chunking.
+        chkx: Chunk size in x dimension.
+        chky: Chunk size in y dimension.
+        clobber: If True, overwrite existing output files.
+        use_dLT: If True, compute SF using longitudinal component only (duL);
+            otherwise use both longitudinal and transverse components.
+    """
     # duL?
     SFavg_path = grab_path(use_dLT)
     
@@ -118,6 +149,15 @@ def calc_SF(dcorr=3599, chkx=256, chky=256, clobber:bool=False, use_dLT:bool=Tru
         ii = ii + 1
 
 def calc_SF_5years(use_dLT:bool=True):
+    """Combine spatially averaged SF files into a single 5-year dataset.
+
+    Loads all per-chunk spatial average files, bins by separation distance,
+    averages over orientation, and saves as a single NetCDF file.
+
+    Args:
+        use_dLT: If True, use longitudinal-only SF files and save with '_duL' suffix;
+            otherwise use standard SF files and save with '_new' suffix.
+    """
     SFavg_path = grab_path(use_dLT)
     if use_dLT:
         outfile = os.path.join(qg_path, 'SFQG_aver_pos_orien_5yearb_duL.nc')
@@ -143,7 +183,19 @@ def calc_SF_5years(use_dLT:bool=True):
 
 
 def parse_SF(SF_file:str, Ndays:int):
+    """Load and parse a regional SF file, applying third-order cumulant correction.
 
+    Args:
+        SF_file: Path to a regional structure function NetCDF file.
+        Ndays: Number of days from the end to use for time-averaging.
+
+    Returns:
+        tuple: (rr1, rrr1, du1, du2, du3, du3_corr, dull_mn, du2_mn_duL, du3_mn_duL)
+            where rr1 is from the 5-year duL reference, rrr1 is from the regional file
+            (in km), du1/du2/du3 are time-mean SFs from the regional file, du3_corr is
+            the corrected third-order SF, and the _duL quantities are from the 5-year
+            duL reference dataset.
+    """
     # Load
     SFds = xarray.load_dataset(SF_file)
     qg, mSF_15_duL = qg_utils.load_qg(use_SFduL=True)

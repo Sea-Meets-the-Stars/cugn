@@ -11,6 +11,17 @@ import numpy as np
 from IPython import embed
 
 def load_qg(use_SFduL:bool=False, orig:bool=False):
+    """Load QG model output and pre-computed structure functions.
+
+    Args:
+        use_SFduL: If True, load SF file computed with duL only.
+        orig: If True, load the original SF file (ignored if use_SFduL is True).
+
+    Returns:
+        tuple: (qg, mSF_15) where qg is the 20-year QG model xarray Dataset
+            and mSF_15 is the 5-year structure function Dataset with time
+            converted to days and du1 = ulls + utts added.
+    """
     qg_file = os.path.join(os.getenv('OS_DATA'), 'QG', 'QGModelOutput20years.nc')
     qg = xarray.open_dataset(qg_file)
 
@@ -33,6 +44,16 @@ def load_qg(use_SFduL:bool=False, orig:bool=False):
 
 
 def load_last_time(ndays=6*30):
+    """Load the QG model and select the last ndays of surface-level data.
+
+    Args:
+        ndays: Number of days to select from the end of the time series.
+            Defaults to 180 (6 months).
+
+    Returns:
+        tuple: (qg, Udsn) where qg is the full QG Dataset and Udsn is the
+            surface-level (lev=0) subset for the last ndays.
+    """
     # Load
     qg, _ = load_qg()
 
@@ -43,6 +64,7 @@ def load_last_time(ndays=6*30):
 
     i1 = -2-ndays
     all_time = np.arange(i1, i1 + ndays)
+    print(f'Loading {ndays} days of data from {all_time[0]} to {all_time[-1]}')
 
     # Chunks data
     chx = len(qg.x)
@@ -51,16 +73,30 @@ def load_last_time(ndays=6*30):
     chunks = {'x': chx, 'y': chy, 'time': cht}
 
     # Selects the first level (surface)
-    # Last 6 months
     Udsn = qg.isel(lev=0, time=all_time).chunk(chunks)
 
     # Return
     return qg, Udsn
 
 
-def calc_dus(qg, mSF_15, indx:int=1, indf:int=40, 
+def calc_dus(qg, mSF_15, indx:int=1, indf:int=40,
              subsets:bool=False, Ndays:int=None):
+    """Compute time-averaged structure functions (orders 1-3) from QG SF data.
 
+    Args:
+        qg: QG model xarray Dataset (used for metadata, not directly computed on).
+        mSF_15: Structure function xarray Dataset with ulls, utts, du1, du2, du3, dr.
+        indx: Starting radial bin index (inclusive).
+        indf: Ending radial bin index (exclusive).
+        subsets: If True, also compute 25-day and 50-day rolling averages of du1 and duLL.
+        Ndays: If set, restrict to the last Ndays time steps before averaging.
+
+    Returns:
+        dict: Keys include 'rr1' (mean separation distances), 'du1'/'du1LL' (raw arrays),
+            'dull_mn', 'dull_std', 'dutt_mn', 'dutt_std' (longitudinal/transverse stats),
+            'du1_mn', 'du2_mn', 'du3_mn' (time-mean SF orders 1-3),
+            and optionally 'du1_25', 'du1_50', 'dull_25', 'dull_50' (subset averages).
+    """
     out_dict = {}
 
     # Cut on time
@@ -165,8 +201,20 @@ def calc_dus(qg, mSF_15, indx:int=1, indf:int=40,
     return out_dict
 
 def calc_dus_limtime(mSF_15, ndays:int, t0:int=0, indx:int=1, indf:int=40):
+    """Compute structure functions averaged over a limited time window.
 
-    #embed(header='Calculating structure functions with limited time')
+    Args:
+        mSF_15: Structure function xarray Dataset.
+        ndays: Number of days in the averaging window.
+        t0: Starting time index for the window.
+        indx: Starting radial bin index (inclusive).
+        indf: Ending radial bin index (exclusive).
+
+    Returns:
+        tuple: (rr1, du1s, du1LLs, du2s, du3s, du3_corr) where each is a 1D
+            array over radial bins. du3_corr is the third-order cumulant
+            correction: du3 - 3*du1*du2^2 + 2*du1^3.
+    """
     rr1 = np.mean(mSF_15.dr.values[t0:t0+ndays,indx:indf], axis=0)
 
     # Grab em

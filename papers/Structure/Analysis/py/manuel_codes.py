@@ -21,6 +21,15 @@ from strucFunct2_ai import calculateSF_2
 QG_path = '/home/xavier/Projects/Oceanography/data/QG'
 
 def calc_structure(eddyrun_lev, clobber:bool=False):
+    """Compute raw structure functions from QG model output in 15-day chunks.
+
+    Processes the last 5 years of the QG model, computing velocity structure
+    functions (duL, duT) for each 15-day chunk and saving individual NetCDF files.
+
+    Args:
+        eddyrun_lev: xarray Dataset of QG model output with u, v velocities.
+        clobber: If True, overwrite existing output files.
+    """
     # Calculates structure functions
     shiftdim = 'x','y'
     maxcorr = 60
@@ -75,7 +84,11 @@ def calc_structure(eddyrun_lev, clobber:bool=False):
         SFQG.to_netcdf(filessv)
 
 def gen_spatavg():
+    """Compute spatially averaged structure functions from raw duLT files.
 
+    Reads raw duLT NetCDF chunks, computes du2 and du3, averages over
+    spatial dimensions (x, y), and saves per-time-chunk NetCDF files.
+    """
     #fileraw = '/data/SO3/manuelogv/MethodsKEFlux/rawduLT/'
     fileraw = '/data/Projects/Oceanography/data/QG/rawduLT/'
 
@@ -119,7 +132,11 @@ def gen_spatavg():
         ii = ii + 1
 
 def gen_mSF():
+    """Combine spatially averaged SF files into a single orientation-averaged dataset.
 
+    Loads all spatial average files, bins by separation distance, averages
+    over orientation (dcorr), and saves the final 5-year dataset to NetCDF.
+    """
     fileaver = 'spatialaverduLT/'
 
     # Open the NetCDF files using xarray's open_mfdataset (multi-file dataset)
@@ -137,6 +154,12 @@ def gen_mSF():
     dudlt_aver_angl.to_netcdf('SFQG_aver_pos_orien_5yearb.nc')
 
 def load_mSF():
+    """Load the pre-computed 5-year orientation-averaged structure function dataset.
+
+    Returns:
+        xarray.Dataset: Structure function dataset with time in days and
+            du1 = ulls + utts added as a variable.
+    """
     chunksSF15 = {'time': 100, 'mid_rbins': 53}
     mSF_15 = xarray.open_dataset('SFQG_aver_pos_orien_5yearb.nc', 
                                  chunks=chunksSF15)
@@ -146,7 +169,20 @@ def load_mSF():
     return mSF_15
 
 def first_order(mSF_15):
+    """Compute first-order structure function statistics, histograms, and higher moments.
 
+    Calculates time-mean and standard deviation of longitudinal/transverse
+    components, builds normalized histograms at selected separation distances,
+    fits Gaussians, and computes skewness and kurtosis.
+
+    Args:
+        mSF_15: xarray Dataset of orientation-averaged structure functions with
+            du1, ulls, utts, du2, dr variables.
+
+    Returns:
+        tuple: (rr1, du1, sf1_mn, dull_mn, dutt_mn, sf1_std, dull_std, dutt_std)
+            where rr1 is mean separation distances and the rest are xarray DataArrays.
+    """
     # Calculates degrees of freedom
     nyears = 5
     yr2day = 365
@@ -218,7 +254,14 @@ def first_order(mSF_15):
     return rr1, du1, sf1_mn, dull_mn, dutt_mn, sf1_std, dull_std, dutt_std
 
 def main(flg:int):
+    """Run pipeline stages controlled by an integer flag.
 
+    Args:
+        flg: Pipeline stage to execute:
+            0 = compute raw structure functions from QG model output,
+            1 = compute spatial averages,
+            5 = load pre-computed SF and compute first-order statistics.
+    """
     # Generate raw
     if flg == 0:
         fileQG = '/home/xavier/Projects/Oceanography/data/QG/QGModelOutput20years.nc'

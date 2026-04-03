@@ -3,18 +3,39 @@
 import os
 import sys
 
+import qg_100km
+
 sys.path.append(os.path.abspath("../Analysis/QG/py"))
 import glider_analysis
 import small_box_drifters
 import calc_sf
 
+
 from IPython import embed
 
 def qg_root(qg_xt:dict):
+    """Build a filename root string from QG experiment parameters.
+
+    Args:
+        qg_xt: Dict with keys 'ts' (start time), 'nd' (number of days),
+            'x', 'y' (box origin), 'dx' (box size).
+
+    Returns:
+        str: Formatted root string, e.g. 'ts5001_nd100_x450_y450_dx100'.
+    """
     root = f'ts{qg_xt["ts"]}_nd{qg_xt["nd"]}_x{qg_xt["x"]}_y{qg_xt["y"]}_dx{qg_xt["dx"]}'
     return root
 
 def file_names(qg_xt:dict, obs_type:str):
+    """Generate output file paths for trajectory and structure function files.
+
+    Args:
+        qg_xt: Dict of QG experiment parameters (passed to qg_root).
+        obs_type: Observation type string, e.g. 'glider' or 'drifter'.
+
+    Returns:
+        tuple: (traj_file, sf_file) paths under the Output/ directory.
+    """
     root = qg_root(qg_xt)
 
     traj_file = f'Output/qg_{obs_type}_traj_{root}.csv'
@@ -23,11 +44,19 @@ def file_names(qg_xt:dict, obs_type:str):
     return traj_file, sf_file
 
 def run_one(qg_xt:dict):
+    """Run glider, drifter, and Eulerian analyses for one QG sub-domain.
 
+    Computes trajectories and structure functions for the specified
+    space-time region of the QG model.
+
+    Args:
+        qg_xt: Dict with keys 'ts' (start time step), 'nd' (number of days),
+            'x', 'y' (box origin in km), 'dx' (box width in km).
+    """
     dx_grid = 1000./256
 
-    if False:
     ## Gliders
+    if False:
         glider_csv = 'QG/data/100km100day10gliders3h.csv'
         glider_traj, glider_sf = file_names(qg_xt, 'glider')
         glider_df, meta = glider_analysis.run_single(glider_csv, t_start=qg_xt['ts'], lev=1,
@@ -38,16 +67,19 @@ def run_one(qg_xt:dict):
         glider_analysis.save_sf(Sn_LL, glider_sf)
 
     ## Drifters
-    drifter_traj, drifter_sf = file_names(qg_xt, 'drifter')
-    traj, meta = small_box_drifters.run_small_box(
-        t_start=qg_xt['ts'], 
-        n_days=qg_xt['nd'],
-        box_center_x=(qg_xt['x']+0.5*qg_xt['dx'])/dx_grid,
-        box_center_y=(qg_xt['x']+0.5*qg_xt['dx'])/dx_grid,
-        box_size_km=qg_xt['dx'],
-        drifter_spacing_km=10.,
-        output_path=drifter_traj)
-    Sn_LL, Sn_TT = calc_sf.calc_drifter_sf(drifter_traj, drifter_sf)
+    if False:
+        drifter_traj, drifter_sf = file_names(qg_xt, 'drifter')
+        traj, meta = small_box_drifters.run_small_box(
+            t_start=qg_xt['ts'], 
+            n_days=qg_xt['nd'],
+            box_center_x=(qg_xt['x']+0.5*qg_xt['dx'])/dx_grid,
+            box_center_y=(qg_xt['x']+0.5*qg_xt['dx'])/dx_grid,
+            box_size_km=qg_xt['dx'],
+            drifter_spacing_km=10.,
+            output_path=drifter_traj)
+        Sn_LL, Sn_TT = calc_sf.calc_drifter_sf(drifter_traj, drifter_sf)
+    
+    ## Eulerian
 
 # Command line
 if __name__ == '__main__':

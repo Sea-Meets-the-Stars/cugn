@@ -140,6 +140,21 @@ def rossby_r(sf2, dr, fcor):
 
 @delayed
 def process_dcorr(dcorr1, dcorr2, Udata, Vdata, Xg, Yg, grid):
+    """Compute separation distance and velocity components for one grid shift (Dask delayed).
+
+    Args:
+        dcorr1: Number of grid shifts in the x direction.
+        dcorr2: Number of grid shifts in the y direction.
+        Udata: Zonal velocity xarray DataArray.
+        Vdata: Meridional velocity xarray DataArray.
+        Xg: Broadcasted x-coordinate DataArray.
+        Yg: Broadcasted y-coordinate DataArray.
+        grid: Coordinate system: 'm' for metric, 'deg' for lat/lon.
+
+    Returns:
+        tuple: (dr, ull, utt) where dr is separation distance, ull is
+            longitudinal velocity difference, and utt is transverse velocity difference.
+    """
     kwargs = {'x': dcorr1, 'y': dcorr2}
     dU, dV = diff_vel(Udata, Vdata, kwargs)
     dy = disty_dlat(Yg, kwargs, grid)
@@ -353,6 +368,21 @@ def dult_mean_orientation(data, rbins, mid_rbins):
     return mean_result, dr_mean_result
 
 def process_SF_samples(fs, rbins, mid_rbins):
+    """Average structure function samples over orientation for each time step.
+
+    For each time step, bins the SF data by separation distance and averages
+    over all orientations (dcorr dimension), then concatenates across time.
+
+    Args:
+        fs: xarray Dataset with variables ulls, utts, du2, du3 and dimensions
+            time and dcorr.
+        rbins: 1D array of separation distance bin edges (meters).
+        mid_rbins: 1D array of bin center values.
+
+    Returns:
+        xarray.Dataset: Orientation-averaged SF dataset with dimensions
+            (time, mid_rbins) and variables ulls, utts, du2, du3, dr.
+    """
     # Initialize an empty list to store the results for each time step
     all_results = []
     dr_results = []
