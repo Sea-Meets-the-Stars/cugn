@@ -20,6 +20,8 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
+from IPython import embed
+
 # Default QG NetCDF path
 _NC_PATH = os.path.join(os.environ.get('OS_DATA', ''), 'QG', 'QGModelOutput20years.nc')
 
@@ -120,6 +122,7 @@ def build_stationary_glider_df(
             missid_map[(ix, iy)] = missid
             missid += 1
 
+    embed(header='123 of build_stationary_glider_df')
     for t_idx_local, t_idx_global in enumerate(t_indices):
         # Time in seconds from t_start
         time_s = float(t_idx_local) * 86400.0
