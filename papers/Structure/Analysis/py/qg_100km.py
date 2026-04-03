@@ -173,7 +173,7 @@ if __name__ == '__main__':
                             ndays=365*5, maxcorr=30)
 
     # Drifter region for 100 days
-    if False:
+    if True:
         x0, y0 = 450., 450.
         run_one_region((x0, x0+100.), (y0, y0+100.), 
             f'Output/SF_region_x{int(x0)}_y{int(y0)}_100days.nc',
@@ -181,7 +181,7 @@ if __name__ == '__main__':
             ndays=100, maxcorr=30, clobber=True)
 
     # Testing
-    if True:
+    if False:
         x0, y0 = 450., 450.
         run_one_region((x0, x0+12.), (y0, y0+12.), 
             f'Output/test_me.nc',
