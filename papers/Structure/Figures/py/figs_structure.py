@@ -1679,7 +1679,7 @@ def fig_compare_drifters_gliders_eulerian(
         '''
 
         # 0 line
-        ax.axhline(0., color='red', linestyle='--')
+        ax.axhline(0., color='gray', linestyle='--')
 
         plotting.set_fontsize(ax, 19) 
         ax.grid()

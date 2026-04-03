@@ -27,6 +27,8 @@ def calc_drifter_sf(drifter_file:str, outfile:str):
     p_io.savejson(outfile, jdict, easy_to_read=True, overwrite=True)
     print(f'Saved: {outfile}')
 
+    return Sn_LL, Sn_TT
+
 # Command line execution
 if __name__ == "__main__":
     calc_drifter_sf(drifter_file='data/small_box_drifters_ts5001_nd100.csv',
