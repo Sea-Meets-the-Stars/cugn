@@ -133,7 +133,7 @@ def build_stationary_glider_df(
                 v_val = float(v_all[t_idx_local, jj, ii])
                 records.append((
                     float(ix), float(iy), time_s, mid,
-                    float(ix) * dx, float(iy) * dx,
+                    float(ix) * dx + dx/2, float(iy) * dx + dx/2,
                     u_val, v_val,
                 ))
 
