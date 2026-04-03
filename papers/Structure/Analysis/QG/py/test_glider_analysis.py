@@ -92,6 +92,7 @@ def build_stationary_glider_df(
     # Convert lev to 0-based
     lev_idx = lev - 1
 
+    embed(header='95 of build_stationary_glider_df')
     print(f"Stationary glider grid: {n_per_side}x{n_per_side} = {n_gliders} gliders")
     print(f"  Box: [{i_lo}, {i_hi}] x [{j_lo}, {j_hi}] (grid indices)")
     print(f"  Time: {n_times} snapshots (t_start={t_start}, n_days={n_days})")
