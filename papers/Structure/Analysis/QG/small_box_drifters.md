@@ -119,6 +119,7 @@ The JSON metadata sidecar must include box parameters when they are used, so cac
 # Analysis
 
 1. Move the pair separations and structure functions methods from the small_box_drifters.py module to the py/analysis.py module.  For velocities, compute these from the drifter trajectories, not from the QG model output.  Also, add a method to py/io.py to load the drifter trajectories from the CSV file.
+2. Generate a method in 
 
 # Prompts
 

@@ -65,6 +65,7 @@ def plot_trajectories_over_speed(traj, meta, nc_path=None, max_drifters=None,
         sub = traj[traj.ID == did]
         ax.plot(sub.x_m / 1000, sub.y_m / 1000, "w-", lw=0.5, alpha=0.7)
         ax.plot(sub.x_m.iloc[0] / 1000, sub.y_m.iloc[0] / 1000, "r.", ms=3)
+        ax.plot(sub.x_m.iloc[-1] / 1000, sub.y_m.iloc[-1] / 1000, "k.", ms=3)
 
     ax.set_xlabel("x (km)")
     ax.set_ylabel("y (km)")

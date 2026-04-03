@@ -142,6 +142,33 @@ def calc_SF_5years(use_dLT:bool=True):
     print(f'Saved: {outfile}')
 
 
+def parse_SF(SF_file:str, Ndays:int):
+
+    # Load
+    SFds = xarray.load_dataset(SF_file)
+    qg, mSF_15_duL = qg_utils.load_qg(use_SFduL=True)
+    SF_dict_duL = qg_utils.calc_dus(qg, mSF_15_duL)
+    du2_mn_duL = SF_dict_duL['du2_mn']
+    du3_mn_duL = SF_dict_duL['du3_mn']
+    dull_mn = SF_dict_duL['dull_mn']
+    rr1 = SF_dict_duL['rr1']
+
+    # Cut on time
+    i1 = -1*Ndays
+    times = np.arange(i1, i1 + Ndays)
+    SFds = SFds.isel(time=times)
+
+    # Correct the du3
+    du1 = SFds.ulls.T.mean('time')
+    du2 = SFds.du2.T.mean('time')
+    du3 = SFds.du3.T.mean('time')
+    du3_corr = du3 - 3*du1*du2 + 2*du1**3
+    
+    rrr1 = SFds.dr.mean('time')*1e-3 
+
+    # Return
+    return rr1, rrr1, du1, du2, du3, du3_corr, dull_mn, du2_mn_duL, du3_mn_duL
+
 
 if __name__ == '__main__':
 

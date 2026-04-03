@@ -15,6 +15,7 @@ Usage:
 """
 
 from qg_drifters import run_drifters
+import qg_io
 
 
 def run_small_box(
@@ -121,6 +122,9 @@ if __name__ == "__main__":
     # 10 day test run
     #test_small_box_drifters()
 
-    # 100 day full run
-    full_run(output_path='data/small_box_drifters_ts5001_nd100.csv',
-        t_start=5001, n_days=100)
+    ### 100 day full run
+
+    #full_run(output_path='data/small_box_drifters_ts5001_nd100.csv',
+    #    t_start=5001, n_days=100)
+    traj, meta = qg_io.load_trajectories('data/small_box_drifters_ts5001_nd100.csv')
+    plot_test_results(traj, meta, outfile='data/traj_small_box_drifters_ts5001_nd100.png')

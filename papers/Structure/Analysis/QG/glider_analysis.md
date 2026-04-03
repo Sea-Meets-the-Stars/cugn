@@ -131,9 +131,4 @@ Save the structure function results to JSON using `profiler.io.savejson()`, foll
 
 ## Code
 
-1. Reread this doc. Generate the code to satisfy the Requirements.  Place the Python code in a py/qg_gliders.py module. Place the Julia code in a jl/qg_gliders.jl module.
-
-## Tests
-
-1. Reread this doc. Create the tests described in the Testing section above.
-2. Examining the test_glider_velocity_field.png figure, the velocities of the gliders do not appear to match the underlying velocity field.  Please investigate. 
+1. Reread this doc. Generate the code to satisfy the Requirements.  Place the Python code in a py/glider_analysis.py module.

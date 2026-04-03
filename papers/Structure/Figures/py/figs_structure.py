@@ -30,8 +30,10 @@ from IPython import embed
 
 # Local
 sys.path.append(os.path.abspath("../Analysis/py"))
-sys.path.append(os.path.abspath("../Analysis/QG/py"))
 import qg_utils
+import qg_uL_SF
+
+sys.path.append(os.path.abspath("../Analysis/QG/py"))
 import data_utils
 import glider_io
 
@@ -759,27 +761,10 @@ def fig_region_dul3(output_file:str, outfile:str,
     """
     if Ndays is None:
         Ndays = 90
-    # Load
-    SFds = xarray.load_dataset(output_file)
-    qg, mSF_15_duL = qg_utils.load_qg(use_SFduL=True)
-    SF_dict_duL = qg_utils.calc_dus(qg, mSF_15_duL)
-    du2_mn_duL = SF_dict_duL['du2_mn']
-    du3_mn_duL = SF_dict_duL['du3_mn']
-    dull_mn = SF_dict_duL['dull_mn']
-    rr1 = SF_dict_duL['rr1']
 
-    # Cut on time
-    i1 = -1*Ndays
-    times = np.arange(i1, i1 + Ndays)
-    SFds = SFds.isel(time=times)
-
-    # Correct the du3
-    du1 = SFds.ulls.T.mean('time')
-    du2 = SFds.du2.T.mean('time')
-    du3 = SFds.du3.T.mean('time')
-    du3_corr = du3 - 3*du1*du2 + 2*du1**3
-    
-    rrr1 = SFds.dr.mean('time')*1e-3 
+    # Parse
+    rr1, rrr1, du1, du2, du3, du3_corr, dull_mn, du2_mn_duL, du3_mn_duL = \
+        qg_uL_SF.parse_SF(output_file, Ndays)
 
 
     # Start the figure
@@ -803,7 +788,7 @@ def fig_region_dul3(output_file:str, outfile:str,
     ax2 = plt.subplot(gs[1])
     ax2.loglog(rr1*1e-3, du2_mn_duL, 'r', linewidth=1, 
                 label=r'Full grid $<\delta u_L^2>$')
-    ax2.loglog(SFds.dr.mean('time')*1e-3, du2, '-k', linewidth=1.5, 
+    ax2.loglog(rrr1, du2, '-k', linewidth=1.5, 
                 label=r'Region $<\delta u_L^2>$')
     lsz = 10.
     ax2.legend(fontsize=lsz, loc='lower right')
@@ -813,9 +798,9 @@ def fig_region_dul3(output_file:str, outfile:str,
     # ################################################3
     # du3
     ax3 = plt.subplot(gs[2])
-    ax3.semilogx(SFds.dr.mean('time')*1e-3, du3, '-k', linewidth=1.5, 
+    ax3.semilogx(rrr1, du3, '-k', linewidth=1.5, 
                 label=r'$<\delta u_L^3>$')
-    ax3.semilogx(SFds.dr.mean('time')*1e-3, du3_corr, 'x', color='b', 
+    ax3.semilogx(rrr1, du3_corr, 'x', color='b', 
                 label=r'Corrected $<\delta u_L^3>$')
     ax3.semilogx(rr1*1e-3, du3_mn_duL, '-r', linewidth=1, 
                 label=r'Full grid $<\delta u_L^3>$')
@@ -1585,10 +1570,10 @@ def fig_Npairs_vs_Dt(outfile='fig_Npairs_vs_Dt.png'):
     for ss, dataset in enumerate(datasets):
         print(f"{dataset}: Npairs ~ Dt^{alphas[0]:.2f}")
 
-def fig_qg_structure_from_drifters(drifter_SF_file:str, outfile:str):
+def fig_qg_structure(SF_file:str, outfile:str):
 
     # Load up
-    Sn_LL = p_io.loadjson(drifter_SF_file)
+    Sn_LL = p_io.loadjson(SF_file)
     # Conert lists to np.ndarray
     for key in Sn_LL.keys():
         if isinstance(Sn_LL[key], list):
@@ -1597,6 +1582,119 @@ def fig_qg_structure_from_drifters(drifter_SF_file:str, outfile:str):
     # Start the figure
     fig_structure(None, Sn_dict=Sn_LL, outfile=outfile, iz=0,
         show_correct=False)
+
+def fig_compare_drifters_gliders_eulerian(
+    outfile:str='fig_compare_drifters_gliders_eulerian.png'):
+
+    # Load up drifters
+    SF_file_drifters ='../Analysis/QG/data/small_box_drifters_ts5001_nd100_sf.json'
+    Sn_LL_d = p_io.loadjson(SF_file_drifters)
+
+    # Gliders
+    SF_file_gliders ='../Analysis/QG/data/glider_sf_LL_ts5001.json'
+    Sn_LL_g = p_io.loadjson(SF_file_gliders)
+
+    # Convert lists to np.ndarray
+    for Sn_LL in [Sn_LL_d, Sn_LL_g]:
+        for key in Sn_LL.keys():
+            if isinstance(Sn_LL[key], list):
+                Sn_LL[key] = np.array(Sn_LL[key])
+
+    # Good
+    minN = 10
+    goodN_d = np.array(Sn_LL_d['config']['N']) > minN
+    goodN_g = np.array(Sn_LL_g['config']['N']) > minN
+    
+    # Eulerian
+    eulerian_file = '../Analysis/Output/SF_region_x450_y450_100days.nc'
+    Ndays = 100
+    rr1, rrr1, du1, du2, du3, du3_corr, dull_mn, du2_mn_duL, du3_mn_duL = \
+        qg_uL_SF.parse_SF(eulerian_file, Ndays)
+    variables = 'duLduLduL'
+    Skeys = ['S1_duL', 'S2_duL**2', 'S3_'+variables]
+    
+    # Figure
+    fig = plt.figure(figsize=(19,6))
+    plt.clf()
+    gs = gridspec.GridSpec(1,3)
+
+
+    for n in range(3):
+        ax = plt.subplot(gs[n])
+        Skey = Skeys[n] 
+
+        # Drifters and gliders
+        for lbl, goodN, Sn_dict, clr in zip(['Drifters', 'Gliders'], [goodN_d, goodN_g], [Sn_LL_d, Sn_LL_g], ['r', 'b']):
+            if n == 1:
+                ilbl = lbl
+            else:
+                ilbl = None
+            ax.errorbar(Sn_dict['r'][goodN], 
+                    Sn_dict[Skey][goodN], 
+                    yerr=Sn_dict['err_'+Skey][goodN],
+                    color=clr, label=ilbl,
+                    fmt='x', capsize=5)  # fmt defines marker style, capsize sets error bar cap length
+
+        # Eulerian
+        if n == 0:
+            ax.plot(rrr1, du1, 'ko')
+        elif n == 1:
+            ax.plot(rrr1, du2, 'ko', label='Eulerian') 
+        elif n == 2:
+            ax.plot(rrr1, du3, 'ko')
+
+        '''
+        # Corrected
+        if n > 0 and show_correct:
+            corr_key = Skey[0:2]+'corr'+Skey[2:]
+            ax.plot(Sn_dict['r'][goodN], 
+                    Sn_dict[corr_key][goodN],  
+                    'x',
+                    color=clr)
+        elif 'med_S1' in Sn_dict.keys():
+            ax.plot(Sn_dict['r'][goodN], Sn_dict['med_S1'][goodN],  
+                    'x', color=clr)
+        '''
+
+
+        ax.set_xscale('log')
+    #
+        ax.set_xlabel('Separation (km)')
+        ax.set_ylabel(Sn_lbls[Skey])
+
+        '''
+        # Label time separation
+        if n == 2:
+            same_glider = 'True' if avoid_same_glider else 'False'
+            if stretch:
+                text = f'{dataset}'
+                ytxt = 0.9
+                tsz = 18.
+            else:
+                text = f'{dataset}\n depth = {(iz+1)*10} m, t<{int(Sn_dict['config']['max_time'])} hr\nAvoid same glider? {same_glider}\n {variables}' 
+                ytxt = 0.8
+                tsz = 16.
+            ax.text(0.1, ytxt, text,
+                transform=ax.transAxes, fontsize=tsz, ha='left')
+        '''
+
+        # 0 line
+        ax.axhline(0., color='red', linestyle='--')
+
+        plotting.set_fontsize(ax, 19) 
+        ax.grid()
+        #if use_xlim:
+        #    ax.set_xlim(use_xlim)
+        #if n == 2 and use_ylim is not None:
+        #    ax.set_ylim(use_ylim)
+
+        # Legend
+        if n == 1:
+            ax.legend(fontsize=16)#, loc='lower right')
+        
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
 
 def main(flg):
     if flg== 'all':
@@ -1754,12 +1852,22 @@ def main(flg):
     if flg == 20:
         fig_Npairs_vs_Dt()
 
-    # QG structure function from drifters
+    # QG structure function from drifters/gliders
     if flg == 21:
-        fig_qg_structure_from_drifters(
-            drifter_SF_file='../Analysis/QG/data/small_box_drifters_ts5001_nd100_sf.json',
-            outfile='fig_qg_structure_from_drifters.png'
+        ### Drifters
+        #fig_qg_structure(
+        #    SF_file='../Analysis/QG/data/small_box_drifters_ts5001_nd100_sf.json',
+        #    outfile='fig_qg_structure_from_drifters.png'
+        #)
+        ### Gliders
+        fig_qg_structure(
+            SF_file='../Analysis/QG/data/glider_sf_LL_ts5001.json',
+            outfile='fig_qg_structure_from_gliders.png'
         )
+
+    # Compare drifters/gliders + Eulerian
+    if flg == 22:
+        fig_compare_drifters_gliders_eulerian()
 
 # Command line execution
 if __name__ == '__main__':
