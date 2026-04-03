@@ -32,6 +32,7 @@ from IPython import embed
 sys.path.append(os.path.abspath("../Analysis/py"))
 import qg_utils
 import qg_uL_SF
+import qg_observe
 
 sys.path.append(os.path.abspath("../Analysis/QG/py"))
 import data_utils
@@ -1584,15 +1585,23 @@ def fig_qg_structure(SF_file:str, outfile:str):
         show_correct=False)
 
 def fig_compare_drifters_gliders_eulerian(
-    outfile:str='fig_compare_drifters_gliders_eulerian.png'):
+    qg_xt:dict, outroot:str='fig_compare_qg_'):
+    
+    # Filenames
+    glider_traj, glider_sf = qg_observe.file_names(qg_xt, 'glider')
+    drifter_traj, drifter_sf = qg_observe.file_names(qg_xt, 'drifter')
+    root = qg_observe.qg_root(qg_xt)
+    anly_path = '../Analysis'
+    eulerian_file = os.path.join(anly_path, 
+                                 'Output', f'qg_eulerian_SF_{root}.nc')
+
+    outfile = f'{outroot}_{root}.png'
 
     # Load up drifters
-    SF_file_drifters ='../Analysis/QG/data/small_box_drifters_ts5001_nd100_sf.json'
-    Sn_LL_d = p_io.loadjson(SF_file_drifters)
+    Sn_LL_d = p_io.loadjson(os.path.join(anly_path, drifter_sf))
 
     # Gliders
-    SF_file_gliders ='../Analysis/QG/data/glider_sf_LL_ts5001.json'
-    Sn_LL_g = p_io.loadjson(SF_file_gliders)
+    Sn_LL_g = p_io.loadjson(os.path.join(anly_path, glider_sf))
 
     # Convert lists to np.ndarray
     for Sn_LL in [Sn_LL_d, Sn_LL_g]:
@@ -1606,8 +1615,7 @@ def fig_compare_drifters_gliders_eulerian(
     goodN_g = np.array(Sn_LL_g['config']['N']) > minN
     
     # Eulerian
-    eulerian_file = '../Analysis/Output/SF_region_x450_y450_100days.nc'
-    Ndays = 100
+    Ndays = qg_xt['nd']
     rr1, rrr1, du1, du2, du3, du3_corr, dull_mn, du2_mn_duL, du3_mn_duL = \
         qg_uL_SF.parse_SF(eulerian_file, Ndays)
     variables = 'duLduLduL'
@@ -1867,7 +1875,14 @@ def main(flg):
 
     # Compare drifters/gliders + Eulerian
     if flg == 22:
-        fig_compare_drifters_gliders_eulerian()
+        qg_xt = {
+            'ts': 5001,
+            'nd': 100,
+            'x': 450,
+            'y': 450,
+            'dx': 100,
+        }
+        fig_compare_drifters_gliders_eulerian(qg_xt=qg_xt)
 
 # Command line execution
 if __name__ == '__main__':

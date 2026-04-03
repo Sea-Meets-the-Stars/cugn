@@ -90,11 +90,22 @@ def run_one(qg_xt:dict):
 
 # Command line
 if __name__ == '__main__':
-    qg_xt = {
+    # ts = 5001
+    qg_xt_5001 = {
         'ts': 5001,
         'nd': 100,
         'x': 450,
         'y': 450,
         'dx': 100,
     }
-    run_one(qg_xt)
+    # ts = 6001
+    qg_xt_6001 = {
+        'ts': 6001,
+        'nd': 100,
+        'x': 450,
+        'y': 450,
+        'dx': 100,
+    }
+
+    # Go
+    run_one(qg_xt_6001)
