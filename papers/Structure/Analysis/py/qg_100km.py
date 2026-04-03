@@ -93,9 +93,11 @@ def run_one_region(xlim:tuple, ylim:tuple, outfile:str,
     iregion_y = np.where((qg.y >= ylim[0]*1e3) & (qg.y < ylim[1]*1e3))[0]
 
     # Cut down Usdn
+    print(f'Cutting down Usdn to region {xlim} {ylim}')
+    print(f'Calculating structure function for {ndays} days')
     Udsn = Udsn.isel(x=iregion_x, y=iregion_y, time=np.arange(0, ndays))
 
-    # Grab the last 15 days
+    # Calculate structure function
     SFtest = strucFunct2_ai.calculateSF_2(Udsn, maxcorr, shiftdim, grid)
 
     # Higher order
