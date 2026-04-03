@@ -1585,7 +1585,8 @@ def fig_qg_structure(SF_file:str, outfile:str):
         show_correct=False)
 
 def fig_compare_drifters_gliders_eulerian(
-    qg_xt:dict, outroot:str='fig_compare_qg_'):
+    qg_xt:dict, outroot:str='fig_compare_qg_',
+    minN:int=100):
     
     # Filenames
     glider_traj, glider_sf = qg_observe.file_names(qg_xt, 'glider')
@@ -1610,7 +1611,6 @@ def fig_compare_drifters_gliders_eulerian(
                 Sn_LL[key] = np.array(Sn_LL[key])
 
     # Good
-    minN = 10
     goodN_d = np.array(Sn_LL_d['config']['N']) > minN
     goodN_g = np.array(Sn_LL_g['config']['N']) > minN
     
@@ -1877,6 +1877,7 @@ def main(flg):
     if flg == 22:
         qg_xt = {
             'ts': 5001,
+            #'ts': 6001,
             'nd': 100,
             'x': 450,
             'y': 450,

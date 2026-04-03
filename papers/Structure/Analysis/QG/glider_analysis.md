@@ -121,6 +121,25 @@ Save the structure function results to JSON using `profiler.io.savejson()`, foll
 - The new `SprayData.from_QG_glider()` classmethod is an addition to the profiler package, not a modification of existing methods
 - Reuse existing imports and patterns from `structure_function.py` and `calc_sf.py`
 
+# Testing
+
+As a test of my QG analysis, I wish to analyze the QG outputs with a set of gliders, one at each grid point in a 100x100 km box centered on the output center.  The gliders should be deployed for a given number of days and remain stationary.  They will measure the velocity field at their positions each day and save the results to a CSV file.  I will input the start time, number of days, and box center.  I will then use the Profiler package to compute the structure functions and save the results to a JSON file.
+
+Any code for this test should be written in Python.
+Place it in a py/test_glider_analysis.py module.
+
+I will perform the structure function analysis on the glider measurements separately.  You do not need to write code for this.
+
+## Open Questions
+
+Here are answers to the open questions in the testing doc:
+
+1. All code should be Python
+2. I will specify the times for the glider measurements 
+3. 10 days is sufficient for a quick test
+
+I'll add that there should not be any interpolation.  We will be taking glider measurements directly on the QG grid.
+
 # Prompts
 
 ## Plan
@@ -128,7 +147,10 @@ Save the structure function results to JSON using `profiler.io.savejson()`, foll
 1. Read this document and develop a plan for the analysis.  Write it down in Overleaf.  Append it to the claude_gliders_in_qg_plan.tex file. Do not execute any code yet.
 2. Turn the plan into a set of requirements for the code and put them in the Requirements section above.  Answers to the open questions in the claude_gliders_in_qg_plan.tex doc are given in the Planning section above.
 3. Instead of using the DrifterData class, use the SprayData class to read the gliders into the Profiler package.  Modify the planning doc and Requirements section above to reflect this.
+4. Read the Testing section above and develop a plan for the testing.  Write it down in Overleaf.  Append it to the claude_gliders_in_qg_plan.tex file. Do not execute any code yet.
+5. Read the Open Questions section above and modify the plan for the testing as needed.
 
 ## Code
 
 1. Reread this doc. Generate the code to satisfy the Requirements.  Place the Python code in a py/glider_analysis.py module.
+2. Reread this doc. Generate the code to perform the test in Testing.  Refer to the claude_gliders_in_qg_plan.tex file for the testing plan.
