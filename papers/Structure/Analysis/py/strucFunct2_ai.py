@@ -198,10 +198,9 @@ def calculateSF_2(Uds, maxcorr, shiftdim, grid):
     tasks = []
     for dcorr1 in range(0, maxcorr):
         #for dcorr2 in range(0, maxcorr):
-        for dcorr2 in range(-(maxcorr-1), maxcorr):
             #if dcorr1 + dcorr2 != 0:
+        for dcorr2 in range(-(maxcorr-1), maxcorr):
             if (dcorr1>0) or ((dcorr1 == 0) & (dcorr2 > 0)):
-                print(f'dcorr1: {dcorr1}, dcorr2: {dcorr2}')
                 tasks.append(process_dcorr(dcorr1, dcorr2, Udata, Vdata, Xg, Yg, grid))
 
     # Compute the tasks in parallel using Dask
