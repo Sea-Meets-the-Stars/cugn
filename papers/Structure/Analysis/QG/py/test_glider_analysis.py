@@ -42,8 +42,7 @@ def build_stationary_glider_df(
     Parameters
     ----------
     t_start : int
-        QG time index at which to begin (1-based, as in the Julia code).
-        Converted to 0-based for xarray indexing.
+        QG time index at which to begin (0-based)
     n_days : int
         Number of days to sample (reads t_start through t_start + n_days).
     box_center_idx : tuple of int
@@ -87,7 +86,7 @@ def build_stationary_glider_df(
     n_gliders = n_per_side * n_per_side
 
     # Time indices (convert 1-based t_start to 0-based for xarray)
-    t_indices = np.arange(t_start - 1, t_start - 1 + n_days + 1)
+    t_indices = np.arange(t_start, t_start + n_days + 1)
     n_times = len(t_indices)
 
     # Convert lev to 0-based
@@ -122,10 +121,10 @@ def build_stationary_glider_df(
             missid_map[(ix, iy)] = missid
             missid += 1
 
-    embed(header='123 of build_stationary_glider_df')
+    #embed(header='123 of build_stationary_glider_df')
     for t_idx_local, t_idx_global in enumerate(t_indices):
         # Time in seconds from t_start
-        time_s = float(t_idx_local) * 86400.0
+        time_s = float(t_idx_global) * 86400.0
         for jj, iy in enumerate(iy_arr):
             for ii, ix in enumerate(ix_arr):
                 mid = missid_map[(ix, iy)]
