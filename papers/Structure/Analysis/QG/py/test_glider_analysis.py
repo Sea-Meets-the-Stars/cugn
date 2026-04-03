@@ -74,9 +74,9 @@ def build_stationary_glider_df(
     # Determine box extent in grid indices
     half_n = int(np.floor(box_size_km / (2.0 * dx_km)))
     cx, cy = box_center_idx
-    i_lo = cx - half_n
+    i_lo = cx - half_n - 1  # Matches to QG code
     i_hi = cx + half_n
-    j_lo = cy - half_n
+    j_lo = cy - half_n - 1
     j_hi = cy + half_n
 
     # Grid point indices within the box
@@ -92,7 +92,7 @@ def build_stationary_glider_df(
     # Convert lev to 0-based
     lev_idx = lev - 1
 
-    embed(header='95 of build_stationary_glider_df')
+    #embed(header='95 of build_stationary_glider_df')
     print(f"Stationary glider grid: {n_per_side}x{n_per_side} = {n_gliders} gliders")
     print(f"  Box: [{i_lo}, {i_hi}] x [{j_lo}, {j_hi}] (grid indices)")
     print(f"  Time: {n_times} snapshots (t_start={t_start}, n_days={n_days})")
