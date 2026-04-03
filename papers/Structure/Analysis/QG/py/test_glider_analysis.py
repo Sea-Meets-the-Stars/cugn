@@ -156,15 +156,15 @@ def build_stationary_glider_df(
     return df, meta
 
 
-def run_stationary_test(
+def run_stationary(
     t_start=5001,
     n_days=10,
     box_center_idx=(128, 128),
     box_size_km=100.0,
     lev=1,
-    outfile_LL='data/test_stationary_sf_LL.json',
-    outfile_TT='data/test_stationary_sf_TT.json',
-):
+    outfile_df:str=None,
+    outfile_LL:str=None,
+    outfile_TT:str=None):
     """End-to-end test: build stationary glider DataFrame, compute SF, save.
 
     Parameters
@@ -199,14 +199,27 @@ def run_stationary_test(
     )
 
     # Compute structure functions
-    Sn_LL, Sn_TT = compute_glider_sf(df, meta)
+    dr = 5 # meters
+    rbins = np.arange(0, 1.3e2, dr) # 130 km
+    Sn_LL, Sn_TT = compute_glider_sf(df, meta, r_bins_km=rbins)
 
     # Save
-    save_sf(Sn_LL, outfile_LL)
-    save_sf(Sn_TT, outfile_TT)
+    if outfile_df is not None:
+        df.to_csv(outfile_df, index=False)
+    if outfile_LL is not None:  
+        save_sf(Sn_LL, outfile_LL)
+    if outfile_TT is not None:
+        save_sf(Sn_TT, outfile_TT)
 
     return Sn_LL, Sn_TT
 
 
 if __name__ == "__main__":
-    run_stationary_test(t_start=5001, n_days=10)
+    # Test
+    #run_stationary(t_start=5001, n_days=10)
+
+    # Full
+    run_stationary(t_start=5001, n_days=100,
+        outfile_df='data/stationary_gliders_ts5001_nd100_df.csv',
+        outfile_LL='data/stationary_gliders_ts5001_nd100_sf_LL.json',
+        outfile_TT='data/stationary_gliders_ts5001_nd100_sf_TT.json')

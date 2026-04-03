@@ -78,6 +78,8 @@ def compute_glider_sf(glider_df, meta, r_bins_km=None, max_time:float=8.):
         Metadata dict.
     r_bins_km : array-like, optional
         Bin edges in km. Default: 20 log-spaced bins from 1 to 400 km.
+    max_time : float, optional
+        Maximum time difference (hours) for pairing. Default: 8.0.
 
     Returns
     -------
@@ -95,7 +97,7 @@ def compute_glider_sf(glider_df, meta, r_bins_km=None, max_time:float=8.):
     # Construct ProfilerPairs
     pairs = ProfilerPairs(
         gliders,
-        max_time=8.0,
+        max_time=max_time,
         avoid_same_glider=True,
         randomize=False,
     )
