@@ -85,7 +85,7 @@ def run_one(qg_xt:dict):
     qg_100km.run_one_region((qg_xt['x'], qg_xt['x']+qg_xt['dx']), 
         (qg_xt['y'], qg_xt['y']+qg_xt['dx']),
             eulerian_file,
-            timelast=7200-qg_xt['ts']+2,
+            timelast=7200-qg_xt['ts']-2,
             ndays=qg_xt['nd'], maxcorr=30)
 
 # Command line
