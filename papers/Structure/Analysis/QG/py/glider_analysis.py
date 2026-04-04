@@ -18,6 +18,8 @@ from profiler.gliderdata import SprayData
 from profiler.profilerpairs import ProfilerPairs
 from profiler import io as p_io
 
+from IPython import embed
+
 # Default radial bins matching real Spray data (figs_structure.py)
 _NBINS = 20
 _DEFAULT_RBINS_KM = 10**np.linspace(0., np.log10(400), _NBINS)
@@ -93,6 +95,9 @@ def compute_glider_sf(glider_df, meta, r_bins_km=None, max_time:float=8.):
 
     # Build SprayData objects — one per glider
     gliders = SprayData.all_from_QG_glider(glider_df, meta)
+
+    # Set distances
+    embed(header='98 of compute_glider_sf')
 
     # Construct ProfilerPairs
     pairs = ProfilerPairs(
