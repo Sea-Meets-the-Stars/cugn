@@ -97,7 +97,10 @@ def compute_glider_sf(glider_df, meta, r_bins_km=None, max_time:float=8.):
     gliders = SprayData.all_from_QG_glider(glider_df, meta)
 
     # Set distances
-    embed(header='98 of compute_glider_sf')
+    for ss, glider in enumerate(gliders):
+        profiles = glider.missid == ss
+        glider.distE = glider_df.x_m.values[profiles]/1e3
+        glider.distN = glider_df.y_m.values[profiles]/1e3
 
     # Construct ProfilerPairs
     pairs = ProfilerPairs(
