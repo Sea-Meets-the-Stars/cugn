@@ -86,7 +86,7 @@ def build_stationary_glider_df(
     n_gliders = n_per_side * n_per_side
 
     # Time indices (convert 1-based t_start to 0-based for xarray)
-    t_indices = np.arange(t_start, t_start + n_days + 1)
+    t_indices = np.arange(t_start, t_start + n_days)
     n_times = len(t_indices)
 
     # Convert lev to 0-based
