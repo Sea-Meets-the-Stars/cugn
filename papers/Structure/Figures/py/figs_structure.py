@@ -1599,9 +1599,11 @@ def fig_compare_drifters_gliders_eulerian(
     outfile = f'{outroot}_{root}.png'
 
     # Load up drifters
+    print(f'Loading drifters: {drifter_sf}')
     Sn_LL_d = p_io.loadjson(os.path.join(anly_path, drifter_sf))
 
     # Gliders
+    print(f'Loading gliders: {glider_sf}')
     Sn_LL_g = p_io.loadjson(os.path.join(anly_path, glider_sf))
 
     # Convert lists to np.ndarray
@@ -1618,6 +1620,7 @@ def fig_compare_drifters_gliders_eulerian(
     Ndays = qg_xt['nd']
     rr1, rrr1, du1, du2, du3, du3_corr, dull_mn, du2_mn_duL, du3_mn_duL = \
         qg_uL_SF.parse_SF(eulerian_file, Ndays)
+    print(f'Loaded Eulerian: {eulerian_file}')
     variables = 'duLduLduL'
     Skeys = ['S1_duL', 'S2_duL**2', 'S3_'+variables]
     

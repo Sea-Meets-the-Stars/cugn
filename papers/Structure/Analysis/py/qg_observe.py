@@ -43,7 +43,7 @@ def file_names(qg_xt:dict, obs_type:str):
 
     return traj_file, sf_file
 
-def run_one(qg_xt:dict):
+def run_one(qg_xt:dict, clobber:bool=False):
     """Run glider, drifter, and Eulerian analyses for one QG sub-domain.
 
     Computes trajectories and structure functions for the specified
@@ -52,6 +52,7 @@ def run_one(qg_xt:dict):
     Args:
         qg_xt: Dict with keys 'ts' (start time step), 'nd' (number of days),
             'x', 'y' (box origin in km), 'dx' (box width in km).
+        clobber: If True, overwrite existing files.
     """
     dx_grid = 1000./256
 
@@ -62,7 +63,7 @@ def run_one(qg_xt:dict):
         glider_df, meta = glider_analysis.run_single(glider_csv, t_start=qg_xt['ts'], lev=1,
             offset_x=qg_xt['x']/dx_grid, 
             offset_y=qg_xt['y']/dx_grid,
-            output_path=glider_traj)
+            output_path=glider_traj, cache=not clobber)
         Sn_LL, Sn_TT = glider_analysis.compute_glider_sf(glider_df, meta)
         glider_analysis.save_sf(Sn_LL, glider_sf)
 
@@ -76,6 +77,7 @@ def run_one(qg_xt:dict):
             box_center_y=(qg_xt['x']+0.5*qg_xt['dx'])/dx_grid,
             box_size_km=qg_xt['dx'],
             drifter_spacing_km=10.,
+            cache=not clobber,
             output_path=drifter_traj)
         Sn_LL, Sn_TT = calc_sf.calc_drifter_sf(drifter_traj, drifter_sf)
     
@@ -86,7 +88,7 @@ def run_one(qg_xt:dict):
         (qg_xt['y'], qg_xt['y']+qg_xt['dx']),
             eulerian_file,
             timelast=7200-qg_xt['ts']-2,
-            ndays=qg_xt['nd'], maxcorr=30)
+            ndays=qg_xt['nd'], maxcorr=30, clobber=clobber)
 
 # Command line
 if __name__ == '__main__':
@@ -108,4 +110,4 @@ if __name__ == '__main__':
     }
 
     # Go
-    run_one(qg_xt_5001)
+    run_one(qg_xt_5001, clobber=True)
