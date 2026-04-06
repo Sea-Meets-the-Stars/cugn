@@ -1965,8 +1965,8 @@ def main(flg):
     # Compare drifters/gliders + Eulerian
     if flg == 22:
         qg_xt = {
-            'ts': 5001,
-            #'ts': 6001,
+            #'ts': 5001,
+            'ts': 6001,
             'nd': 100,
             'x': 450,
             'y': 450,
