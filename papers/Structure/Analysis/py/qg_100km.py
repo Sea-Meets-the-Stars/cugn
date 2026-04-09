@@ -102,7 +102,7 @@ def run_one_region(xlim:tuple, ylim:tuple, outfile:str,
 
     #embed(header='103 of run_one_region')
 
-    # Higher order
+    # Higher order;  Use duL only
     SF2, SF3 = strucFunct2_ai.SF2_3_ul(SFtest.ulls)
 
     # Slice the data to include the current chunk
@@ -137,16 +137,16 @@ if __name__ == '__main__':
     # Full
     #test_full()
 
-    # Regions for 60 days
-    if False:
+    # Regions for 100 days
+    if True:
         for x0 in [300., 400, 500.]:
             for y0 in [300., 400, 500.]:
                 run_one_region((x0, x0+100.), (y0, y0+100.), 
                             f'Output/SF_region_x{int(x0)}_y{int(y0)}_60days.nc', 
-                            ndays=60, maxcorr=30)
+                            ndays=100, maxcorr=30)
 
     # Regions for 5 years
-    if False:
+    if True:
         for x0 in [300., 400, 500.]:
             for y0 in [300., 400, 500.]:
                 run_one_region((x0, x0+100.), (y0, y0+100.), 
@@ -155,13 +155,13 @@ if __name__ == '__main__':
                             ndays=365*5, maxcorr=30)
 
     # 200km regions for 5 years
-    if False:
+    if True:
         for x0 in [200., 400, 600.]:
             for y0 in [200., 400, 600.]:
                 run_one_region((x0, x0+200.), (y0, y0+200.),
                             f'Output/SF_region_x{int(x0)}_y{int(y0)}_200km_5years.nc',
                             timelast=int(365*5.1),
-                            ndays=365*5, maxcorr=30)
+                            ndays=365*5, maxcorr=60)
 
     # 300km regions for 5 years
     if False:
@@ -170,7 +170,7 @@ if __name__ == '__main__':
                 run_one_region((x0, x0+300.), (y0, y0+300.),
                             f'Output/SF_region_x{int(x0)}_y{int(y0)}_300km_5years.nc',
                             timelast=int(365*5.1),
-                            ndays=365*5, maxcorr=30)
+                            ndays=365*5, maxcorr=90)
 
     # Drifter region for 100 days
     if True:

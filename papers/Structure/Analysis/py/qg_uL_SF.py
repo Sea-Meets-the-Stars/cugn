@@ -1,4 +1,4 @@
-""" Calculations on a ~100 km region """
+""" Calculate QG SF on the full grid """
 
 from importlib import reload
 import os
@@ -44,7 +44,7 @@ def grab_path(use_duL:bool):
     else:
         return os.path.join(qg_path, 'SF_spatialav')
 
-def calc_rawduLT(nyears=5, maxcorr=60, clobber:bool=False):
+def calc_rawduLT(nyears=5, maxcorr=90, clobber:bool=False):
     """Compute raw duL/duT structure functions in 15-day chunks and save to disk.
 
     Processes the last nyears of QG model data, computing velocity structure
@@ -53,6 +53,7 @@ def calc_rawduLT(nyears=5, maxcorr=60, clobber:bool=False):
     Args:
         nyears: Number of years of data to process from the end of the time series.
         maxcorr: Maximum number of grid shifts for pair separations.
+            90 gives good stats to ~300km
         clobber: If True, overwrite existing output files.
     """
     ndays = nyears * 365
@@ -225,12 +226,12 @@ def parse_SF(SF_file:str, Ndays:int):
 if __name__ == '__main__':
 
     # raw dULT
-    #calc_rawduLT()#clobber=True)
+    calc_rawduLT(clobber=True)
 
-    # SF
-    #calc_SF(clobber=True)
-    calc_SF(use_dLT=False, clobber=True)
+    # SF per time step
+    calc_SF(clobber=True)
+    #calc_SF(use_dLT=False, clobber=True)
 
     # Lastly
-    #calc_SF_5years(use_dLT=True)
-    calc_SF_5years(use_dLT=False)
+    calc_SF_5years(use_dLT=True)
+    #calc_SF_5years(use_dLT=False)

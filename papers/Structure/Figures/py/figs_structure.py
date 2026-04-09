@@ -33,6 +33,7 @@ sys.path.append(os.path.abspath("../Analysis/py"))
 import qg_utils
 import qg_uL_SF
 import qg_observe
+import qg_io
 
 sys.path.append(os.path.abspath("../Analysis/QG/py"))
 import data_utils
@@ -868,12 +869,13 @@ def fig_qg_duL_vs_time(x0:int,y0:int, outroot:str='fig_qg_duL_vs_time',
         _, SFds = qg_utils.load_qg()#use_SFduL=True)
     else:
         outfile = f'{outroot}_x{x0}_y{y0}_dx{dx}.png'
-        if dx == 200:
-            output_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_200km_5years.nc' 
-        elif dx == 300:
-            output_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_300km_5years.nc' 
-        else:
-            output_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_5years.nc' 
+        output_file = qg_io.qg_output_file(x0, y0, dx=dx)
+        #if dx == 200:
+        #    output_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_200km_5years.nc' 
+        #elif dx == 300:
+        #    output_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_300km_5years.nc' 
+        #else:
+        #    output_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_5years.nc' 
         SFds = xarray.load_dataset(output_file)
 
     # Start the figure
@@ -1074,9 +1076,10 @@ def fig_duL3corr_vs_time(
     print(f"Saved: {outfile}")
 
 def fig_qg_duL_by_year(x0:int,y0:int, outroot:str='fig_qg_duL_yearly',
-                   title:str=None):
+                   title:str=None, dx:int=100):
     outfile = f'{outroot}_x{x0}_y{y0}.png'
-    output_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_5years.nc' 
+    #output_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_5years.nc' 
+    output_file = qg_io.qg_output_file(x0, y0, dx=dx)
 
     # Load
     SFds = xarray.load_dataset(output_file)
@@ -1100,7 +1103,7 @@ def fig_qg_duL_by_year(x0:int,y0:int, outroot:str='fig_qg_duL_yearly',
     ax.set_xlabel('$r$ [km]')
     ax.set_ylabel('$\\delta u_L(r, t)$ [m s$^{-1}$]')
 
-    title=f'QG: x={x0}-{x0+100}km, y={x0}-{x0+100}km'
+    title=f'QG: x={x0}-{x0+100}km, y={x0}-{x0+dx}km'
     if title is not None:
         ax.set_title(title, fontsize=23.)
 
@@ -1882,8 +1885,10 @@ def main(flg):
     if flg == 13:
         ix, iy = 0, 0
         ix, iy = 300, 300
-        ix, iy = 200, 200
-        fig_qg_duL_vs_time(ix,iy, dx=300)
+        #ix, iy = 200, 200
+        #fig_qg_duL_vs_time(ix,iy, dx=200)
+        ix, iy = 400, 600
+        fig_qg_duL_by_year(ix,iy,dx=200)
         #fig_qg_duL_by_year(ix,iy)
 
         # duL3
@@ -1935,7 +1940,7 @@ def main(flg):
         ix, iy = 300, 300
         fig_frac_duL3_vs_time(ix,iy)
 
-    # Examine how duL, duL^3 average down with time
+    # Compare first bug fix
     if flg == 18:
         fig_orig_vs_new_qg_SF()
 
