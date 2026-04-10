@@ -44,7 +44,7 @@ def grab_path(use_duL:bool):
     else:
         return os.path.join(qg_path, 'SF_spatialav')
 
-def calc_rawduLT(nyears=5, maxcorr=60, clobber:bool=False):
+def calc_rawduLT(nyears=5, maxcorr=50, clobber:bool=False):
     """Compute raw duL/duT structure functions in 15-day chunks and save to disk.
 
     Processes the last nyears of QG model data, computing velocity structure
@@ -53,7 +53,7 @@ def calc_rawduLT(nyears=5, maxcorr=60, clobber:bool=False):
     Args:
         nyears: Number of years of data to process from the end of the time series.
         maxcorr: Maximum number of grid shifts for pair separations.
-            60 gives good stats to ~200km
+            50 gives good stats to ~200km
         clobber: If True, overwrite existing output files.
     """
     ndays = nyears * 365
