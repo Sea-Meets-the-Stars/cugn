@@ -226,10 +226,10 @@ def parse_SF(SF_file:str, Ndays:int):
 if __name__ == '__main__':
 
     # raw dULT
-    calc_rawduLT(clobber=True)
+    #calc_rawduLT(clobber=True)
 
     # SF per time step
-    calc_SF(clobber=True)
+    #calc_SF(clobber=True)
     #calc_SF(use_dLT=False, clobber=True)
 
     # Lastly
