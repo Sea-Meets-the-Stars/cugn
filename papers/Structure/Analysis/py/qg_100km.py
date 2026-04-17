@@ -34,7 +34,7 @@ def test_full(ndays=15, maxcorr=60):
     """
     qg, Udsn = qg_utils.load_last_time()
 
-    # Grab the last 15 days
+    # Grab the last ndays
     SFtest = strucFunct2_ai.calculateSF_2(Udsn.isel(
         time=np.arange(0, ndays)), maxcorr, shiftdim, grid)
 
@@ -53,7 +53,7 @@ def test_full(ndays=15, maxcorr=60):
     with ProgressBar():
         data_avers = data_slice.mean(dim=('x','y'), skipna=True).compute()
 
-    # Defines distance bins 
+    # Defines distance bins
     dr = 5000 # meters
     rbins = np.arange(0, 3.e5, dr) # 300 km (same as Miguel)
     mid_rbins = 0.5*(rbins[:-1] + rbins[1:])
@@ -78,7 +78,7 @@ def run_one_region(xlim:tuple, ylim:tuple, outfile:str,
         outfile: path to save the structure function
         timelast: last time index to load
         ndays: number of days to calculate the structure function
-        maxcorr: maximum correlation time
+        maxcorr: maximum correlation distance
     """
 
     # Clobber?
@@ -103,7 +103,7 @@ def run_one_region(xlim:tuple, ylim:tuple, outfile:str,
     #embed(header='103 of run_one_region')
 
     # Higher order;  Use duL only
-    SF2, SF3 = strucFunct2_ai.SF2_3_ul(SFtest.ulls)
+    #SF2, SF3 = strucFunct2_ai.SF2_3_ul(SFtest.ulls)
 
     # Slice the data to include the current chunk
     data_slice = SFtest.isel(time=slice(0,ndays))
@@ -161,7 +161,7 @@ if __name__ == '__main__':
                 run_one_region((x0, x0+200.), (y0, y0+200.),
                             f'Output/SF_region_x{int(x0)}_y{int(y0)}_200km_5years.nc',
                             timelast=int(365*5.1),
-                            ndays=365*5, maxcorr=60)
+                            ndays=365*5, maxcorr=50)
 
     # 300km regions for 5 years
     if False:

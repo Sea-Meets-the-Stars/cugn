@@ -1396,6 +1396,77 @@ def fig_orig_vs_new_qg_SF(outfile:str='fig_qg_SF_orig_vs_new.png'):
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
+
+       
+def fig_full_qg_SF(outfile:str='fig_full_qg_SF.png'):
+    """
+    QG Structure Function, duL and total
+    """
+    # Load the data
+    qg, mSF_15_duL = qg_utils.load_qg(use_SFduL=False)
+
+    # Calculate the first order structure function
+    SF_dict_duL = qg_utils.calc_dus(qg, mSF_15_duL)
+
+    # Unpack a bit
+    rr1 = SF_dict_duL['rr1']
+
+    # du1
+    dull_mn = SF_dict_duL['dull_mn']
+    du1_mn = SF_dict_duL['du1_mn']
+
+    # du2
+    du2_mn_duL = SF_dict_duL['du2_mn']
+
+    # du3
+    du3_mn_duL = SF_dict_duL['du3_mn']
+
+    # Start the figure
+    fig = plt.figure(figsize=(10,3))
+    plt.clf()
+    gs = gridspec.GridSpec(1,3)
+
+    # ################################################3
+    # du
+    ax0 = plt.subplot(gs[0])
+
+    ols = ':'
+    ax0.semilogx(rr1*1e-3, dull_mn*1e3, 'b', linewidth=1, 
+                label=r'$<\delta u_L>$')
+
+    lsz = 7.
+    ax0.legend(fontsize=lsz, loc='lower left')
+    ax0.set_xlabel(r'$r$ [km]')
+    ax0.set_ylabel(r'$<\delta u> \, 10^{-3}$ [m/s]')
+
+    # ################################################3
+    # du2
+    ax2 = plt.subplot(gs[1])
+
+    ax2.loglog(rr1*1e-3, du2_mn_duL, 'b', linewidth=1, 
+                label=r'New $<\delta u_L^2>$')
+    ax2.legend(fontsize=lsz, loc='lower right')
+    ax2.set_xlabel(r'$r$ [km]')
+    ax2.set_ylabel(r'$<\delta u^2> \, {\rm [m/s]^2}$')
+
+
+    # ################################################3
+    # du3
+    ax3 = plt.subplot(gs[2])
+
+    ax3.semilogx(rr1*1e-3, du3_mn_duL, 'b', linewidth=1, 
+                label=r'New $<\delta u_L^3>$')
+    ax3.legend(fontsize=lsz, loc='upper left')
+    ax3.set_xlabel(r'$r$ [km]')
+    ax3.set_ylabel(r'$<\delta u^3> \, {\rm [m/s]^3}$')
+
+    for ax in [ax0, ax2, ax3]:
+        cugn_plotting.set_fontsize(ax, 13)
+
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
 def fig_compare_dus(dataset:str, outroot:str='fig_comp_dus',
                   variables = 'duLduLduL',
                   iz:int=5): 
@@ -1982,6 +2053,10 @@ def main(flg):
     # Test stationary gliders
     if flg == 23:
         fig_test_stationary_gliders()
+
+    # Full grid, 5 year SF
+    if flg == 24:
+        fig_full_qg_SF()
 
 # Command line execution
 if __name__ == '__main__':
