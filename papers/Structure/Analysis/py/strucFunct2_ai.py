@@ -349,24 +349,33 @@ def dult_mean_orientation(data, rbins, mid_rbins):
     
     # Group by bins along 'dr' using 'mid_rbins' as the coordinate labels
     grouped = data.groupby_bins('dr', rbins, labels=mid_rbins)
-    
+
     # Manually compute the mean over the grouped data
     means = []
     dr_means = []  # List to store mean of 'dr' for each time slice
+    bin_labels = []  # Track which bins have data
     for group in grouped:
         bin_value, group_data = group
         means.append(group_data.mean(dim='dcorr').compute())  # Mean over the 'dcorr' dimension for each group
-        
+        bin_labels.append(float(bin_value))
+
         # Compute the mean of 'dr' (Mean of the binned dr values)
         # Ensure that dr_means is an xarray DataArray with mid_rbins as a coordinate
         dr_means.append(xr.DataArray([bin_value.mean()], coords=[('mid_rbins', [bin_value.mean()])]))
-    
+
     # Concatenate the results along the 'mid_rbins' dimension
     mean_result = xr.concat(means, dim='mid_rbins')
-    
+
     # Concatenate the mean of 'dr' along the 'mid_rbins' dimension
     dr_mean_result = xr.concat(dr_means, dim='mid_rbins')
-    
+
+    # Assign actual bin-center values as coordinate, drop dr (tracked separately),
+    # then reindex to full mid_rbins so all bins are present (NaN for empty bins)
+    mean_result = mean_result.drop_vars('dr')
+    mean_result = mean_result.assign_coords(mid_rbins=bin_labels)
+    mean_result = mean_result.reindex(mid_rbins=mid_rbins)
+    dr_mean_result = dr_mean_result.reindex(mid_rbins=mid_rbins)
+
     return mean_result, dr_mean_result
 
 def process_SF_samples(fs, rbins, mid_rbins):
