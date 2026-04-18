@@ -1403,7 +1403,7 @@ def fig_full_qg_SF(outfile:str='fig_full_qg_SF.png'):
     QG Structure Function, duL and total
     """
     # Load the data
-    qg, mSF_15_duL = qg_utils.load_qg(use_SFduL=False)
+    qg, mSF_15_duL = qg_utils.load_qg(use_SFduL=True)
 
     # Calculate the first order structure function
     SF_dict_duL = qg_utils.calc_dus(qg, mSF_15_duL)

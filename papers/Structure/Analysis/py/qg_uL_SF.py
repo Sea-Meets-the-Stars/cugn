@@ -177,7 +177,7 @@ def calc_SF_5years(use_dLT:bool=True):
     mid_rbins = 0.5*(rbins[:-1] + rbins[1:])
 
     # Average over orientation
-    embed(header='180 of calc_SF_5years')
+    #embed(header='180 of calc_SF_5years')
     dudlt_aver_angl = strucFunct2_ai.process_SF_samples(dult_aver, rbins, mid_rbins)
     outfile = os.path.join(qg_path, outfile)
     dudlt_aver_angl.to_netcdf(outfile)

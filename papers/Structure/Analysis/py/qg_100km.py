@@ -87,7 +87,7 @@ def run_one_region(xlim:tuple, ylim:tuple, outfile:str,
         return
 
     # Load
-    qg, Udsn = qg_utils.load_last_time(ndays=timelast)
+    qg, Udsn = qg_utils.load_last_time(ndays=timelast, use_SFduL=True)
 
     iregion_x = np.where((qg.x >= xlim[0]*1e3) & (qg.x < xlim[1]*1e3))[0]
     iregion_y = np.where((qg.y >= ylim[0]*1e3) & (qg.y < ylim[1]*1e3))[0]

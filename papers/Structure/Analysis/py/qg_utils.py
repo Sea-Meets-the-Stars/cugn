@@ -43,7 +43,7 @@ def load_qg(use_SFduL:bool=False, orig:bool=False):
 
 
 
-def load_last_time(ndays=6*30):
+def load_last_time(ndays=6*30, use_SFduL=False):
     """Load the QG model and select the last ndays of surface-level data.
 
     Args:
@@ -55,7 +55,7 @@ def load_last_time(ndays=6*30):
             surface-level (lev=0) subset for the last ndays.
     """
     # Load
-    qg, _ = load_qg()
+    qg, _ = load_qg(use_SFduL=use_SFduL)
 
     # Gets last 6 months of data
     #nmonths = 6
