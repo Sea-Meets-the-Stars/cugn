@@ -1958,9 +1958,9 @@ def main(flg):
         ix, iy = 300, 300
         #ix, iy = 200, 200
         #fig_qg_duL_vs_time(ix,iy, dx=200)
-        ix, iy = 400, 600
-        fig_qg_duL_by_year(ix,iy,dx=200)
-        #fig_qg_duL_by_year(ix,iy)
+        #ix, iy = 400, 600
+        #fig_qg_duL_by_year(ix,iy,dx=200)
+        fig_qg_duL_by_year(ix,iy)
 
         # duL3
         #fig_qg_duL_vs_time(ix,iy, show_du3=True)
