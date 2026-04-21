@@ -68,9 +68,16 @@ def test_full(ndays=15, maxcorr=60):
 
 def run_one_region(xlim:tuple, ylim:tuple, outfile:str,
                    timelast=180, clobber:bool=False,
-                   ndays:int=60, maxcorr:int=30):
-    """ 
+                   ndays:int=60, maxcorr:int=30,
+                   time_batch:int=365,
+                   reduce_xy:bool=False):
+    """
     Calculate the structure function for a region of the QG model output.
+
+    The SF pipeline is run on consecutive time slabs of length `time_batch`
+    (default one year) and the per-batch, orientation-averaged results are
+    concatenated along `time`. This keeps peak memory bounded by a single
+    batch rather than the full `ndays` window.
 
     Args:
         xlim: tuple of (xmin, xmax) in km
@@ -79,6 +86,12 @@ def run_one_region(xlim:tuple, ylim:tuple, outfile:str,
         timelast: last time index to load
         ndays: number of days to calculate the structure function
         maxcorr: maximum correlation distance
+        time_batch: number of time steps processed per batch
+        reduce_xy: If True, take the (x, y) spatial mean inside each
+            per-shift task in calculateSF_2 rather than after concat.
+            Shrinks the dask graph from ~maxcorr^2 full-grid nodes to
+            ~maxcorr^2 (time,) nodes. Big win on large regions; results
+            are mathematically equivalent.
     """
 
     # Clobber?
@@ -92,41 +105,61 @@ def run_one_region(xlim:tuple, ylim:tuple, outfile:str,
     iregion_x = np.where((qg.x >= xlim[0]*1e3) & (qg.x < xlim[1]*1e3))[0]
     iregion_y = np.where((qg.y >= ylim[0]*1e3) & (qg.y < ylim[1]*1e3))[0]
 
-    # Cut down Usdn
+    # Cut down Usdn (spatial only; time is batched below)
     print(f'Cutting down Usdn to region {xlim} {ylim}')
-    print(f'Calculating structure function for {ndays} days')
+    print(f'Calculating structure function for {ndays} days '
+          f'in batches of {time_batch}')
     Udsn = Udsn.isel(x=iregion_x, y=iregion_y, time=np.arange(0, ndays))
 
-    # Calculate structure function
-    SFtest = strucFunct2_ai.calculateSF_2(Udsn, maxcorr, shiftdim, grid)
-
-    #embed(header='103 of run_one_region')
-
-    # Higher order;  Use duL only
-    #SF2, SF3 = strucFunct2_ai.SF2_3_ul(SFtest.ulls)
-
-    # Slice the data to include the current chunk
-    data_slice = SFtest.isel(time=slice(0,ndays))
-        
-    # Calculates du1, du2 and du3
-    print(f'Calculating du2 and du3 for {outfile}')
-    sf2, sf3 = strucFunct2_ai.SF2_3_ul(data_slice.ulls)#, data_slice.dut)
-    data_slice['du2'] = sf2
-    data_slice['du3'] = sf3
-        
-    # Averages over all $s$ positions
-    print(f'Averaging over all $s$ positions for {outfile}')
-    with ProgressBar():
-        data_avers = data_slice.mean(dim=('x','y'), skipna=True).compute()
-
-    # Defines distance bins
+    # Defines distance bins (shared across batches)
     dr = 5000 # meters
     rbins = np.arange(0, 1.3e5, dr) # 130 km
     mid_rbins = 0.5*(rbins[:-1] + rbins[1:])
 
-    # Average over orientation
-    print(f'Averaging over orientation for {outfile}')
-    dudlt_aver_angl = strucFunct2_ai.process_SF_samples(data_avers, rbins, mid_rbins)
+    # Loop over time batches
+    n_batches = int(np.ceil(ndays / time_batch))
+    batch_results = []
+    for ibatch in range(n_batches):
+        t0 = ibatch * time_batch
+        t1 = min(t0 + time_batch, ndays)
+        print(f'--- Batch {ibatch+1}/{n_batches}: time [{t0}, {t1}) ---')
+
+        Udsn_batch = Udsn.isel(time=np.arange(t0, t1))
+
+        # Calculate structure function for this batch
+        SFtest = strucFunct2_ai.calculateSF_2(
+            Udsn_batch, maxcorr, shiftdim, grid, reduce_xy=reduce_xy)
+
+        data_slice = SFtest.isel(time=slice(0, t1 - t0))
+
+        if reduce_xy:
+            # du2, du3 and the spatial mean are already done inside
+            # calculateSF_2; just materialize.
+            print(f'Materializing reduced SF (batch {ibatch+1})')
+            with ProgressBar():
+                data_avers = data_slice.compute()
+        else:
+            # Calculates du2 and du3
+            print(f'Calculating du2 and du3 (batch {ibatch+1})')
+            sf2, sf3 = strucFunct2_ai.SF2_3_ul(data_slice.ulls)
+            data_slice['du2'] = sf2
+            data_slice['du3'] = sf3
+
+            # Averages over all $s$ positions
+            print(f'Averaging over all $s$ positions (batch {ibatch+1})')
+            with ProgressBar():
+                data_avers = data_slice.mean(
+                    dim=('x', 'y'), skipna=True).compute()
+
+        # Average over orientation
+        print(f'Averaging over orientation (batch {ibatch+1})')
+        batch_out = strucFunct2_ai.process_SF_samples(
+            data_avers, rbins, mid_rbins)
+        batch_results.append(batch_out)
+
+    # Concatenate batches along time
+    dudlt_aver_angl = xarray.concat(batch_results, dim='time')
+    dudlt_aver_angl = dudlt_aver_angl.sortby('time')
 
     # Save
     dudlt_aver_angl.to_netcdf(outfile)
@@ -161,7 +194,7 @@ if __name__ == '__main__':
                 run_one_region((x0, x0+200.), (y0, y0+200.),
                             f'Output/SF_region_x{int(x0)}_y{int(y0)}_200km_5years.nc',
                             timelast=int(365*5.1),
-                            ndays=365*5, maxcorr=50)
+                            ndays=365*5, maxcorr=50, reduce_xy=True)
 
     # 300km regions for 5 years
     if False:
