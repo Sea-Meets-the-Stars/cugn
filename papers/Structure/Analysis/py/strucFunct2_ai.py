@@ -139,7 +139,8 @@ def rossby_r(sf2, dr, fcor):
     return sf2**(1/2)/(dr*fcor)
 
 @delayed
-def process_dcorr(dcorr1, dcorr2, Udata, Vdata, Xg, Yg, grid):
+def process_dcorr(dcorr1, dcorr2, Udata, Vdata, Xg, Yg, grid,
+                  reduce_xy=False):
     """Compute separation distance and velocity components for one grid shift (Dask delayed).
 
     Args:
@@ -150,10 +151,17 @@ def process_dcorr(dcorr1, dcorr2, Udata, Vdata, Xg, Yg, grid):
         Xg: Broadcasted x-coordinate DataArray.
         Yg: Broadcasted y-coordinate DataArray.
         grid: Coordinate system: 'm' for metric, 'deg' for lat/lon.
+        reduce_xy: If True, compute SF powers and average over (x, y)
+            inside this task so the returned arrays have dims (time,)
+            instead of (x, y, time). Shrinks the downstream dask graph
+            dramatically for large regions / large maxcorr.
 
     Returns:
-        tuple: (dr, ull, utt) where dr is separation distance, ull is
-            longitudinal velocity difference, and utt is transverse velocity difference.
+        tuple:
+            If reduce_xy is False: (dr, ull, utt) with dims (x, y, time).
+            If reduce_xy is True: (dr, ull, utt, sf2, sf3) already
+            spatially averaged, with dims (time,). sf2 = <ull**2>,
+            sf3 = <ull**3> (powers taken BEFORE the mean).
     """
     kwargs = {'x': dcorr1, 'y': dcorr2}
     dU, dV = diff_vel(Udata, Vdata, kwargs)
@@ -161,39 +169,50 @@ def process_dcorr(dcorr1, dcorr2, Udata, Vdata, Xg, Yg, grid):
     dx = distx_dlon(Xg, Yg, kwargs, grid)
     dr = (dx**2 + dy**2)**(1/2)
 
-    #import pdb; pdb.set_trace()
     ull, utt = uv_ult(dU, dV, dx, dy)
-#     sf2, sf3 = SF2_3(ull, utt)
-    
-    return dr, ull, utt 
 
-def calculateSF_2(Uds, maxcorr, shiftdim, grid):
+    if reduce_xy:
+        # Take powers BEFORE the spatial mean so we get <ull^n>,
+        # not (<ull>)^n.
+        sf2 = ull**2
+        sf3 = ull * sf2
+        dims = ('x', 'y')
+        return (dr.mean(dim=dims, skipna=True),
+                ull.mean(dim=dims, skipna=True),
+                utt.mean(dim=dims, skipna=True),
+                sf2.mean(dim=dims, skipna=True),
+                sf3.mean(dim=dims, skipna=True))
+
+    return dr, ull, utt
+
+def calculateSF_2(Uds, maxcorr, shiftdim, grid, reduce_xy=False):
     '''Calculates structure functions without ensemble averaging.
     Input:
-        Uds: Xarray dataset with uvel and vvel as the zonal and meridional velocity components, 
+        Uds: Xarray dataset with uvel and vvel as the zonal and meridional velocity components,
              and X and Y as the zonal and meridional distances, and time as the time.
         maxcorr: Maximum number of shifts.
         shiftdim: Dimensions to shift.
         grid: 'm' when is in meters and 'deg' when is lat/lon
-        
+        reduce_xy: If True, take the (x, y) spatial mean inside each
+            per-shift task (with SF powers taken first). Output dims
+            become (time, dcorr) and du2/du3 are included. Big win for
+            peak memory and dask graph size on large regions.
+
     Output:
-        SF_dist: Xarray dataset with dimensions X, Y, time, dcorr (number of shifts) and variables:
-            ulls: du_L longitudinal component
-            utts: du_T transversal component
-            dr: separation distance between pairs of observations'''
-    
+        SF_dist: Xarray dataset.
+            reduce_xy=False: dims (x, y, time, dcorr), variables ulls, utts, dr.
+            reduce_xy=True:  dims (time, dcorr), variables ulls, utts, dr, du2, du3.'''
+
     output_vars = {}
-    dr_list, sf2_list, sf3_list = [], [], []
-    ull_list, utt_list = [], []
-    
+
     Nt = int(len(Uds.time))
-    
+
     Udata = Uds.u.chunk({'x': 256, 'y': 256, 'time': Nt})
     Vdata = Uds.v.chunk({'x': 256, 'y': 256, 'time': Nt})
 
     # Precompute meshgrid once
     Xg, Yg, tg = xr.broadcast(Uds.x, Uds.y, Uds.time)
-    
+
     # Parallelize the loops with Dask
     tasks = []
     for dcorr1 in range(0, maxcorr):
@@ -201,39 +220,55 @@ def calculateSF_2(Uds, maxcorr, shiftdim, grid):
             #if dcorr1 + dcorr2 != 0:
         for dcorr2 in range(-(maxcorr-1), maxcorr):
             if (dcorr1>0) or ((dcorr1 == 0) & (dcorr2 > 0)):
-                tasks.append(process_dcorr(dcorr1, dcorr2, Udata, Vdata, Xg, Yg, grid))
+                tasks.append(process_dcorr(
+                    dcorr1, dcorr2, Udata, Vdata, Xg, Yg, grid,
+                    reduce_xy=reduce_xy))
 
     # Compute the tasks in parallel using Dask
     with ProgressBar():
         results = compute(*tasks)  # <-- Use compute from Dask
-    
+
     # Unpack results from Dask's delayed objects
-#     dr_list, ull_list, utt_list, sf2_list, sf3_list = zip(*results)
-    dr_list, ull_list, utt_list = zip(*results)
-        
+    if reduce_xy:
+        dr_list, ull_list, utt_list, sf2_list, sf3_list = zip(*results)
+    else:
+        dr_list, ull_list, utt_list = zip(*results)
+
     # Add progress bar on the concatenation (if needed)
     with tqdm(total=len(dr_list), desc="Concatenating results", position=2) as pbar:
         dr = xr.concat(dr_list, dim='dcorr')
         ull = xr.concat(ull_list, dim='dcorr')
         utt = xr.concat(utt_list, dim='dcorr')
-#         sf2 = xr.concat(sf2_list, dim='dcorr')
-#         sf3 = xr.concat(sf3_list, dim='dcorr')
+        if reduce_xy:
+            sf2 = xr.concat(sf2_list, dim='dcorr')
+            sf3 = xr.concat(sf3_list, dim='dcorr')
         pbar.update(len(dr_list))  # Update progress after concatenation is done
-    
+
     output_vars['dr'] = dr
     output_vars['dr'].name = '$r$'
     output_vars['dr'].attrs['long_name'] = 'Separation distance $r$'
     output_vars['dr'].attrs['units'] = 'meters'
-    
+
     output_vars['ulls'] = ull
     output_vars['ulls'].name = '$\\delta u_L(\\mathbf{s}, \\mathbf{r}, t)$'
     output_vars['ulls'].attrs['long_name'] = 'Longitudinal velocity fluctuation component'
     output_vars['ulls'].attrs['units'] = 'm/s'
-    
+
     output_vars['utts'] = utt
     output_vars['utts'].name = '$\\delta u_T(\\mathbf{s}, \\mathbf{r}, t)$'
     output_vars['utts'].attrs['long_name'] = 'Transversal velocity fluctuation component'
     output_vars['utts'].attrs['units'] = 'm/s'
+
+    if reduce_xy:
+        output_vars['du2'] = sf2
+        output_vars['du2'].attrs['long_name'] = (
+            'Samples of second-order structure function (spatial mean)')
+        output_vars['du2'].attrs['units'] = 'm^2/s^2'
+
+        output_vars['du3'] = sf3
+        output_vars['du3'].attrs['long_name'] = (
+            'Samples of third-order structure function (spatial mean)')
+        output_vars['du3'].attrs['units'] = 'm^3/s^3'
     
 #     output_vars['du1'] = ull + utt
 #     output_vars['du1'].name = '$\\delta u1(\\mathbf{s}, \\mathbf{r}, t)$'
