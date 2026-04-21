@@ -199,6 +199,7 @@ def parse_SF(SF_file:str, Ndays:int):
             duL reference dataset.
     """
     # Load
+    print(f"Loading {SF_file}")
     SFds = xarray.load_dataset(SF_file)
     qg, mSF_15_duL = qg_utils.load_qg(use_SFduL=True)
     SF_dict_duL = qg_utils.calc_dus(qg, mSF_15_duL)

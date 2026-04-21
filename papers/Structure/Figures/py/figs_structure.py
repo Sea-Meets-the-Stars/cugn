@@ -1463,21 +1463,33 @@ def fig_full_qg_SF(outfile:str='fig_full_qg_SF.png'):
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
-def fig_qg_100km_vs_full(x0:int=400, y0:int=400,
+def fig_qg_subregion_vs_full(x0:int=400, y0:int=400, dx:int=100,
                           outfile:str='fig_qg_100km_vs_full.png'):
     """
     Compare QG 5-year structure functions: 100km region vs full box.
     Plots S1 (duL), S2 (du^2), and S3 (du^3) side by side.
     """
     # Use parse_SF() for both full box and 100km region calculations
-    region_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_5years.nc'
+    if dx == 100:
+        region_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_5years.nc'
+    elif dx == 200:
+        region_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_200km_5years.nc'
+    else:
+        raise ValueError(f'Invalid dx: {dx}')
+
     Ndays = 1825  # all 5 years of daily data
     rr1_full, rrr1_region, du1_region, du2_region, du3_region, \
         du3_corr_region, dull_mn_full, du2_mn_full, du3_mn_full = \
         qg_uL_SF.parse_SF(region_file, Ndays)
 
-    # Mask region data to r <= 100 km
-    rcut = rrr1_region <= 100.
+    # Cut on r
+    if dx == 100:
+        rcut = rrr1_region <= 100.
+    elif dx == 200:
+        rcut = rrr1_region <= 200.
+    else:
+        raise ValueError(f'Invalid dx: {dx}')
+
     rrr1_region = rrr1_region[rcut]
     du1_region = du1_region[rcut]
     du2_region = du2_region[rcut]
@@ -2127,11 +2139,18 @@ def main(flg):
 
     # QG 100km region vs full box
     if flg == 25:
-        #fig_qg_100km_vs_full()
-        #fig_qg_100km_vs_full(x0=500, y0=500, 
+        # 100km
+        #fig_qg_subregion_vs_full()
+        #fig_qg_subregion_vs_full(x0=500, y0=500, 
         #                      outfile='fig_qg_100km_vs_full_x500_y500.png'  )
-        fig_qg_100km_vs_full(x0=300, y0=500, 
-                              outfile='fig_qg_100km_vs_full_x300_y500.png'  )
+        #fig_qg_subregion_vs_full(x0=300, y0=500, 
+        #                      outfile='fig_qg_100km_vs_full_x300_y500.png'  )
+
+        # 200km
+        #fig_qg_subregion_vs_full(x0=400, y0=400, dx=200, 
+        #                      outfile='fig_qg_200km_vs_full_x400_y400.png'  )
+        fig_qg_subregion_vs_full(x0=200, y0=600, dx=200, 
+                              outfile='fig_qg_200km_vs_full_x200_y600.png'  )
 
 # Command line execution
 if __name__ == '__main__':

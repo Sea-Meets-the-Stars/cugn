@@ -68,7 +68,7 @@ def test_full(ndays=15, maxcorr=60):
 
 def run_one_region(xlim:tuple, ylim:tuple, outfile:str,
                    timelast=180, clobber:bool=False,
-                   ndays:int=60, maxcorr:int=30):
+                   ndays:int=60, maxcorr:int=30, rbins:np.ndarray=None):
     """ 
     Calculate the structure function for a region of the QG model output.
 
@@ -79,6 +79,7 @@ def run_one_region(xlim:tuple, ylim:tuple, outfile:str,
         timelast: last time index to load
         ndays: number of days to calculate the structure function
         maxcorr: maximum correlation distance
+        rbins: array of distance bins in meters
     """
 
     # Clobber?
@@ -120,8 +121,9 @@ def run_one_region(xlim:tuple, ylim:tuple, outfile:str,
         data_avers = data_slice.mean(dim=('x','y'), skipna=True).compute()
 
     # Defines distance bins
-    dr = 5000 # meters
-    rbins = np.arange(0, 1.3e5, dr) # 130 km
+    if rbins is None:
+        dr = 5000 # meters
+        rbins = np.arange(0, 1.3e5, dr) # 130 km
     mid_rbins = 0.5*(rbins[:-1] + rbins[1:])
 
     # Average over orientation
@@ -145,7 +147,7 @@ if __name__ == '__main__':
                             f'Output/SF_region_x{int(x0)}_y{int(y0)}_60days.nc', 
                             ndays=100, maxcorr=30)
 
-    # Regions for 5 years
+    # 100km regions for 5 years
     if True:
         for x0 in [300., 400, 500.]:
             for y0 in [300., 400, 500.]:
@@ -156,10 +158,13 @@ if __name__ == '__main__':
 
     # 200km regions for 5 years
     if True:
+        dr = 5000 # meters
+        rbins = np.arange(0, 1.6e5, dr) # 160 km
         for x0 in [200., 400, 600.]:
             for y0 in [200., 400, 600.]:
                 run_one_region((x0, x0+200.), (y0, y0+200.),
                             f'Output/SF_region_x{int(x0)}_y{int(y0)}_200km_5years.nc',
+                            rbins=rbins,
                             timelast=int(365*5.1),
                             ndays=365*5, maxcorr=50)
 
@@ -173,7 +178,7 @@ if __name__ == '__main__':
                             ndays=365*5, maxcorr=90)
 
     # Drifter region for 100 days
-    if True:
+    if False:
         x0, y0 = 450., 450.
         run_one_region((x0, x0+100.), (y0, y0+100.), 
             f'Output/SF_region_x{int(x0)}_y{int(y0)}_100days.nc',
