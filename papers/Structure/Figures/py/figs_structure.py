@@ -1410,14 +1410,10 @@ def fig_full_qg_SF(outfile:str='fig_full_qg_SF.png'):
 
     # Unpack a bit
     rr1 = SF_dict_duL['rr1']
-
     # du1
     dull_mn = SF_dict_duL['dull_mn']
-    du1_mn = SF_dict_duL['du1_mn']
-
     # du2
     du2_mn_duL = SF_dict_duL['du2_mn']
-
     # du3
     du3_mn_duL = SF_dict_duL['du3_mn']
 
@@ -1464,6 +1460,77 @@ def fig_full_qg_SF(outfile:str='fig_full_qg_SF.png'):
         cugn_plotting.set_fontsize(ax, 13)
 
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+def fig_qg_100km_vs_full(x0:int=400, y0:int=400,
+                          outfile:str='fig_qg_100km_vs_full.png'):
+    """
+    Compare QG 5-year structure functions: 100km region vs full box.
+    Plots S1 (duL), S2 (du^2), and S3 (du^3) side by side.
+    """
+    # Use parse_SF() for both full box and 100km region calculations
+    region_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_5years.nc'
+    Ndays = 1825  # all 5 years of daily data
+    rr1_full, rrr1_region, du1_region, du2_region, du3_region, \
+        du3_corr_region, dull_mn_full, du2_mn_full, du3_mn_full = \
+        qg_uL_SF.parse_SF(region_file, Ndays)
+
+    # Mask region data to r <= 100 km
+    rcut = rrr1_region <= 100.
+    rrr1_region = rrr1_region[rcut]
+    du1_region = du1_region[rcut]
+    du2_region = du2_region[rcut]
+    du3_region = du3_region[rcut]
+    du3_corr_region = du3_corr_region[rcut]
+
+    # Start the figure (3-panel layout like fig_full_qg_SF)
+    fig = plt.figure(figsize=(10,3))
+    plt.clf()
+    gs = gridspec.GridSpec(1,3)
+
+    lsz = 7.
+
+    # ################################################
+    # du (first-order, longitudinal)
+    ax0 = plt.subplot(gs[0])
+    ax0.semilogx(rr1_full*1e-3, dull_mn_full*1e3, 'k', linewidth=1,
+                label=r'Full box $<\delta u_L>$')
+    ax0.semilogx(rrr1_region, du1_region*1e3, 'ro', markersize=3,
+                label=r'100km $<\delta u_L>$')
+    ax0.legend(fontsize=lsz, loc='upper left')
+    ax0.set_xlabel(r'$r$ [km]')
+    ax0.set_ylabel(r'$<\delta u> \, 10^{-3}$ [m/s]')
+
+    # ################################################
+    # du2 (second-order)
+    ax2 = plt.subplot(gs[1])
+    ax2.loglog(rr1_full*1e-3, du2_mn_full, 'k', linewidth=1,
+                label=r'Full box $<\delta u_L^2>$')
+    ax2.loglog(rrr1_region, du2_region, 'ro', markersize=3,
+                label=r'100km $<\delta u_L^2>$')
+    ax2.legend(fontsize=lsz, loc='upper left')
+    ax2.set_xlabel(r'$r$ [km]')
+    ax2.set_ylabel(r'$<\delta u^2> \, {\rm [m/s]^2}$')
+
+    # ################################################
+    # du3 (third-order, scaled by 1e-3)
+    ax3 = plt.subplot(gs[2])
+    ax3.semilogx(rr1_full*1e-3, du3_mn_full*1e3, 'k', linewidth=1,
+                label=r'Full box $<\delta u_L^3>$')
+    ax3.semilogx(rrr1_region, du3_region*1e3, 'ro', markersize=3,
+                label=r'100km $<\delta u_L^3>$')
+    # Corrected du3 for 100km region (open red circles)
+    ax3.semilogx(rrr1_region, du3_corr_region*1e3, 'ro', markersize=3,
+                markerfacecolor='none', label=r'100km corrected')
+    ax3.legend(fontsize=lsz, loc='upper left')
+    ax3.set_xlabel(r'$r$ [km]')
+    ax3.set_ylabel(r'$<\delta u^3> \, 10^{-3} \, {\rm [m/s]^3}$')
+
+    for ax in [ax0, ax2, ax3]:
+        cugn_plotting.set_fontsize(ax, 13)
+
+    plt.tight_layout()
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
@@ -2057,6 +2124,14 @@ def main(flg):
     # Full grid, 5 year SF
     if flg == 24:
         fig_full_qg_SF()
+
+    # QG 100km region vs full box
+    if flg == 25:
+        #fig_qg_100km_vs_full()
+        #fig_qg_100km_vs_full(x0=500, y0=500, 
+        #                      outfile='fig_qg_100km_vs_full_x500_y500.png'  )
+        fig_qg_100km_vs_full(x0=300, y0=500, 
+                              outfile='fig_qg_100km_vs_full_x300_y500.png'  )
 
 # Command line execution
 if __name__ == '__main__':
