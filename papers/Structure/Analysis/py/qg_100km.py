@@ -70,8 +70,9 @@ def run_one_region(xlim:tuple, ylim:tuple, outfile:str,
                    timelast=180, clobber:bool=False,
                    ndays:int=60, maxcorr:int=30,
                    time_batch:int=365,
-                   reduce_xy:bool=False):
-    """
+                   reduce_xy:bool=False,
+                   rbins:np.ndarray=None):
+    """ 
     Calculate the structure function for a region of the QG model output.
 
     The SF pipeline is run on consecutive time slabs of length `time_batch`
@@ -92,6 +93,7 @@ def run_one_region(xlim:tuple, ylim:tuple, outfile:str,
             Shrinks the dask graph from ~maxcorr^2 full-grid nodes to
             ~maxcorr^2 (time,) nodes. Big win on large regions; results
             are mathematically equivalent.
+        rbins: array of distance bins in meters
     """
 
     # Clobber?
@@ -112,8 +114,32 @@ def run_one_region(xlim:tuple, ylim:tuple, outfile:str,
     Udsn = Udsn.isel(x=iregion_x, y=iregion_y, time=np.arange(0, ndays))
 
     # Defines distance bins (shared across batches)
-    dr = 5000 # meters
-    rbins = np.arange(0, 1.3e5, dr) # 130 km
+    if rbins is None:
+        dr = 5000 # meters
+        rbins = np.arange(0, 1.3e5, dr) # 130 km
+
+    # Calculate structure function
+    SFtest = strucFunct2_ai.calculateSF_2(Udsn, maxcorr, shiftdim, grid)
+
+    #embed(header='103 of run_one_region')
+
+    # Higher order;  Use duL only
+    #SF2, SF3 = strucFunct2_ai.SF2_3_ul(SFtest.ulls)
+
+    # Slice the data to include the current chunk
+    data_slice = SFtest.isel(time=slice(0,ndays))
+        
+    # Calculates du1, du2 and du3
+    print(f'Calculating du2 and du3 for {outfile}')
+    sf2, sf3 = strucFunct2_ai.SF2_3_ul(data_slice.ulls)#, data_slice.dut)
+    data_slice['du2'] = sf2
+    data_slice['du3'] = sf3
+        
+    # Averages over all $s$ positions
+    print(f'Averaging over all $s$ positions for {outfile}')
+    with ProgressBar():
+        data_avers = data_slice.mean(dim=('x','y'), skipna=True).compute()
+
     mid_rbins = 0.5*(rbins[:-1] + rbins[1:])
 
     # Loop over time batches
@@ -178,7 +204,7 @@ if __name__ == '__main__':
                             f'Output/SF_region_x{int(x0)}_y{int(y0)}_60days.nc', 
                             ndays=100, maxcorr=30)
 
-    # Regions for 5 years
+    # 100km regions for 5 years
     if True:
         for x0 in [300., 400, 500.]:
             for y0 in [300., 400, 500.]:
@@ -189,10 +215,13 @@ if __name__ == '__main__':
 
     # 200km regions for 5 years
     if True:
+        dr = 5000 # meters
+        rbins = np.arange(0, 1.6e5, dr) # 160 km
         for x0 in [200., 400, 600.]:
             for y0 in [200., 400, 600.]:
                 run_one_region((x0, x0+200.), (y0, y0+200.),
                             f'Output/SF_region_x{int(x0)}_y{int(y0)}_200km_5years.nc',
+                            rbins=rbins,
                             timelast=int(365*5.1),
                             ndays=365*5, maxcorr=50, reduce_xy=True)
 
@@ -206,7 +235,7 @@ if __name__ == '__main__':
                             ndays=365*5, maxcorr=90)
 
     # Drifter region for 100 days
-    if True:
+    if False:
         x0, y0 = 450., 450.
         run_one_region((x0, x0+100.), (y0, y0+100.), 
             f'Output/SF_region_x{int(x0)}_y{int(y0)}_100days.nc',

@@ -18,6 +18,11 @@ If you need to run python, use the conda environment `os_313`.
 
 When running `run_one_region()` in `qg_100km.py`,  I run out of memory when running on a 200km region for 5 years using maxcorr=50.  Do I have any other option than to reduce the maxcorr?
 
+The "Averages over all $s$ positions" is taking a very long time for a      
+  single batch to compute.  Is this sensible? 
+
+claude --resume efb6e1ec-c2ac-4ef4-80ff-818cbee72eb7
+
 
 
 # Prompts
