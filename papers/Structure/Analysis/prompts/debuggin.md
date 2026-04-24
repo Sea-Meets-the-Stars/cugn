@@ -30,3 +30,5 @@ claude --resume efb6e1ec-c2ac-4ef4-80ff-818cbee72eb7
 1. Read this file.  Work on the First step for debugging calc_SF_5years() as described above.
 
 2. Read this file.  Work on the issue in Running regions as described above.
+
+3. I increased rbins to 160 km for the 200km regions for 5 years.  I have run out of memory when running on a 200km region for 5 years using maxcorr=50.  What might you suggest?
