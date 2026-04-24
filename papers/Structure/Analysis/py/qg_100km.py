@@ -117,29 +117,6 @@ def run_one_region(xlim:tuple, ylim:tuple, outfile:str,
     if rbins is None:
         dr = 5000 # meters
         rbins = np.arange(0, 1.3e5, dr) # 130 km
-
-    # Calculate structure function
-    SFtest = strucFunct2_ai.calculateSF_2(Udsn, maxcorr, shiftdim, grid)
-
-    #embed(header='103 of run_one_region')
-
-    # Higher order;  Use duL only
-    #SF2, SF3 = strucFunct2_ai.SF2_3_ul(SFtest.ulls)
-
-    # Slice the data to include the current chunk
-    data_slice = SFtest.isel(time=slice(0,ndays))
-        
-    # Calculates du1, du2 and du3
-    print(f'Calculating du2 and du3 for {outfile}')
-    sf2, sf3 = strucFunct2_ai.SF2_3_ul(data_slice.ulls)#, data_slice.dut)
-    data_slice['du2'] = sf2
-    data_slice['du3'] = sf3
-        
-    # Averages over all $s$ positions
-    print(f'Averaging over all $s$ positions for {outfile}')
-    with ProgressBar():
-        data_avers = data_slice.mean(dim=('x','y'), skipna=True).compute()
-
     mid_rbins = 0.5*(rbins[:-1] + rbins[1:])
 
     # Loop over time batches
