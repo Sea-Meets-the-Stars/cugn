@@ -82,13 +82,14 @@ def run_one(qg_xt:dict, clobber:bool=False):
         Sn_LL, Sn_TT = calc_sf.calc_drifter_sf(drifter_traj, drifter_sf)
     
     ## Eulerian
-    root = qg_root(qg_xt)
-    eulerian_file = f'Output/qg_eulerian_SF_{root}.nc'
-    qg_100km.run_one_region((qg_xt['x'], qg_xt['x']+qg_xt['dx']), 
-        (qg_xt['y'], qg_xt['y']+qg_xt['dx']),
-            eulerian_file,
-            timelast=7200-qg_xt['ts']-2,
-            ndays=qg_xt['nd'], maxcorr=30, clobber=clobber)
+    if True:
+        root = qg_root(qg_xt)
+        eulerian_file = f'Output/qg_eulerian_SF_{root}.nc'
+        qg_100km.run_one_region((qg_xt['x'], qg_xt['x']+qg_xt['dx']), 
+            (qg_xt['y'], qg_xt['y']+qg_xt['dx']),
+                eulerian_file,
+                timelast=7200-qg_xt['ts']-2,
+                ndays=qg_xt['nd'], maxcorr=30, clobber=clobber)
 
 # Command line
 if __name__ == '__main__':

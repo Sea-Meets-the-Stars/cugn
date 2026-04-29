@@ -1,8 +1,12 @@
-
+import os
+import sys
 import numpy as np
 
 from profiler import gliderdata
 from profiler import profilerpairs
+
+sys.path.append(os.path.abspath("../Analysis/py"))
+import glider_io
 
 from IPython import embed
 
@@ -26,7 +30,7 @@ def load_SF(dataset:str, variables = 'duLduLduL', iz:int=5,
             with sufficient pairs), 'Skeys' (list of structure function key names).
     """
    # Load dataset
-    profilers = gliderdata.load_dataset(dataset)
+    profilers = glider_io.load_dataset(dataset)
 
     # Cut on valid velocity data 
     nbins = 20

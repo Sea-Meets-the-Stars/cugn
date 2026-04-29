@@ -34,19 +34,20 @@ import qg_utils
 import qg_uL_SF
 import qg_observe
 import qg_io
+import glider_io
 
 sys.path.append(os.path.abspath("../Analysis/QG/py"))
 import data_utils
-import glider_io
 
 Sn_lbls = cugn_plotting.Sn_lbls
 
-def fig_separations(dataset:str, outroot='fig_sep', max_time:float=10.):
+def fig_separations(dataset:str, outroot='fig_sep', max_time:float=10.,
+                    fsz:float=10., ncol:int=2):
     outfile = f'{outroot}_{dataset}.png'
 
     # Load dataset
     profilers = glider_io.load_dataset(dataset)
-    embed(header='45 of figs_structure')
+    #embed(header='45 of figs_structure')
     
 
     # Generate pairs
@@ -75,7 +76,7 @@ def fig_separations(dataset:str, outroot='fig_sep', max_time:float=10.):
 
     ax_ll.set_xlabel('Longitude [deg]')
     ax_ll.set_ylabel('Latitude [deg]')
-    ax_ll.legend(fontsize=4, ncol=2,
+    ax_ll.legend(fontsize=fsz, ncol=ncol,
                  loc='upper left')
 
     ax_ll.grid()
@@ -206,6 +207,7 @@ def fig_structure(dataset:str, outroot='fig_structure',
                   outfile:str=None,
                   skip_vel:bool=False,
                   stretch:bool=False,
+                  no_labeling:bool=False,
                   Sn_dict:dict=None,
                   gpair_file:str=None,
                   use_xlim:tuple=None,
@@ -338,7 +340,8 @@ def fig_structure(dataset:str, outroot='fig_structure',
                 text = f'{dataset}\n depth = {(iz+1)*10} m, t<{int(Sn_dict['config']['max_time'])} hr\nAvoid same glider? {same_glider}\n {variables}' 
                 ytxt = 0.8
                 tsz = 16.
-            ax.text(0.1, ytxt, text,
+            if not no_labeling:
+                ax.text(0.1, ytxt, text,
                 transform=ax.transAxes, fontsize=tsz, ha='left')
         # 0 line
         ax.axhline(0., color='red', linestyle='--')
@@ -1417,6 +1420,7 @@ def fig_full_qg_SF(outfile:str='fig_full_qg_SF.png'):
     # du3
     du3_mn_duL = SF_dict_duL['du3_mn']
 
+    clr = 'k'
     # Start the figure
     fig = plt.figure(figsize=(10,3))
     plt.clf()
@@ -1427,11 +1431,11 @@ def fig_full_qg_SF(outfile:str='fig_full_qg_SF.png'):
     ax0 = plt.subplot(gs[0])
 
     ols = ':'
-    ax0.semilogx(rr1*1e-3, dull_mn*1e3, 'b', linewidth=1, 
+    ax0.semilogx(rr1*1e-3, dull_mn*1e3, clr, linewidth=1, 
                 label=r'$<\delta u_L>$')
 
     lsz = 7.
-    ax0.legend(fontsize=lsz, loc='lower left')
+    #ax0.legend(fontsize=lsz, loc='lower left')
     ax0.set_xlabel(r'$r$ [km]')
     ax0.set_ylabel(r'$<\delta u> \, 10^{-3}$ [m/s]')
 
@@ -1439,9 +1443,9 @@ def fig_full_qg_SF(outfile:str='fig_full_qg_SF.png'):
     # du2
     ax2 = plt.subplot(gs[1])
 
-    ax2.loglog(rr1*1e-3, du2_mn_duL, 'b', linewidth=1, 
+    ax2.loglog(rr1*1e-3, du2_mn_duL, clr, linewidth=1, 
                 label=r'New $<\delta u_L^2>$')
-    ax2.legend(fontsize=lsz, loc='lower right')
+    #ax2.legend(fontsize=lsz, loc='lower right')
     ax2.set_xlabel(r'$r$ [km]')
     ax2.set_ylabel(r'$<\delta u^2> \, {\rm [m/s]^2}$')
 
@@ -1450,11 +1454,12 @@ def fig_full_qg_SF(outfile:str='fig_full_qg_SF.png'):
     # du3
     ax3 = plt.subplot(gs[2])
 
-    ax3.semilogx(rr1*1e-3, du3_mn_duL, 'b', linewidth=1, 
+    ax3.semilogx(rr1*1e-3, du3_mn_duL, clr, linewidth=1, 
                 label=r'New $<\delta u_L^3>$')
-    ax3.legend(fontsize=lsz, loc='upper left')
+    #ax3.legend(fontsize=lsz, loc='upper left')
     ax3.set_xlabel(r'$r$ [km]')
     ax3.set_ylabel(r'$<\delta u^3> \, {\rm [m/s]^3}$')
+    ax3.axvline(92.3, color='k', linestyle='--')
 
     for ax in [ax0, ax2, ax3]:
         cugn_plotting.set_fontsize(ax, 13)
@@ -1464,9 +1469,10 @@ def fig_full_qg_SF(outfile:str='fig_full_qg_SF.png'):
     print(f"Saved: {outfile}")
 
 def fig_qg_subregion_vs_full(x0:int=400, y0:int=400, dx:int=100,
-                          outfile:str='fig_qg_100km_vs_full.png'):
+                          outfile:str='fig_qg_100km_vs_full.png',
+                          Ndays:int=1825, llocs=(None,None,None)):
     """
-    Compare QG 5-year structure functions: 100km region vs full box.
+    Compare QG Ndays structure functions: 100km region vs full box.
     Plots S1 (duL), S2 (du^2), and S3 (du^3) side by side.
     """
     # Use parse_SF() for both full box and 100km region calculations
@@ -1477,7 +1483,6 @@ def fig_qg_subregion_vs_full(x0:int=400, y0:int=400, dx:int=100,
     else:
         raise ValueError(f'Invalid dx: {dx}')
 
-    Ndays = 1825  # all 5 years of daily data
     rr1_full, rrr1_region, du1_region, du2_region, du3_region, \
         du3_corr_region, dull_mn_full, du2_mn_full, du3_mn_full = \
         qg_uL_SF.parse_SF(region_file, Ndays)
@@ -1501,41 +1506,43 @@ def fig_qg_subregion_vs_full(x0:int=400, y0:int=400, dx:int=100,
     plt.clf()
     gs = gridspec.GridSpec(1,3)
 
-    lsz = 7.
+    lsz = 9.
+    cfull = 'gray'
 
     # ################################################
     # du (first-order, longitudinal)
     ax0 = plt.subplot(gs[0])
-    ax0.semilogx(rr1_full*1e-3, dull_mn_full*1e3, 'k', linewidth=1,
-                label=r'Full box $<\delta u_L>$')
-    ax0.semilogx(rrr1_region, du1_region*1e3, 'ro', markersize=3,
-                label=r'100km $<\delta u_L>$')
-    ax0.legend(fontsize=lsz, loc='upper left')
+    ax0.semilogx(rr1_full*1e-3, dull_mn_full*1e3, cfull, linewidth=1,
+                label='Full box')
+    ax0.semilogx(rrr1_region, du1_region*1e3, 'ko', markersize=3,
+                label=f'{dx}km region')
+    ax0.legend(fontsize=lsz, loc=llocs[0])
     ax0.set_xlabel(r'$r$ [km]')
     ax0.set_ylabel(r'$<\delta u> \, 10^{-3}$ [m/s]')
 
     # ################################################
     # du2 (second-order)
     ax2 = plt.subplot(gs[1])
-    ax2.loglog(rr1_full*1e-3, du2_mn_full, 'k', linewidth=1,
-                label=r'Full box $<\delta u_L^2>$')
+    ax2.loglog(rr1_full*1e-3, du2_mn_full, cfull, linewidth=1,
+                label=r'Full box') 
     ax2.loglog(rrr1_region, du2_region, 'ro', markersize=3,
-                label=r'100km $<\delta u_L^2>$')
-    ax2.legend(fontsize=lsz, loc='upper left')
+                label=f'{dx}km region')
+    ax2.legend(fontsize=lsz, loc=llocs[1])
     ax2.set_xlabel(r'$r$ [km]')
     ax2.set_ylabel(r'$<\delta u^2> \, {\rm [m/s]^2}$')
 
     # ################################################
     # du3 (third-order, scaled by 1e-3)
     ax3 = plt.subplot(gs[2])
-    ax3.semilogx(rr1_full*1e-3, du3_mn_full*1e3, 'k', linewidth=1,
-                label=r'Full box $<\delta u_L^3>$')
-    ax3.semilogx(rrr1_region, du3_region*1e3, 'ro', markersize=3,
-                label=r'100km $<\delta u_L^3>$')
+    ax3.semilogx(rr1_full*1e-3, du3_mn_full*1e3, cfull, linewidth=1,
+                label='Full box') 
+    ax3.semilogx(rrr1_region, du3_region*1e3, 'bo', markersize=3,
+                label=f'{dx}km region',
+                markerfacecolor='none') 
     # Corrected du3 for 100km region (open red circles)
-    ax3.semilogx(rrr1_region, du3_corr_region*1e3, 'ro', markersize=3,
-                markerfacecolor='none', label=r'100km corrected')
-    ax3.legend(fontsize=lsz, loc='upper left')
+    ax3.semilogx(rrr1_region, du3_corr_region*1e3, 'bo', markersize=3,
+                label=r'Corrected')
+    ax3.legend(fontsize=lsz, loc=llocs[2])
     ax3.set_xlabel(r'$r$ [km]')
     ax3.set_ylabel(r'$<\delta u^3> \, 10^{-3} \, {\rm [m/s]^3}$')
 
@@ -1954,8 +1961,9 @@ def main(flg):
 
     # Separations
     if flg == 1:
-        fig_separations('ARCTERX-2023')
-        fig_separations('Calypso2019', max_time=10.)
+        #fig_separations('ARCTERX-2023', fsz=12, ncol=1)
+        #fig_separations('Calypso2019', max_time=10.)
+        fig_separations('Calypso2022', max_time=10.)
 
     # Delta times
     if flg == 2:
@@ -1981,12 +1989,16 @@ def main(flg):
         #dataset = 'Calypso2019'
         dataset = 'Calypso2022'
         #dataset = 'ARCTERX'
+        #dataset = 'ARCTERX-2023'
         avoid_same_glider = True
         #fig_separations(dataset)
         #fig_dtimes(dataset)
         #fig_dus(dataset)
 
-        fig_structure(dataset, avoid_same_glider=avoid_same_glider)
+        #fig_structure(dataset, avoid_same_glider=avoid_same_glider)
+        fig_structure(dataset, avoid_same_glider=avoid_same_glider,
+            show_correct=False, outfile=f'fig_structure_{dataset}_no_correct.png',
+            no_labeling=True)
         #fig_structure(dataset, avoid_same_glider=avoid_same_glider,
         #              variables='duTduTduT')#, iz=5)
         #fig_structure(dataset, avoid_same_glider=avoid_same_glider,
@@ -2140,7 +2152,7 @@ def main(flg):
     # QG 100km region vs full box
     if flg == 25:
         # 100km
-        #fig_qg_subregion_vs_full()
+        fig_qg_subregion_vs_full()
         #fig_qg_subregion_vs_full(x0=500, y0=500, 
         #                      outfile='fig_qg_100km_vs_full_x500_y500.png'  )
         #fig_qg_subregion_vs_full(x0=300, y0=500, 
@@ -2149,8 +2161,8 @@ def main(flg):
         # 200km
         #fig_qg_subregion_vs_full(x0=400, y0=400, dx=200, 
         #                      outfile='fig_qg_200km_vs_full_x400_y400.png'  )
-        fig_qg_subregion_vs_full(x0=200, y0=600, dx=200, 
-                              outfile='fig_qg_200km_vs_full_x200_y600.png'  )
+        #fig_qg_subregion_vs_full(x0=200, y0=600, dx=200, 
+        #                      outfile='fig_qg_200km_vs_full_x200_y600.png'  )
 
 # Command line execution
 if __name__ == '__main__':

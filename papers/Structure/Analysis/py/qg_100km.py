@@ -204,10 +204,13 @@ if __name__ == '__main__':
 
     # 300km regions for 5 years
     if False:
+        dr = 5000 # meters
+        rbins = np.arange(0, 1.6e5, dr) # 160 km
         for x0 in [200., 500]:
             for y0 in [200., 500]:
                 run_one_region((x0, x0+300.), (y0, y0+300.),
                             f'Output/SF_region_x{int(x0)}_y{int(y0)}_300km_5years.nc',
+                            rbins=rbins,
                             timelast=int(365*5.1),
                             ndays=365*5, maxcorr=90)
 
