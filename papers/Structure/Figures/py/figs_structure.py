@@ -1746,7 +1746,7 @@ def fig_qg_structure(SF_file:str, outfile:str):
 
 def fig_compare_drifters_gliders_eulerian(
     qg_xt:dict, outroot:str='fig_compare_qg_',
-    minN:int=100):
+    minN:int=100, xmax:float=None):
     
     # Filenames
     glider_traj, glider_sf = qg_observe.file_names(qg_xt, 'glider')
@@ -1862,6 +1862,9 @@ def fig_compare_drifters_gliders_eulerian(
         # Legend
         if n == 1:
             ax.legend(fontsize=16)#, loc='lower right')
+        
+        if xmax is not None:
+            ax.set_xlim(None, xmax)
         
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
@@ -2132,14 +2135,15 @@ def main(flg):
     # Compare drifters/gliders + Eulerian
     if flg == 22:
         qg_xt = {
-            #'ts': 5001,
-            'ts': 6001,
+            'ts': 5001,
+            #'ts': 6001,
             'nd': 100,
             'x': 450,
             'y': 450,
             'dx': 100,
         }
-        fig_compare_drifters_gliders_eulerian(qg_xt=qg_xt)
+        fig_compare_drifters_gliders_eulerian(qg_xt=qg_xt,
+            xmax=100.)
 
     # Test stationary gliders
     if flg == 23:
