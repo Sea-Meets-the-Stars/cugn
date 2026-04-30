@@ -879,6 +879,7 @@ def fig_qg_duL_vs_time(x0:int,y0:int, outroot:str='fig_qg_duL_vs_time',
         #    output_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_300km_5years.nc' 
         #else:
         #    output_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_5years.nc' 
+        print(f'Loading {output_file}')
         SFds = xarray.load_dataset(output_file)
 
     # Start the figure
@@ -1085,6 +1086,7 @@ def fig_qg_duL_by_year(x0:int,y0:int, outroot:str='fig_qg_duL_yearly',
     output_file = qg_io.qg_output_file(x0, y0, dx=dx)
 
     # Load
+    print(f'Loading {output_file}')
     SFds = xarray.load_dataset(output_file)
 
     # Start the figure
@@ -2155,7 +2157,7 @@ def main(flg):
         ix, iy = 0, 0
         ix, iy = 300, 300
         #ix, iy = 200, 200
-        #fig_qg_duL_vs_time(ix,iy, dx=200)
+        fig_qg_duL_vs_time(ix,iy)#, dx=200)
         #ix, iy = 400, 600
         #fig_qg_duL_by_year(ix,iy,dx=200)
         fig_qg_duL_by_year(ix,iy)

@@ -184,6 +184,19 @@ if __name__ == '__main__':
                             timelast=int(365*5.1),
                             ndays=365*5, maxcorr=50, reduce_xy=True)
 
+    # 500km
+    if True:  # This blows up the memory
+        dr = 5000 # meters
+        rbins = np.arange(0, 1.6e5, dr) # 160 km
+        for x0 in [200.]:
+            for y0 in [200.]:
+                run_one_region((x0, x0+500.), (y0, y0+500.),
+                            f'Output/SF_region_x{int(x0)}_y{int(y0)}_500km_5years.nc',
+                            rbins=rbins,
+                            timelast=int(365*5.1),
+                            ndays=365*5, maxcorr=50, reduce_xy=True)
+
+
 
     # Regions for 100 days
     if False:

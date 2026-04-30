@@ -146,6 +146,12 @@ def main(flg):
         #    outfile='fig_qg_100days_100km_400_400.png',
         #    llocs=('lower left', None, 'lower left'))
 
+        # 1825 days, 100km
+        #figs_structure.fig_qg_subregion_vs_full(Ndays=5*365,
+        #    x0=300, y0=300,
+        #    outfile='fig_qg_5years_100km_300_300.png',
+        #    llocs=('lower left', None, 'lower left'))
+
         # 100 days, 200km
         #figs_structure.fig_qg_subregion_vs_full(Ndays=100, dx=200,
         #    outfile='fig_qg_100days_200km_400_400.png',
@@ -156,16 +162,32 @@ def main(flg):
         #    outfile='fig_qg_1000days_200km_400_400.png',
         #    llocs=('lower left', None, 'lower left'))
 
+        # 5 years, 200km 
+        #figs_structure.fig_qg_subregion_vs_full(Ndays=5*365, dx=200,
+        #    x0=200, y0=200,
+        #    outfile='fig_qg_5years_200km_200_200.png',
+        #    llocs=('lower left', None, 'lower left'))
+        #figs_structure.fig_qg_subregion_vs_full(Ndays=5*365, dx=200,
+        #    x0=400, y0=400,
+        #    outfile='fig_qg_5years_200km_400_400.png',
+        #    llocs=('lower left', None, 'lower left'))
+
         # 1000 days, 200km; 400, 600
         #figs_structure.fig_qg_subregion_vs_full(Ndays=1000, dx=200,
         #    y0=600,
         #    outfile='fig_qg_1000days_200km_400_600.png',
         #    llocs=('lower left', None, 'lower left'))
 
-        # 1000 days, 300km; 400, 600
-        figs_structure.fig_qg_subregion_vs_full(Ndays=1000, dx=300,
+        # 1000 days, 300km; 
+        #figs_structure.fig_qg_subregion_vs_full(Ndays=1000, dx=300,
+        #    x0=200, y0=200,
+        #    outfile='fig_qg_1000days_300km_200_200.png',
+        #    llocs=('lower left', None, 'lower left'))
+
+        # 5 years, 300km; 300km
+        figs_structure.fig_qg_subregion_vs_full(Ndays=5*365, dx=300,
             x0=200, y0=200,
-            outfile='fig_qg_1000days_300km_200_200.png',
+            outfile='fig_qg_5years_300km_200_200.png',
             llocs=('lower left', None, 'lower left'))
 
 # Command line execution
