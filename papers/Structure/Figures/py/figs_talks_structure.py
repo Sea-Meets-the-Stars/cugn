@@ -157,11 +157,16 @@ def main(flg):
         #    llocs=('lower left', None, 'lower left'))
 
         # 1000 days, 200km; 400, 600
-        figs_structure.fig_qg_subregion_vs_full(Ndays=1000, dx=200,
-            y0=600,
-            outfile='fig_qg_1000days_200km_400_600.png',
-            llocs=('lower left', None, 'lower left'))
+        #figs_structure.fig_qg_subregion_vs_full(Ndays=1000, dx=200,
+        #    y0=600,
+        #    outfile='fig_qg_1000days_200km_400_600.png',
+        #    llocs=('lower left', None, 'lower left'))
 
+        # 1000 days, 300km; 400, 600
+        figs_structure.fig_qg_subregion_vs_full(Ndays=1000, dx=300,
+            x0=200, y0=200,
+            outfile='fig_qg_1000days_300km_200_200.png',
+            llocs=('lower left', None, 'lower left'))
 
 # Command line execution
 if __name__ == '__main__':
