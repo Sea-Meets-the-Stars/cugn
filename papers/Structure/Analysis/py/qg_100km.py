@@ -173,7 +173,7 @@ if __name__ == '__main__':
 
     # Full
     #test_full()
-    if True:
+    if False:  # This blows up the memory
         dr = 5000 # meters
         rbins = np.arange(0, 1.6e5, dr) # 160 km
         for x0 in [0.]:
