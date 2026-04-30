@@ -1557,6 +1557,106 @@ def fig_qg_subregion_vs_full(x0:int=400, y0:int=400, dx:int=100,
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
+
+def fig_qg_test_reduce_xy(x0:int=400, y0:int=500, dx:int=100,
+                          outfile:str='fig_qg_test_reduce_xy.png',
+                          Ndays:int=1825, llocs=(None,None,None)):
+    """
+    Compare QG Ndays structure functions: 100km region vs full box.
+    Plots S1 (duL), S2 (du^2), and S3 (du^3) side by side.
+    """
+    # Use parse_SF() for both full box and 100km region calculations
+    if dx == 100:
+        region_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_5years.nc'
+        orig_region_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_5years_orig.nc'
+    else:
+        raise ValueError(f'Invalid dx: {dx}')
+
+    # Load new
+    rr1_full, rrr1_region, du1_region, du2_region, du3_region, \
+        du3_corr_region, dull_mn_full, du2_mn_full, du3_mn_full = \
+        qg_uL_SF.parse_SF(region_file, Ndays)
+    # Load original
+    rr1_full_orig, rrr1_region_orig, du1_region_orig, du2_region_orig, du3_region_orig, \
+        du3_corr_region_orig, dull_mn_full_orig, du2_mn_full_orig, du3_mn_full_orig = \
+        qg_uL_SF.parse_SF(orig_region_file, Ndays)
+
+    # Cut on r
+    if dx == 100:
+        rcut = rrr1_region <= 100.
+    elif dx == 200:
+        rcut = rrr1_region <= 200.
+    elif dx == 300:
+        rcut = rrr1_region <= 300.
+    else:
+        raise ValueError(f'Invalid dx for cut: {dx}')
+
+    # Cut
+    rrr1_region = rrr1_region[rcut]
+    du1_region = du1_region[rcut]
+    du2_region = du2_region[rcut]
+    du3_region = du3_region[rcut]
+    du3_corr_region = du3_corr_region[rcut]
+
+    rrr1_region_orig = rrr1_region_orig[rcut]
+    du1_region_orig = du1_region_orig[rcut]
+    du2_region_orig = du2_region_orig[rcut]
+    du3_region_orig = du3_region_orig[rcut]
+    du3_corr_region_orig = du3_corr_region_orig[rcut]
+
+    # Start the figure (3-panel layout like fig_full_qg_SF)
+    fig = plt.figure(figsize=(10,3))
+    plt.clf()
+    gs = gridspec.GridSpec(1,3)
+
+    lsz = 9.
+    cfull = 'gray'
+
+    # ################################################
+    # du (first-order, longitudinal)
+    ax0 = plt.subplot(gs[0])
+    ax0.semilogx(rrr1_region, du1_region_orig*1e3, 'rs', markersize=3,
+                label=f'Orig {dx}km region')
+    ax0.semilogx(rrr1_region, du1_region*1e3, 'ko', markersize=3,
+                label=f'{dx}km region')
+    ax0.legend(fontsize=lsz, loc=llocs[0])
+    ax0.set_xlabel(r'$r$ [km]')
+    ax0.set_ylabel(r'$<\delta u> \, 10^{-3}$ [m/s]')
+
+    # ################################################
+    # du2 (second-order)
+    ax2 = plt.subplot(gs[1])
+    ax2.loglog(rrr1_region, du2_region_orig, 'rs', markersize=3,
+                label=f'Orig {dx}km region')
+    ax2.loglog(rrr1_region, du2_region, 'ko', markersize=3,
+                label=f'{dx}km region')
+    ax2.legend(fontsize=lsz, loc=llocs[1])
+    ax2.set_xlabel(r'$r$ [km]')
+    ax2.set_ylabel(r'$<\delta u^2> \, {\rm [m/s]^2}$')
+
+    # ################################################
+    # du3 (third-order, scaled by 1e-3)
+    ax3 = plt.subplot(gs[2])
+    ax3.semilogx(rrr1_region, du3_region_orig*1e3, 'rs', markersize=3,
+                label=f'Orig {dx}km region',
+                markerfacecolor='none') 
+    ax3.semilogx(rrr1_region, du3_region*1e3, 'bo', markersize=3,
+                label=f'{dx}km region',
+                markerfacecolor='none') 
+    # Corrected du3 for 100km region (open red circles)
+    ax3.semilogx(rrr1_region, du3_corr_region*1e3, 'bo', markersize=3,
+                label=r'Corrected')
+    ax3.legend(fontsize=lsz, loc=llocs[2])
+    ax3.set_xlabel(r'$r$ [km]')
+    ax3.set_ylabel(r'$<\delta u^3> \, 10^{-3} \, {\rm [m/s]^3}$')
+
+    for ax in [ax0, ax2, ax3]:
+        cugn_plotting.set_fontsize(ax, 13)
+
+    plt.tight_layout()
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
 def fig_compare_dus(dataset:str, outroot:str='fig_comp_dus',
                   variables = 'duLduLduL',
                   iz:int=5): 
@@ -2171,6 +2271,11 @@ def main(flg):
         #                      outfile='fig_qg_200km_vs_full_x400_y400.png'  )
         #fig_qg_subregion_vs_full(x0=200, y0=600, dx=200, 
         #                      outfile='fig_qg_200km_vs_full_x200_y600.png'  )
+
+    # Test reduce_xy
+    if flg == 26:
+        fig_qg_test_reduce_xy()
+
 
 # Command line execution
 if __name__ == '__main__':
