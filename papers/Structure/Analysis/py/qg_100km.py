@@ -111,7 +111,7 @@ def run_one_region(xlim:tuple, ylim:tuple, outfile:str,
     print(f'Cutting down Usdn to region {xlim} {ylim}')
     print(f'Calculating structure function for {ndays} days '
           f'in batches of {time_batch}')
-    embed(header='run_one_region 114')
+    #embed(header='run_one_region 114')
     Udsn = Udsn.isel(x=iregion_x, y=iregion_y, time=np.arange(0, ndays))
 
     # Defines distance bins (shared across batches)
@@ -213,7 +213,7 @@ if __name__ == '__main__':
                             f'Output/SF_region_x{int(x0)}_y{int(y0)}_300km_5years.nc',
                             rbins=rbins,
                             timelast=int(365*5.1),
-                            ndays=365*5, maxcorr=50)
+                            ndays=365*5, maxcorr=50, reduce_xy=True)
 
     # Drifter region for 100 days
     if False:
