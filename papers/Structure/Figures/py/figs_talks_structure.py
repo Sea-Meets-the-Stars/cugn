@@ -146,6 +146,19 @@ def main(flg):
         #    outfile='fig_qg_100days_100km_400_400.png',
         #    llocs=('lower left', None, 'lower left'))
 
+        # 100 days, 100km
+        #figs_structure.fig_qg_subregion_vs_full(Ndays=100,
+        #    x0=300, y0=300,
+        #    outfile='fig_qg_100days_100km_300_300.png',
+        #    llocs=('lower left', None, 'lower left'))
+
+        # 100 days, 100km
+        figs_structure.fig_qg_subregion_vs_full(Ndays=100,
+            x0=500, y0=300,
+            outfile='fig_qg_100days_100km_500_300.png',
+            llocs=('lower left', None, 'lower left'))
+
+
         # 1825 days, 100km
         #figs_structure.fig_qg_subregion_vs_full(Ndays=5*365,
         #    x0=300, y0=300,
@@ -185,10 +198,16 @@ def main(flg):
         #    llocs=('lower left', None, 'lower left'))
 
         # 5 years, 300km; 300km
-        figs_structure.fig_qg_subregion_vs_full(Ndays=5*365, dx=300,
-            x0=200, y0=200,
-            outfile='fig_qg_5years_300km_200_200.png',
-            llocs=('lower left', None, 'lower left'))
+        #figs_structure.fig_qg_subregion_vs_full(Ndays=5*365, dx=300,
+        #    x0=200, y0=200,
+        #    outfile='fig_qg_5years_300km_200_200.png',
+        #    llocs=('lower left', None, 'lower left'))
+
+        # 5 years, 500km
+        #figs_structure.fig_qg_subregion_vs_full(Ndays=5*365, dx=500,
+        #    x0=200, y0=200,
+        #    outfile='fig_qg_5years_500km_200_200.png',
+        #    llocs=('lower left', None, 'lower left'))
 
 # Command line execution
 if __name__ == '__main__':

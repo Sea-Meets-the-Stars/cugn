@@ -1484,6 +1484,8 @@ def fig_qg_subregion_vs_full(x0:int=400, y0:int=400, dx:int=100,
         region_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_200km_5years.nc'
     elif dx == 300:
         region_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_300km_5years.nc'
+    elif dx == 500:
+        region_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_500km_5years.nc'
     else:
         raise ValueError(f'Invalid dx: {dx}')
 
@@ -1498,6 +1500,8 @@ def fig_qg_subregion_vs_full(x0:int=400, y0:int=400, dx:int=100,
         rcut = rrr1_region <= 200.
     elif dx == 300:
         rcut = rrr1_region <= 300.
+    elif dx == 500:
+        rcut = rrr1_region <= 500.
     else:
         raise ValueError(f'Invalid dx for cut: {dx}')
 
