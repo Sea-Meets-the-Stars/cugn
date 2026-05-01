@@ -184,7 +184,7 @@ def calc_SF_5years(use_dLT:bool=True):
     print(f'Saved: {outfile}')
 
 
-def parse_SF(SF_file:str, Ndays:int):
+def parse_SF(SF_file:str, Ndays:int, i1:int=None):
     """Load and parse a regional SF file, applying third-order cumulant correction.
 
     Args:
@@ -209,7 +209,8 @@ def parse_SF(SF_file:str, Ndays:int):
     rr1 = SF_dict_duL['rr1']
 
     # Cut on time
-    i1 = -1*Ndays
+    if i1 is None:
+        i1 = -1*Ndays
     times = np.arange(i1, i1 + Ndays)
     SFds = SFds.isel(time=times)
 

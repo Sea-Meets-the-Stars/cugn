@@ -2066,6 +2066,95 @@ def fig_test_stationary_gliders(
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
+def fig_qg_all_duL3(dx:int=100, dt:int=100, 
+    outfile:str='fig_qg_all_duL3_100_100km.png',
+    xlim=(10, 100.),
+    ylim=(-0.5, 0.5)):
+
+    # Grab all the files for the given dx
+    nstep = 1825 // dt
+
+    if dx == 100:
+        files = glob.glob('../Analysis/Output/SF_*0_5years.nc')
+    elif dx == 200:
+        files = glob.glob('../Analysis/Output/SF_*200km_5years.nc')
+    else:
+        raise ValueError(f'Invalid dx: {dx}')
+
+    # Loop through on files    
+    all_du3 = []
+    all_du3c = []
+    print("Processing...")
+    for ss, region_file in enumerate(files):
+        for istep in range(nstep):
+            i1 = -1*((istep+1)*dt) 
+            rr1_full, rrr1_region, du1_region, du2_region, du3_region, \
+                du3_corr_region, dull_mn_full, du2_mn_full, du3_mn_full = \
+                qg_uL_SF.parse_SF(region_file, dt, i1=i1)
+            # Save
+            all_du3.append(du3_region)
+            all_du3c.append(du3_corr_region)
+    #embed(header='fig_qg_all_duL3 2091')
+
+    # Calculate the mean and std of the all_du3
+    all_du3 = np.array(all_du3)
+    mean_du3 = np.mean(all_du3, axis=0)
+    std_du3 = np.std(all_du3, axis=0)
+
+    # Corrected
+    all_du3c = np.array(all_du3c)
+    mean_du3c = np.mean(all_du3c, axis=0)
+    std_du3c = np.std(all_du3c, axis=0)
+
+
+    fig = plt.figure(figsize=(6,3))
+    plt.clf()
+    gs = gridspec.GridSpec(1,2)
+
+    # ################################################
+    # du3 (third-order, scaled by 1e-3)
+    ax3 = plt.subplot(gs[0])
+    # Place on top
+    ax3.plot(rr1_full*1e-3, du3_mn_full*1e3, 'k', linewidth=2,
+                label='Full box',zorder=10) 
+    for du3_region in all_du3:
+        # Use thin, semi-transparent lines 
+        ax3.plot(rrr1_region, du3_region*1e3, 'b-', linewidth=0.5, alpha=0.3,
+                label=f'{dx}km region')
+    #ax3.legend(fontsize=lsz, loc=llocs[2])
+    ax3.set_xlabel(r'$r$ [km]')
+    ax3.set_ylabel(r'$<\delta u^3> \, 10^{-3} \, {\rm [m/s]^3}$')
+
+    # ################################################
+    # du3 (third-order corrected)
+    ax3c = plt.subplot(gs[1])
+    # Place on top
+    ax3c.plot(rr1_full*1e-3, du3_mn_full*1e3, 'k', linewidth=2,
+                label='Full box',zorder=10) 
+    # Mean of the regions
+    ax3c.plot(rrr1_region, mean_du3c*1e3, 'r', linewidth=2,
+                label='Full box',zorder=5) 
+
+    for du3_region in all_du3c:
+        # Use thin, semi-transparent lines 
+        ax3c.plot(rrr1_region, du3_region*1e3, 'r-', linewidth=0.5, alpha=0.3,
+                label=f'{dx}km region')
+    #ax3.legend(fontsize=lsz, loc=llocs[2])
+    ax3c.set_xlabel(r'$r$ [km]')
+    ax3c.set_ylabel(r'$<\delta u^3_{\rm corr}> \, 10^{-3} \, {\rm [m/s]^3}$')
+
+    for ax in [ax3, ax3c]:
+        cugn_plotting.set_fontsize(ax, 7)
+        ax.set_xlim(xlim)
+        ax.set_ylim(ylim)
+        # Horizontal line at 0
+        ax.axhline(0., color='gray', linestyle='--')
+
+    plt.tight_layout()
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+
 def main(flg):
     if flg== 'all':
         flg= np.sum(np.array([2 ** ii for ii in range(25)]))
@@ -2281,6 +2370,17 @@ def main(flg):
     # Test reduce_xy
     if flg == 26:
         fig_qg_test_reduce_xy()
+
+    # All duL3
+    if flg == 27:
+        # 100km
+        #fig_qg_all_duL3()
+
+        # 200km
+        fig_qg_all_duL3(dx=200, outfile='fig_qg_all_duL3_100_200km.png',
+                        ylim=(-0.2, 0.2), xlim=(10, 150.))
+        fig_qg_all_duL3(dx=200, outfile='fig_qg_all_duL3_300_200km.png',
+                        dt=300, ylim=(-0.1, 0.1), xlim=(10, 150.))
 
 
 # Command line execution
