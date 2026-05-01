@@ -8,6 +8,7 @@ Follow these guidelines:
 - Use the same plotting style as the other methods in figs_structure.py
 - Use inline comments to explain the code.
 - Code in Python
+- Place imports at the top of modules
 
 # QG 5year in 100km region vs. full box
 

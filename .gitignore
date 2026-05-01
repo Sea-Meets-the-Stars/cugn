@@ -17,6 +17,9 @@ __pycache__/
 *.nc
 *.npz
 
+# Movies
+*.mp4
+
 # Distribution / packaging
 .Python
 build/
