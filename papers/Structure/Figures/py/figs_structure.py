@@ -2144,7 +2144,7 @@ def fig_qg_all_duL3(dx:int=100, dt:int=100,
     ax3c.set_ylabel(r'$<\delta u^3_{\rm corr}> \, 10^{-3} \, {\rm [m/s]^3}$')
 
     for ax in [ax3, ax3c]:
-        cugn_plotting.set_fontsize(ax, 7)
+        cugn_plotting.set_fontsize(ax, 9)
         ax.set_xlim(xlim)
         ax.set_ylim(ylim)
         # Horizontal line at 0
@@ -2377,8 +2377,8 @@ def main(flg):
         #fig_qg_all_duL3()
 
         # 200km
-        fig_qg_all_duL3(dx=200, outfile='fig_qg_all_duL3_100_200km.png',
-                        ylim=(-0.2, 0.2), xlim=(10, 150.))
+        #fig_qg_all_duL3(dx=200, outfile='fig_qg_all_duL3_100_200km.png',
+        #                ylim=(-0.2, 0.2), xlim=(10, 150.))
         fig_qg_all_duL3(dx=200, outfile='fig_qg_all_duL3_300_200km.png',
                         dt=300, ylim=(-0.1, 0.1), xlim=(10, 150.))
 
