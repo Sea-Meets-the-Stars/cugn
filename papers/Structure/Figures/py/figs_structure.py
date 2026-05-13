@@ -2188,8 +2188,8 @@ def main(flg):
 
     # Full run on a daatset
     if flg == 5:
-        #dataset = 'Calypso2019'
-        dataset = 'Calypso2022'
+        dataset = 'Calypso2019'
+        #dataset = 'Calypso2022'
         #dataset = 'ARCTERX'
         #dataset = 'ARCTERX-2023'
         avoid_same_glider = True
@@ -2200,7 +2200,10 @@ def main(flg):
         #fig_structure(dataset, avoid_same_glider=avoid_same_glider)
         fig_structure(dataset, avoid_same_glider=avoid_same_glider,
             show_correct=False, outfile=f'fig_structure_{dataset}_no_correct.png',
-            no_labeling=True)
+            no_labeling=True,
+            use_xlim=(None, 100.),
+            use_ylim=(-0.003, 0.003),
+            )
         #fig_structure(dataset, avoid_same_glider=avoid_same_glider,
         #              variables='duTduTduT')#, iz=5)
         #fig_structure(dataset, avoid_same_glider=avoid_same_glider,
