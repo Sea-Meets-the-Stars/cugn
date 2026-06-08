@@ -34,8 +34,16 @@ import data_utils
 import glider_io
 import struct_defs
 
+# Globals
 Sn_lbls = cugn_plotting.Sn_lbls
 datasets = ['Calypso2019', 'Calypso2022', 'ARCTERX-2023']#, 'ARCTERX-2025']
+focus_dataset = 'Calypso2022'
+
+def set_xmax(counts, rbins, minxmax:float=100):
+    non_zero = counts > 0
+    xmax = rbins[1:][non_zero][-1]
+    xmax = max(xmax, minxmax)
+    return xmax
 
 def fig_experiments(outfile='fig_experiments.png', 
                     max_time:float=10., show_legend:bool=False):
@@ -99,6 +107,151 @@ def fig_experiments(outfile='fig_experiments.png',
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
+
+
+def fig_separations(dataset:str, outroot='fig_separations', 
+                    fsz:float=10., xmax:float=None):
+
+    outfile = f'{outroot}_{dataset}.png'
+    clr = struct_defs.dataset_clrs[dataset]
+
+    # Load dataset
+    #profilers = glider_io.load_dataset(dataset)
+    #embed(header='45 of figs_structure')
+
+    rdict = data_utils.load_SF(
+        dataset=dataset, iz=struct_defs.iz, 
+        minN=struct_defs.minN, btype=struct_defs.btype, 
+        max_time=struct_defs.max_time, 
+        avoid_same_glider=struct_defs.avoid_same_glider)
+    
+    ## Unpack
+    gPairs = rdict['gPairs']
+    Sn_dict = rdict['Sn_dict']
+    goodN = rdict['goodN']
+    Skeys = rdict['Skeys']
+    rbins = rdict['rbins']
+
+    #embed(header='129 of figs_paper_structure')
+
+    # Generate pairs
+    #gPairs = gliderpairs.GliderPairs(gData, max_time=max_time)
+    #gPairs = profilerpairs.ProfilerPairs(profilers, 
+    #                                      max_time=struct_defs.max_time,
+    #                                      debug=False,
+    #                                      randomize=False)
+
+
+    # Start the figure
+    fig = plt.figure(figsize=(6,6))
+    plt.clf()
+    gs = gridspec.GridSpec(1,1)
+
+
+    # Log Separations
+    rbins = data_utils.rbinning(struct_defs.btype, dataset)
+
+    ax_r = plt.subplot(gs[0])
+    # Plot a bar chart histogram from the counts
+    counts = np.array(Sn_dict['config']['N'])
+    ax_r.stairs(counts, rbins, color=clr, fill=True)
+    #_ = sns.histplot(gPairs.r, bins=rbins, ax=ax_r, color=clr)#, log_scale=True)
+    # Label
+    ax_r.set_xlabel('Separation [km]')
+    ax_r.set_ylabel('Number of pairs')
+
+    # Add dataset
+    lsz = 16.
+    ax_r.text(0.1, 0.9, dataset, transform=ax_r.transAxes, fontsize=lsz)
+    # Label time separation
+    #ax_r.text(0.1, 0.8, f't < {struct_defs.max_time} hours', transform=ax_r.transAxes, fontsize=15)
+    if struct_defs.btype == 'log':
+        ax_r.set_xscale('log')
+
+    plotting.set_fontsize(ax_r, 15) 
+    if xmax is None:
+        xmax = set_xmax(counts, rbins)
+
+    ax_r.set_xlim(None, xmax)
+        #ax.set_yscale('log')
+
+    # Add vertical line at minN
+    ax_r.axhline(struct_defs.minN, color='gray', linestyle='--')
+        
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+
+def fig_single_order(dataset:str, order:int, outroot='fig_duL', 
+                    use_xlim:float=None, use_ylim:float=None):
+
+    # Order specific
+    if order > 1:
+        outroot = outroot + f'{order}'
+    color = 'krb'[order-1]
+
+    outfile = f'{outroot}_{dataset}.png'
+    clr = struct_defs.dataset_clrs[dataset]
+
+    # Run
+    rdict = data_utils.load_SF(
+        dataset=dataset, iz=struct_defs.iz, 
+        minN=struct_defs.minN, btype=struct_defs.btype, 
+        max_time=struct_defs.max_time, 
+        avoid_same_glider=struct_defs.avoid_same_glider)
+    
+    ## Unpack
+    gPairs = rdict['gPairs']
+    Sn_dict = rdict['Sn_dict']
+    goodN = rdict['goodN']
+    Skeys = rdict['Skeys']
+    rbins = rdict['rbins']
+
+    # Start the figure
+    fig = plt.figure(figsize=(7,6))
+    plt.clf()
+    gs = gridspec.GridSpec(1,1)
+
+    n=order-1
+    ax = plt.subplot(gs[0])
+    Skey = Skeys[n] 
+    ax.errorbar(Sn_dict['r'][goodN], 
+                Sn_dict[Skey][goodN], 
+                yerr=Sn_dict['err_'+Skey][goodN],
+                color=color,
+                fmt='o', capsize=5)  # fmt defines marker style, capsize sets error bar cap length
+
+    if struct_defs.btype == 'log':
+        ax.set_xscale('log')
+#
+    ax.set_xlabel('Separation (km)')
+    ax.set_ylabel(Sn_lbls[Skey])
+
+    # 0 line
+    ax.axhline(0., color='g', linestyle='--')
+
+    plotting.set_fontsize(ax, 19) 
+    #ax.grid()
+    ax.grid(which='major', linewidth=0.8, alpha=0.7)
+    ax.grid(which='minor', linewidth=0.5, alpha=0.3)
+    if use_xlim:
+        ax.set_xlim(use_xlim)
+    else:
+        xmax = set_xmax(np.array(Sn_dict['config']['N']), rbins)
+        ax.set_xlim(None, xmax)
+    if n == 2 and use_ylim is not None:
+        ax.set_ylim(use_ylim)
+    
+        
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+
+# #########################################################
+# APPENDIX
+# #########################################################
 
 
 def fig_histogram_dr(outfile='fig_histogram_dr.png', 
@@ -166,7 +319,7 @@ def fig_structure(dataset:str, outroot='fig_structure',
     #    skip_vel = False
 
     # Load dataset
-    profilers = glider_io.load_dataset(dataset)
+    #profilers = glider_io.load_dataset(dataset)
 
     # Outfile
     if iz >= 0:
@@ -323,9 +476,17 @@ def main(flg):
     if flg == 1:
         fig_experiments()
 
-    # Figure 2  (Separation histogram)
+    # Figure 1  (Profile tracks)
     if flg == 2:
-        fig_histogram_dr(log_rbins=False)
+        fig_separations(focus_dataset)
+
+    # Figure 1  (First moment)
+    if flg == 3:
+        fig_single_order(focus_dataset, order=1)
+
+    # Figure 4  (Second moment)
+    if flg == 4:
+        fig_single_order(focus_dataset, order=2)
 
 
     # Figure ??
@@ -339,6 +500,15 @@ def main(flg):
                       outroot='fig_structure_lin',
                       btype='lin', show_correct=False)
                       #use_xlim=(None, 100))
+
+    # #########################################################
+    # APPENDIX
+    # #########################################################
+
+    # Figure 100  (Separation histograms for the others)
+    if flg == 100:
+        fig_histogram_dr(log_rbins=False)
+
 
 # Command line execution
 if __name__ == '__main__':

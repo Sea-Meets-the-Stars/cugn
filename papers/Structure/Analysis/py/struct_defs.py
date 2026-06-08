@@ -7,10 +7,13 @@ dataset_clrs = {'Calypso2019': 'blue',
 
 # Binning
 dataset_binning = {
+    'Calypso2019': {'log': 40, 'lin': 80},
     'Calypso2022': {'log': 40, 'lin': 80},
     }
 
 # Analysis
+iz = 5
 minN = 50
 max_time = 10.
 btype = 'log'
+avoid_same_glider = True

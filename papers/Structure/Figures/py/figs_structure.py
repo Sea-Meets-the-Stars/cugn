@@ -2453,7 +2453,7 @@ def main(flg):
     # Loglin separations
     if flg == 50:
         #fig_loglin_separations('Calypso2022', xmax=100.)
-        fig_loglin_separations('Calypso2019', xmax=100.)
+        fig_loglin_separations('Calypso2019', xmax=150.)
 
 # Command line execution
 if __name__ == '__main__':
