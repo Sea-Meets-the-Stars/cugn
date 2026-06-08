@@ -7,11 +7,31 @@ from profiler import profilerpairs
 
 sys.path.append(os.path.abspath("../Analysis/py"))
 import glider_io
+import struct_defs
 
 from IPython import embed
 
-def load_SF(dataset:str, variables = 'duLduLduL', iz:int=5,
-    minN:int=10):
+def rbinning(btype:str, dataset:str=None, nbins=None):
+    # nbins
+    if nbins is None:
+        nbins = struct_defs.dataset_binning[dataset][btype]
+
+    # Do it
+    if btype == 'log':
+        rbins = 10**np.linspace(0., np.log10(400), nbins) # km
+    elif btype == 'lin':
+        rbins = np.linspace(0,400,nbins);
+    else:
+        raise ValueError(f'Bad binning style: {btype}')
+    return rbins
+
+def load_SF(dataset:str, 
+            variables = 'duLduLduL', 
+            iz:int=5, 
+            minN:int=struct_defs.minN, 
+            btype:str=struct_defs.btype,
+            max_time:float=struct_defs.max_time,
+            avoid_same_glider:bool=True):
     """Load glider data and compute structure functions for a given dataset.
 
     Loads profiler data, generates profile pairs, computes velocity differences
@@ -23,6 +43,9 @@ def load_SF(dataset:str, variables = 'duLduLduL', iz:int=5,
         iz: Depth index for computing velocity differences. Negative values
             trigger isopycnal coordinate analysis.
         minN: Minimum number of pairs required per radial bin.
+        btype: Type of binning ('log' or 'lin').
+        max_time: Maximum time separation (days) for valid profile pairs.
+        avoid_same_glider: If True, exclude pairs from the same glider.
 
     Returns:
         dict: Keys 'gPairs' (ProfilerPairs object), 'Sn_dict' (structure function
@@ -32,15 +55,14 @@ def load_SF(dataset:str, variables = 'duLduLduL', iz:int=5,
    # Load dataset
     profilers = glider_io.load_dataset(dataset)
 
-    # Cut on valid velocity data 
-    nbins = 20
-    rbins = 10**np.linspace(0., np.log10(400), nbins) # km
+    # Binning
+    rbins = rbinning(btype, dataset)
 
     # Generate pairs
     #gData = gliderdata.load_dataset(dataset)
     gPairs = profilerpairs.ProfilerPairs(
-        profilers, max_time=10.,
-        avoid_same_glider=True,
+        profilers, max_time=max_time,
+        avoid_same_glider=avoid_same_glider,
         remove_nans=True,
         debug=False, 
         randomize=False)
@@ -61,6 +83,7 @@ def load_SF(dataset:str, variables = 'duLduLduL', iz:int=5,
     Skeys = ['S1_duL', 'S2_duL**2', 'S3_'+variables]
 
     # Return
-    rdict = dict(gPairs=gPairs, Sn_dict=Sn_dict,
-                 goodN=goodN, Skeys=Skeys)
+    rdict = dict(
+        gPairs=gPairs, Sn_dict=Sn_dict, 
+        goodN=goodN, Skeys=Skeys, rbins=rbins)
     return rdict

@@ -6,8 +6,8 @@ from profiler.loading.pymatreader import pymatreader
 from profiler.gliderdata import SprayData
 
 # Local
-sys.path.append(os.path.abspath("../../ARCTERX/Analysis/py"))
-import arcterx_utils
+#sys.path.append(os.path.abspath("../../ARCTERX/Analysis/py"))
+#import arcterx_utils
 
 def load_dataset(dataset:str):
     """

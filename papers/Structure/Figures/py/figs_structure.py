@@ -35,8 +35,7 @@ import qg_uL_SF
 import qg_observe
 import qg_io
 import glider_io
-
-sys.path.append(os.path.abspath("../Analysis/QG/py"))
+import struct_defs
 import data_utils
 
 Sn_lbls = cugn_plotting.Sn_lbls
@@ -98,6 +97,72 @@ def fig_separations(dataset:str, outroot='fig_sep', max_time:float=10.,
 
     for ax in [ax_ll, ax_r]:
         plotting.set_fontsize(ax, 15) 
+        
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+
+def fig_loglin_separations(dataset:str, outroot='fig_loglin_sep', max_time:float=10.,
+                    fsz:float=10., ncol:int=2, xmax:float=None):
+    outfile = f'{outroot}_{dataset}.png'
+    clr = struct_defs.dataset_clrs[dataset]
+
+    # Load dataset
+    profilers = glider_io.load_dataset(dataset)
+    #embed(header='45 of figs_structure')
+    
+
+    # Generate pairs
+    #gPairs = gliderpairs.GliderPairs(gData, max_time=max_time)
+    gPairs = profilerpairs.ProfilerPairs(profilers, 
+                                          max_time=max_time,
+                                          debug=False,
+                                          randomize=True)
+
+
+    # Start the figure
+    fig = plt.figure(figsize=(12,6))
+    plt.clf()
+    gs = gridspec.GridSpec(1,2)
+
+
+    # Log Separations
+    rbins = data_utils.rbinning('log', dataset)
+    #embed(header='132 of figs_structure')
+    #rbins = 50
+    ax_r = plt.subplot(gs[0])
+    _ = sns.histplot(gPairs.r, bins=rbins, ax=ax_r, color=clr)#, log_scale=True)
+    # Label
+    ax_r.set_xlabel('Separation [km]')
+    ax_r.set_ylabel('Count')
+
+    # Add dataset
+    lsz = 16.
+    ax_r.text(0.1, 0.9, dataset, transform=ax_r.transAxes, fontsize=lsz)
+    # Label time separation
+    ax_r.text(0.1, 0.8, f't < {max_time} hours', transform=ax_r.transAxes, fontsize=15)
+    ax_r.set_xscale('log')
+
+    # Linear Separations
+    rbins = data_utils.rbinning('lin', dataset)
+    ax_lr = plt.subplot(gs[1])
+    _ = sns.histplot(gPairs.r, bins=rbins, log_scale=False, ax=ax_lr, color=clr)
+    # Label
+    ax_lr.set_xlabel('Separation [km]')
+    ax_lr.set_ylabel('Count')
+
+    # Add dataset
+    lsz = 16.
+    ax_r.text(0.1, 0.9, dataset, transform=ax_r.transAxes, fontsize=lsz)
+    # Label time separation
+    ax_r.text(0.1, 0.8, f't < {max_time} hours', transform=ax_r.transAxes, fontsize=15)
+
+
+    for ax in [ax_lr, ax_r]:
+        plotting.set_fontsize(ax, 15) 
+        ax.set_xlim(None, xmax)
+        #ax.set_yscale('log')
         
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
@@ -2385,6 +2450,10 @@ def main(flg):
         fig_qg_all_duL3(dx=200, outfile='fig_qg_all_duL3_300_200km.png',
                         dt=300, ylim=(-0.1, 0.1), xlim=(10, 150.))
 
+    # Loglin separations
+    if flg == 50:
+        #fig_loglin_separations('Calypso2022', xmax=100.)
+        fig_loglin_separations('Calypso2019', xmax=100.)
 
 # Command line execution
 if __name__ == '__main__':
