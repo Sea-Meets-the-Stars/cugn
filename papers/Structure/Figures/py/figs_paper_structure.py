@@ -45,6 +45,55 @@ def set_xmax(counts, rbins, minxmax:float=100):
     xmax = max(xmax, minxmax)
     return xmax
 
+def plot_single_order(order:int, ax, rdict,
+                      use_xlim:tuple=None, use_ylim:tuple=None,
+                      corrected:bool=False):
+
+    color = 'krb'[order-1]
+    ## Unpack
+    gPairs = rdict['gPairs']
+    Sn_dict = rdict['Sn_dict']
+    goodN = rdict['goodN']
+    Skeys = rdict['Skeys']
+    rbins = rdict['rbins']
+    Skey = Skeys[order-1] 
+
+    # Plot main data
+    corr_key = Skey[0:2]+'corr'+Skey[2:]
+    key = corr_key if corrected else Skey
+    ax.errorbar(Sn_dict['r'][goodN], 
+                Sn_dict[key][goodN], 
+                yerr=Sn_dict['err_'+Skey][goodN],
+                color=color,
+                fmt='o', capsize=5, label='Corrected')  # fmt defines marker style, capsize sets error bar cap length
+
+    if corrected:
+        ax.plot(Sn_dict['r'][goodN], 
+                Sn_dict[Skey][goodN], 'x', color=color, label='Raw')
+        ax.legend(fontsize=17, loc='upper left')
+
+    if struct_defs.btype == 'log':
+        ax.set_xscale('log')
+#
+    ax.set_xlabel('Separation (km)')
+    ax.set_ylabel(Sn_lbls[Skey])
+
+    # 0 line
+    ax.axhline(0., color='g', linestyle='--')
+
+    plotting.set_fontsize(ax, 19) 
+    #ax.grid()
+    ax.grid(which='major', linewidth=0.8, alpha=0.7)
+    ax.grid(which='minor', linewidth=0.5, alpha=0.3)
+    if use_xlim:
+        ax.set_xlim(use_xlim)
+    else:
+        xmax = set_xmax(np.array(Sn_dict['config']['N']), rbins)
+        ax.set_xlim(None, xmax)
+    if use_ylim is not None:
+        ax.set_ylim(use_ylim)
+    
+
 def fig_experiments(outfile='fig_experiments.png', 
                     max_time:float=10., show_legend:bool=False):
 
@@ -189,7 +238,6 @@ def fig_single_order(dataset:str, order:int, outroot='fig_duL',
     # Order specific
     if order > 1:
         outroot = outroot + f'{order}'
-    color = 'krb'[order-1]
 
     outfile = f'{outroot}_{dataset}.png'
     clr = struct_defs.dataset_clrs[dataset]
@@ -200,13 +248,6 @@ def fig_single_order(dataset:str, order:int, outroot='fig_duL',
         minN=struct_defs.minN, btype=struct_defs.btype, 
         max_time=struct_defs.max_time, 
         avoid_same_glider=struct_defs.avoid_same_glider)
-    
-    ## Unpack
-    gPairs = rdict['gPairs']
-    Sn_dict = rdict['Sn_dict']
-    goodN = rdict['goodN']
-    Skeys = rdict['Skeys']
-    rbins = rdict['rbins']
 
     # Start the figure
     fig = plt.figure(figsize=(7,6))
@@ -215,39 +256,62 @@ def fig_single_order(dataset:str, order:int, outroot='fig_duL',
 
     n=order-1
     ax = plt.subplot(gs[0])
-    Skey = Skeys[n] 
-    ax.errorbar(Sn_dict['r'][goodN], 
-                Sn_dict[Skey][goodN], 
-                yerr=Sn_dict['err_'+Skey][goodN],
-                color=color,
-                fmt='o', capsize=5)  # fmt defines marker style, capsize sets error bar cap length
-
-    if struct_defs.btype == 'log':
-        ax.set_xscale('log')
-#
-    ax.set_xlabel('Separation (km)')
-    ax.set_ylabel(Sn_lbls[Skey])
-
-    # 0 line
-    ax.axhline(0., color='g', linestyle='--')
-
-    plotting.set_fontsize(ax, 19) 
-    #ax.grid()
-    ax.grid(which='major', linewidth=0.8, alpha=0.7)
-    ax.grid(which='minor', linewidth=0.5, alpha=0.3)
-    if use_xlim:
-        ax.set_xlim(use_xlim)
-    else:
-        xmax = set_xmax(np.array(Sn_dict['config']['N']), rbins)
-        ax.set_xlim(None, xmax)
-    if n == 2 and use_ylim is not None:
-        ax.set_ylim(use_ylim)
-    
+    plot_single_order(order, ax, rdict)
         
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
+
+def fig_corrected_s3(dataset:str, outfile:str, use_xlim:tuple=None):
+
+    rdict = data_utils.load_SF(dataset, variables='duLduLduL')
+    # Unpack
+    Sn_dict = rdict['Sn_dict']
+    goodN = rdict['goodN']
+    rbins = rdict['rbins']
+
+    # Trim Calypso2019
+    #if dataset == 'Calypso2019':
+    #    goodN[-4] = False
+    
+    Skey = rdict['Skeys'][2]
+
+    # Combine the figures
+    fig = plt.figure(figsize=(10, 6))
+    plt.clf()
+    ax = plt.gca()
+
+    # Corrected
+    plot_single_order(3, ax, rdict, corrected=True)
+
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+
+def fig_S1S3_other(datasets:str, outfile:str='fig_S1S3_other.png', use_xlim:tuple=None):
+
+    # Combine the figures
+    fig = plt.figure(figsize=(12, 12))
+    plt.clf()
+    gs = gridspec.GridSpec(2,2)
+
+    for row, dataset in enumerate(datasets):
+        rdict = data_utils.load_SF(dataset, variables='duLduLduL')
+        for col, order in enumerate([1, 3]):
+            ax = plt.subplot(gs[row, col])
+            #
+            correct = True if order == 3 else False
+            plot_single_order(order, ax, rdict, corrected=correct)
+            # Label by dataset
+            if order == 1:
+                ax.text(0.05, 0.95, dataset, transform=ax.transAxes,
+                         fontsize=19, ha='left', va='top')
+
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
 
 # #########################################################
 # APPENDIX
@@ -487,6 +551,21 @@ def main(flg):
     # Figure 4  (Second moment)
     if flg == 4:
         fig_single_order(focus_dataset, order=2)
+
+    # Figure 5  (Third moment)
+    if flg == 5:
+        fig_single_order(focus_dataset, order=3)
+
+    # Figure 6  (Corrected third moment)
+    if flg == 6:
+        fig_corrected_s3(focus_dataset,
+                         f'fig_corrected_s3_{focus_dataset}.png')
+
+    # Figure 7  (Other 1st/3rd)
+    if flg == 7:
+        other_datasets = datasets.copy()
+        other_datasets.remove(focus_dataset)
+        fig_S1S3_other(other_datasets)
 
 
     # Figure ??

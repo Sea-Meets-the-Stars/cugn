@@ -9,6 +9,7 @@ dataset_clrs = {'Calypso2019': 'blue',
 dataset_binning = {
     'Calypso2019': {'log': 40, 'lin': 80},
     'Calypso2022': {'log': 40, 'lin': 80},
+    'ARCTERX-2023': {'log': 40, 'lin': 80},
     }
 
 # Analysis
