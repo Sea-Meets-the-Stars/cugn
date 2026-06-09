@@ -1467,74 +1467,6 @@ def fig_orig_vs_new_qg_SF(outfile:str='fig_qg_SF_orig_vs_new.png'):
     print(f"Saved: {outfile}")
 
 
-       
-def fig_full_qg_SF(outfile:str='fig_full_qg_SF.png'):
-    """
-    QG Structure Function, duL and total
-    """
-    # Load the data
-    qg, mSF_15_duL = qg_utils.load_qg(use_SFduL=True)
-
-    # Calculate the first order structure function
-    SF_dict_duL = qg_utils.calc_dus(qg, mSF_15_duL)
-
-    # Unpack a bit
-    rr1 = SF_dict_duL['rr1']
-    # du1
-    dull_mn = SF_dict_duL['dull_mn']
-    # du2
-    du2_mn_duL = SF_dict_duL['du2_mn']
-    # du3
-    du3_mn_duL = SF_dict_duL['du3_mn']
-
-    clr = 'k'
-    # Start the figure
-    fig = plt.figure(figsize=(10,3))
-    plt.clf()
-    gs = gridspec.GridSpec(1,3)
-
-    # ################################################3
-    # du
-    ax0 = plt.subplot(gs[0])
-
-    ols = ':'
-    ax0.semilogx(rr1*1e-3, dull_mn*1e3, clr, linewidth=1, 
-                label=r'$<\delta u_L>$')
-
-    lsz = 7.
-    #ax0.legend(fontsize=lsz, loc='lower left')
-    ax0.set_xlabel(r'$r$ [km]')
-    ax0.set_ylabel(r'$<\delta u> \, 10^{-3}$ [m/s]')
-
-    # ################################################3
-    # du2
-    ax2 = plt.subplot(gs[1])
-
-    ax2.loglog(rr1*1e-3, du2_mn_duL, clr, linewidth=1, 
-                label=r'New $<\delta u_L^2>$')
-    #ax2.legend(fontsize=lsz, loc='lower right')
-    ax2.set_xlabel(r'$r$ [km]')
-    ax2.set_ylabel(r'$<\delta u^2> \, {\rm [m/s]^2}$')
-
-
-    # ################################################3
-    # du3
-    ax3 = plt.subplot(gs[2])
-
-    ax3.semilogx(rr1*1e-3, du3_mn_duL, clr, linewidth=1, 
-                label=r'New $<\delta u_L^3>$')
-    #ax3.legend(fontsize=lsz, loc='upper left')
-    ax3.set_xlabel(r'$r$ [km]')
-    ax3.set_ylabel(r'$<\delta u^3> \, {\rm [m/s]^3}$')
-    ax3.axvline(92.3, color='k', linestyle='--')
-
-    for ax in [ax0, ax2, ax3]:
-        cugn_plotting.set_fontsize(ax, 13)
-
-    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
-    plt.savefig(outfile, dpi=300)
-    print(f"Saved: {outfile}")
-
 def fig_qg_subregion_vs_full(x0:int=400, y0:int=400, dx:int=100,
                           outfile:str='fig_qg_100km_vs_full.png',
                           Ndays:int=1825, llocs=(None,None,None)):
@@ -2418,12 +2350,16 @@ def main(flg):
 
     # Full grid, 5 year SF
     if flg == 24:
-        fig_full_qg_SF()
+        pass # Moved to paper figs
+        #fig_full_qg_SF()
 
     # QG 100km region vs full box
     if flg == 25:
+        # ALSO IN PAPER FIGS
+        pass
+
         # 100km
-        fig_qg_subregion_vs_full()
+        #fig_qg_subregion_vs_full()
         #fig_qg_subregion_vs_full(x0=500, y0=500, 
         #                      outfile='fig_qg_100km_vs_full_x500_y500.png'  )
         #fig_qg_subregion_vs_full(x0=300, y0=500, 

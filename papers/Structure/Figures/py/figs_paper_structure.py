@@ -33,6 +33,8 @@ import qg_utils
 import data_utils
 import glider_io
 import struct_defs
+import qg_uL_SF
+import qg_utils
 
 # Globals
 Sn_lbls = cugn_plotting.Sn_lbls
@@ -56,7 +58,7 @@ def plot_single_order(order:int, ax, rdict,
     goodN = rdict['goodN']
     Skeys = rdict['Skeys']
     rbins = rdict['rbins']
-    Skey = Skeys[order-1] 
+    Skey = Skeys[order-1]
 
     # Plot main data
     corr_key = Skey[0:2]+'corr'+Skey[2:]
@@ -314,6 +316,186 @@ def fig_S1S3_other(datasets:str, outfile:str='fig_S1S3_other.png', use_xlim:tupl
     print(f"Saved: {outfile}")
 
 # #########################################################
+# QG figs
+# #########################################################
+
+
+def fig_full_qg_SF(outfile:str='fig_full_qg_SF.png'):
+    """
+    QG Structure Function, duL and total
+    """
+    # Load the data
+    qg, mSF_15_duL = qg_utils.load_qg(use_SFduL=True)
+
+    # Calculate the first order structure function
+    SF_dict_duL = qg_utils.calc_dus(qg, mSF_15_duL)
+
+    # Unpack a bit
+    rr1 = SF_dict_duL['rr1']
+    # du1
+    dull_mn = SF_dict_duL['dull_mn']
+    # du2
+    du2_mn_duL = SF_dict_duL['du2_mn']
+    # du3
+    du3_mn_duL = SF_dict_duL['du3_mn']
+
+    # Start the figure
+    fig = plt.figure(figsize=(10,3))
+    plt.clf()
+    gs = gridspec.GridSpec(1,3)
+
+    # ################################################3
+    # du
+    ax0 = plt.subplot(gs[0])
+
+    ols = ':'
+    clr = 'k'
+
+    ax0.semilogx(rr1[:-1]*1e-3, dull_mn[:-1]*1e0, 'o', color=clr, markersize=3, #linewidth=1, 
+                label=r'$<\delta u_L>$')
+
+    lsz = 7.
+    #ax0.legend(fontsize=lsz, loc='lower left')
+    ax0.set_xlabel(r'$r$ [km]')
+    ax0.set_ylabel(r'$<\delta u_L>$   [m/s]')
+    #ax0.set_ylabel(r'$<\delta u> \, 10^{-3}$ [m/s]')
+
+    # ################################################3
+    # du2
+    ax2 = plt.subplot(gs[1])
+
+    clr = 'r'
+    ax2.semilogx(rr1*1e-3, du2_mn_duL, 'o', color=clr, markersize=3, #linewidth=1, 
+                label=r'New $<\delta u_L^2>$')
+    #ax2.legend(fontsize=lsz, loc='lower right')
+    ax2.set_xlabel(r'$r$ [km]')
+    ax2.set_ylabel(r'$<\delta u_L^2> \;\; {\rm [m/s]^2}$')
+
+
+    # ################################################3
+    # du3
+    ax3 = plt.subplot(gs[2])
+
+    clr = 'b'
+    ax3.semilogx(rr1*1e-3, du3_mn_duL, 'o', color=clr, 
+                 markersize=3, #linewidth=1, 
+                label=r'New $<\delta u_L^3>$')
+    #ax3.legend(fontsize=lsz, loc='upper left')
+    ax3.set_xlabel(r'$r$ [km]')
+    ax3.set_ylabel(r'$<\delta u_L^3> \;\; {\rm [m/s]^3}$')
+    ax3.axvline(92.3, color='k', linestyle='--')
+
+    for ax in [ax0, ax2, ax3]:
+        cugn_plotting.set_fontsize(ax, 13)
+        #
+        ax.grid(which='major', linewidth=0.8, alpha=0.7)
+        ax.grid(which='minor', linewidth=0.5, alpha=0.3)
+
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+
+def fig_qg_subregion_vs_full(x0:int=400, y0:int=400, dx:int=100,
+                          outfile:str='fig_qg_100km_vs_full.png',
+                          Ndays:int=1825, llocs=(None,None,None)):
+    """
+    Compare QG Ndays structure functions: 100km region vs full box.
+    Plots S1 (duL), S2 (du^2), and S3 (du^3) side by side.
+    """
+    # Use parse_SF() for both full box and 100km region calculations
+    if dx == 100:
+        region_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_5years.nc'
+    elif dx == 200:
+        region_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_200km_5years.nc'
+    elif dx == 300:
+        region_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_300km_5years.nc'
+    elif dx == 500:
+        region_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_500km_5years.nc'
+    else:
+        raise ValueError(f'Invalid dx: {dx}')
+
+    rr1_full, rrr1_region, du1_region, du2_region, du3_region, \
+        du3_corr_region, dull_mn_full, du2_mn_full, du3_mn_full = \
+        qg_uL_SF.parse_SF(region_file, Ndays)
+
+    # Cut on r
+    if dx == 100:
+        rcut = rrr1_region <= 100.
+    elif dx == 200:
+        rcut = rrr1_region <= 200.
+    elif dx == 300:
+        rcut = rrr1_region <= 300.
+    elif dx == 500:
+        rcut = rrr1_region <= 500.
+    else:
+        raise ValueError(f'Invalid dx for cut: {dx}')
+
+    rrr1_region = rrr1_region[rcut]
+    du1_region = du1_region[rcut]
+    du2_region = du2_region[rcut]
+    du3_region = du3_region[rcut]
+    du3_corr_region = du3_corr_region[rcut]
+
+    # Start the figure (3-panel layout like fig_full_qg_SF)
+    fig = plt.figure(figsize=(10,3))
+    plt.clf()
+    gs = gridspec.GridSpec(1,3)
+
+    lsz = 9.
+    cfull = 'gray'
+
+    # ################################################
+    # du (first-order, longitudinal)
+    ax0 = plt.subplot(gs[0])
+    ax0.semilogx(rr1_full*1e-3, dull_mn_full*1e3, cfull, linewidth=1,
+                label='Full box')
+    ax0.semilogx(rrr1_region, du1_region*1e3, 'ko', markersize=3,
+                label=f'{dx}km region')
+    ax0.legend(fontsize=lsz, loc=llocs[0])
+    ax0.set_xlabel(r'$r$ [km]')
+    ax0.set_ylabel(r'$<\delta u> \, 10^{-3}$ [m/s]')
+
+    # ################################################
+    # du2 (second-order)
+    ax2 = plt.subplot(gs[1])
+    ax2.semilogx(rr1_full*1e-3, du2_mn_full, cfull, linewidth=1,
+                label=r'Full box') 
+    ax2.semilogx(rrr1_region, du2_region, 'ro', markersize=3,
+                label=f'{dx}km region')
+    ax2.legend(fontsize=lsz, loc=llocs[1])
+    ax2.set_xlabel(r'$r$ [km]')
+    ax2.set_ylabel(r'$<\delta u^2> \;\; {\rm [m/s]^2}$')
+
+    # ################################################
+    # du3 (third-order, scaled by 1e-3)
+    ax3 = plt.subplot(gs[2])
+    scl3 = 1
+    ax3.semilogx(rr1_full*1e-3, du3_mn_full*scl3, cfull, linewidth=1,
+                label='Full box') 
+    ax3.semilogx(rrr1_region, du3_region*scl3, 'bo', markersize=3,
+                label=f'{dx}km region',
+                markerfacecolor='none') 
+    # Corrected du3 for 100km region (open red circles)
+    ax3.semilogx(rrr1_region, du3_corr_region*scl3, 'bo', markersize=3,
+                label=r'Corrected')
+    ax3.legend(fontsize=lsz, loc=llocs[2])
+    ax3.set_xlabel(r'$r$ [km]')
+    ax3.set_ylabel(r'$<\delta u^3>  \;\; {\rm [m/s]^3}$')
+    # Horizontal line at 0
+    ax3.axhline(0., color='gray', linestyle='--')
+
+    for ax in [ax0, ax2, ax3]:
+        cugn_plotting.set_fontsize(ax, 13)
+        # Grid
+        ax.grid(which='major', linewidth=0.8, alpha=0.7)
+        ax.grid(which='minor', linewidth=0.5, alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+# #########################################################
 # APPENDIX
 # #########################################################
 
@@ -566,6 +748,16 @@ def main(flg):
         other_datasets = datasets.copy()
         other_datasets.remove(focus_dataset)
         fig_S1S3_other(other_datasets)
+
+    # Figure 8  (QG full grid)
+    if flg == 8:
+        fig_full_qg_SF()
+
+    # Figure 9  (An example 100km, 100 day region)
+    if flg == 9:
+        #fig_qg_subregion_vs_full(x0=500, y0=500)  # Negative duL
+        #fig_qg_subregion_vs_full(x0=300, y0=500)  # Negative duL
+        fig_qg_subregion_vs_full(x0=300, y0=400)  # Negative duL
 
 
     # Figure ??
