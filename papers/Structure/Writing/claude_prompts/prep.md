@@ -14,6 +14,11 @@ See the PDFs in cugn/papers/Structure/Writing/previous/ for several of my previo
 
 See all of the files in the cugn/papers/Structure/ and the calls to the main Repo and other dependencies. 
 
+### Overleaf
+
+The git repo for this paper may be found here:
+/home/xavier/Projects/Overleaf/Energy_Cascade
+
 ## Outline
 
 1. Examine the Context. I have downloaded a PDF version of the Outline I had generated with Dan.  Please convert it into a Markdown file in the cugn/papers/Structure/Writing/ folder.  Call it outline.md.  Log your work in Logs
