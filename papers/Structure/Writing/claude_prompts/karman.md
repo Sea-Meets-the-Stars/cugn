@@ -45,6 +45,8 @@ Our outline is in the cugn/papers/Structure/Writing/ folder.  It is named outlin
     - push your changes via git.   You will need the token.  It is provided as OVER_TOKEN in the .bashrc file.
     - Log your work
 
+5. Please flesh out the derivation in the Appendix.  Aim for at least 20 equations.  Log your work.
+
 ### Q&A
 
 Questions before writing Section 2a (Karman-Howarth; QG deferred). Each has my recommended default in **bold** — feel free to just confirm or correct inline.
@@ -134,3 +136,35 @@ Read the answers to Q1–Q7. All confirmed my recommended defaults: (1) §2a is 
 I raised **one** follow-up (Q8) because it materially shapes the equation budget and the paper's central claim: whether to display all three opposite-signed third-order relations (3D forward energy $-\tfrac45\epsilon r$; 2D inverse energy $+\tfrac32\epsilon r$; 2D forward enstrophy $+\tfrac18\eta r^3$) and frame the **sign + slope of $\langle\delta u_L^3\rangle$** as the testable prediction — or show only the 2D inverse-energy relation in the main text. My recommendation is to show all three. Awaiting the answer to Q8 before writing §2a (item 4).
 
 Planned §2a equation set (pending Q8): (i) definition of $\delta u_L$ and $\langle\delta u_L^n\rangle$; (ii) $\langle\delta u_L^2\rangle = 2u^2(1-f)$; (iii) the 2D Karman-Howarth equation; (iv) 3D 4/5 law as the reference result; (v) 2D inverse-energy third-order relation; (vi) 2D enstrophy-range third-order relation; (vii) homogeneity $\langle\delta u\rangle=0$ and its bias on $\langle\delta u_L^3\rangle$. ~7 displayed equations.
+
+### 2026-06-21 (Wrote §2a "Theoretical underpinnings" in energy_cascade.tex and pushed to Overleaf)
+
+Q8 answered "display all three." Wrote the section into `/home/xavier/Projects/Overleaf/Energy_Cascade/energy_cascade.tex` and pushed to the Overleaf remote (`main`, commit `6065389`). Document compiles cleanly (pdflatex + bibtex + 2 passes, 9 pages, no undefined refs/citations).
+
+**Preamble macros added** (per Q6): `\uvec`, `\rvec`, `\xvec`, `\rhat`, `\duL` ($\delta u_L$), `\duT`, `\Sn{n}` ($\langle\delta u_L^n\rangle$), `\eflux` ($\epsilon$), `\zflux` ($\eta$), `\kh` (Kármán–Howarth). All wrap `\ensuremath{}`.
+
+**New §2 "Theoretical underpinnings"** (between Intro and Methods; Methods/Results/Discussion shift down), with three subsections:
+- *2a — Structure functions and the Kármán–Howarth equation* (`sec:kh`): defines $\delta u_L$ (Eq. duL) and the structure functions; gives $\langle\delta u_L^2\rangle=2u^2(1-f)$ (Eq. S2) and the 2D K-H equation (Eq. kh2d); then the three exact third-order relations — 2D inverse energy $+\tfrac32\epsilon r$ (s3_2d_energy), 2D enstrophy $+\tfrac18\eta r^3$ (s3_2d_enstrophy), 3D four-fifths $-\tfrac45\epsilon r$ (s3_3d) — and frames the **sign + slope of $\langle\delta u_L^3\rangle$** as the central measurement. Notes (per Q4) the coefficient/sign subtlety via Cerbus & Chakraborty, and (per Frisch) that these are exact KH consequences, not K41 phenomenology.
+- *Homogeneity and the third moment* (`sec:kh_homogeneity`): states $\langle\delta u_L\rangle=0$ (Eq. S1zero) and the third-central-moment correction $\langle\delta u_L^3\rangle_c$ (Eq. S3corr), with full treatment deferred to Methods (per Q5).
+- *The two-dimensional limit* (`sec:kh_2d_motivation`): motivates why fixed-depth glider sampling probes a quasi-2D field, justifying the 2D emphasis (per Q2).
+
+**Appendix** (`sec:kh_appendix`): condensed derivation crediting R. Salmon — tensor definitions $Q_{ij}$, $S_{ijk}$, the isotropy/incompressibility reduction, and the 3D K-H equation (Eq. kh3d) as counterpart to the 2D main-text form; notes the wavenumber-space flux statements exist but are not reproduced (per Q2).
+
+**References added to `energy.bib`** (per Q7), all resolved in the .bbl: `karman1938`, `batchelor1953`, `davidson2015`, `frisch1995`, `kolmogorov1941`, `lindborg1999`, `bernard1999`, `cerbus2017`.
+
+**Notes / things to revisit:** (a) the 2D enstrophy-cascade coefficient $\tfrac18$ and the energy-cascade $\tfrac32$ are the standard textbook values but, as flagged in-text, are convention-dependent — worth a final check against Lindborg (1999) and Salmon's notes before submission; (b) I cited `bernard1999` alongside `lindborg1999` for both 2D relations; (c) the K-H appendix is deliberately brief — Salmon's full step-by-step algebra can be expanded there later; (d) build artifacts were cleaned, only `energy.bib` and `energy_cascade.tex` were committed.
+
+### 2026-06-22 (Fleshed out the appendix derivation; pushed to Overleaf)
+
+Expanded the appendix "Derivation of the \kh\ equation" (`sec:kh_appendix`) from the earlier brief sketch into a full, self-contained development following Salmon's notes. Pushed to Overleaf (`main`, commit `d03b43a`). Compiles cleanly (pdflatex + bibtex + 2 passes, 11 pages, no undefined refs/citations). **23 labeled equations** in the appendix (`align` blocks add further numbered lines), comfortably exceeding the requested 20.
+
+The derivation now proceeds through five headed steps:
+1. *Correlation tensors* — definitions of $Q_{ij}$, $S_{ijk}$, $u^2$, $f$, $g$, $K$ (Eqs. QSdef/fdef/Kdef) and the structure-function moments $\Sn{2}=2u^2(1-f)$, $\Sn{3}=6u^3K$ (Eqs. S2app/S3app).
+2. *Reduction by isotropy and incompressibility* — general form $Q_{ij}=Ar_ir_j+B\delta_{ij}$ (Qform), solve $A,B$ (Qfg), incompressibility → $g=f+\tfrac{r}{d-1}f'$ (grf), and the explicit 2D/3D forms of $Q_{ij}$ (Q2d/Q3d).
+3. *The triple correlation* — general $S_{ijk}$ form (Sform), incompressibility → $\widetilde A,\widetilde B$ via $D$ (ABtilde), and $u^3K=-(d-1)rD$ (DK).
+4. *Dynamics* — the momentum-derived evolution $\partial_t Q_{ii}=2\partial_{r_j}S_{iji}+2\nu\nabla^2Q_{ii}$ (mom, pressure terms vanish), the 3D/2D contractions and $\Gamma$ (contract3d/contract2d), giving the 3D K-H equation (kh3d) and the 2D K-H equation (kh2dapp, reproducing main-text kh2d).
+5. *Inertial-range relations* — structure-function form of 3D K-H (kh3d_sf), neglect of the $\Sn{2}$ term, $\eflux=-\tfrac32 du^2/dt$ → four-fifths law (fivefourstep, s3_3d_app); then the two 2D results $+\tfrac32\eflux r$ (s3_2d_energy_app) and $+\tfrac18\zflux r^3$ (s3_2d_enstrophy_app), cross-referenced to the main-text equations.
+
+**Bug fixed:** the earlier brief appendix defined the triple correlation with a repeated index ($u_i u_i u_k$); corrected to $u_i u_j u_k$.
+
+**Caveats unchanged from yesterday:** the 2D coefficients ($\tfrac32$, $\tfrac18$) are convention-dependent (flagged in-text via Cerbus & Chakraborty); the 2D inertial-range integration is *stated* as the cited result rather than fully integrated step-by-step (the forcing/flux assumptions make a fully rigorous 2D integration longer than warranted here) — worth confirming the coefficients against Lindborg (1999) and Salmon before submission. Only `energy_cascade.tex` changed; build artifacts cleaned.
