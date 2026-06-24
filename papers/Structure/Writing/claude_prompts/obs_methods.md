@@ -177,3 +177,15 @@ JXP approved Q8 (make both changes; `OS_SPRAY`/data provided; permission to copy
 **Copied** both PNGs into `/home/xavier/Projects/Overleaf/Energy_Cascade/Figures/`. The superseded `fig_loglin_sep_Calypso2019.png` was left in place (unreferenced; can be removed later). 
 
 **Not pushed:** item 5 carries no git instruction (the push lives in item 6, the writing step), so the new figures sit staged in the Overleaf working tree and the two `cugn` code edits are uncommitted — both await item 6 / explicit instruction.
+
+### 2026-06-24 (Wrote the Structure functions subsection; pushed to Overleaf)
+
+Wrote the **Structure functions** portion of Observations & Methods in `energy_cascade.tex` and pushed to Overleaf (commit `7e7f342` on `main`). Document compiles cleanly (pdflatex + bibtex + 2 passes, 14 pages, no undefined refs/citations); both new figures resolve.
+
+**Macros added** (preamble): `\Shat{n}` (binned sample estimator $\widehat{\langle\delta u_L^n\rangle}$), `\Snc{n}` (centered moment $\langle\delta u_L^n\rangle_{\rm c}$), `\focusexp` (Calypso 2022), `\dtsym`/`\Nmin` (symbols), and value macros `\valdt` (10 hr), `\valNmin` (100), `\valdepth` (60 m), `\valrmax` (400 km), `\valnbins` (80), `\valnboot` (100).
+
+**§2a alignment** (per Q7a): the homogeneity subsection now calls $\Snc{3}$ the **"centered"** third moment (was "central"/"corrected"), uses the `\Snc` macro in Eq. `S3corr`, and forward-references the centering to `sec:structfunc` (and the homogeneity conditions to Results).
+
+**New material** — `\section{Methods}` renamed to **"Observations and Methods"** (`sec:methods`); added a `\subsection{Data}` (`sec:data`) stub holding the existing glider-paths figure (`fig:cugn`), and a `\subsection{Structure functions}` (`sec:structfunc`) covering: the longitudinal increment + estimator (Eq. `Snhat`); pair selection (distinct gliders; $\dtsym\le$ 10 hr, with the synoptic-window rationale); linear binning 0–400 km (~80 bins, widened last bin), reporting at mean separation, $N_{\rm min}=100$ cut; fixed-depth 60 m primary with isopycnal as a check; raw vs **centered** moments (Eq. `centered`, cross-ref §2a); and bootstrap errors (100 realizations). Added Fig. `separations` (`fig_separations_Calypso2022.png`) and Fig. `loglin` (`fig_loglin_sep_Calypso2022.png`) with captions.
+
+**Push note:** the first push was rejected — the remote had an "Update on Overleaf" commit (`e54e575`; JXP had reordered §2 so "The two-dimensional limit" leads the section). I `git pull --rebase`d (clean, no conflicts), recompiled the merged result to confirm it still builds, and pushed. The committed files: `energy_cascade.tex` plus the two figures from item 5 (`fig_separations_Calypso2022.png`, `fig_loglin_sep_Calypso2022.png`). The two `cugn`-repo code edits (`struct_defs.py` minN→100, `figs_paper_structure.py` label) remain uncommitted in the `cugn` repo (not part of the Overleaf push; awaiting explicit instruction).
