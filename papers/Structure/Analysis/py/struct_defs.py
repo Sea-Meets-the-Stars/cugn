@@ -14,7 +14,7 @@ dataset_binning = {
 
 # Analysis
 iz = 5
-minN = 50
+minN = 100
 max_time = 10.
 btype = 'log'
 avoid_same_glider = True

@@ -226,9 +226,12 @@ def fig_separations(dataset:str, outroot='fig_separations',
     ax_r.set_xlim(None, xmax)
         #ax.set_yscale('log')
 
-    # Add vertical line at minN
+    # Add horizontal line at minN, labeled
     ax_r.axhline(struct_defs.minN, color='gray', linestyle='--')
-        
+    ax_r.text(0.97, struct_defs.minN, rf'$N_{{\rm min}}={struct_defs.minN}$',
+              transform=ax_r.get_yaxis_transform(),
+              ha='right', va='bottom', color='gray', fontsize=13)
+
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
