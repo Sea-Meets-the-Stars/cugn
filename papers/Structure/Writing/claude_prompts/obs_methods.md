@@ -48,7 +48,16 @@ Our outline is in the cugn/papers/Structure/Writing/ folder.  It is named outlin
     - push your changes via git.   You will need the token.  It is provided as OVER_TOKEN in the .bashrc file.
     - Log your work
 
-5. Please flesh out the derivation in the Appendix.  Aim for at least 20 equations.  Log your work.
+7. Please prepare to generate a Table describing the three experiments and their data.  Do this by:
+    - Generating a Python script named tabs_structure.py in cugn/papers/Structure/Table/py. 
+    - Model it after tabs_bing.py in bing/papers/phytoplankton/Tables/py
+    - Ask questions before writing the table, add them to the Q&A section below.
+    - Do not create the table yet.
+    - Log your work.
+
+8. Read my answers to the Q&A section below.  Then generate the table.  Log your work.
+
+9. Please make another pass on the text and be sure that you have included sufficient detail that anyone could reproduce the results.  Log your work.
 
 ## Q&A
 
@@ -95,6 +104,27 @@ I looked at the two relevant panels in `Figures/`. **`fig_separations_Calypso202
 
 If you'd rather not regenerate anything now, I'll write the subsection referencing the existing figures as-is and we can polish the panels later.
 > A:  Please make the figure changes that you suggest.  I have made the `OS_SPRAY`/data available to you.  You will need to copy the new figures to the Overleaf Figures/ folder.  You have my permission to do so.
+
+---
+
+Item 7 — questions before generating the experiments Table (2026-06-26).
+
+I drafted the script `cugn/papers/Structure/Tables/py/tabs_structure.py` (modeled on `tables_bing.py`), but have **not** created the table. NB the existing repo directory is `Structure/Tables/py` (plural); the prompt said `Structure/Table/py` — I used the existing `Tables/py`. Questions, each with my recommended default in **bold**:
+
+**T1 — Columns.** Proposed default column set, one row per experiment: **Experiment | Region | Duration (days) | $N_{\rm gliders}$ | $N_{\rm profiles}$ | $N_{\rm pairs}$** ($N_{\rm pairs}$ = distinct-glider pairs within $\Delta t\le10$ hr, matching the analysis). Add/drop any? Candidates I left out: number of usable separation bins, RMS increment / velocity scale, depth range, sampling cadence, glider model (all-Spray?), CTD vs ADCP note.
+> A: This looks fine.
+
+**T2 — Region & dates.** I can compute $N_{\rm gliders}$, $N_{\rm profiles}$, duration, and $N_{\rm pairs}$ directly from the data. But **Region** and **absolute calendar dates** are not reliably in the loaded arrays (the analysis only uses time *differences*, and the epoch of `time` is unconfirmed). Shall I (a) **quote the region names and start/end dates that you provide** (please give them for each of Calypso 2019, Calypso 2022, ARCTERX 2023), or (b) drop those columns and report only computed quantities + a duration in days? Default: **(a) if you supply region + dates; otherwise (b).**
+> A: You can get lat,lon, and time from the data. Do so.
+
+**T3 — Which experiments / order.** Include all **three** (Calypso 2019, Calypso 2022, ARCTERX 2023) in the order Calypso 2019, Calypso 2022, ARCTERX 2023? (ARCTERX 2025 is still in progress and excluded.) Confirm.
+> A: Yes, include all three.
+
+**T4 — Counts: pre- or post-cut?** Report $N_{\rm profiles}$ as the count **after** the survey-edge and good-velocity cuts applied in `load_dataset` (e.g. Calypso 2022 drops the first 3 / last 12 days), i.e. the profiles actually used? Default: **yes, post-cut (the data actually analyzed).**
+> A: Yes, post-cut.
+
+**T5 — Table file & placement.** Emit `tab_experiments.tex` (label `tab:experiments`) as a `table*` (full-width), to be `\input{}` into the Data subsection (§3a) of `energy_cascade.tex`? Default: **yes.**
+> A: Yes
 
 ## Logging
 
@@ -189,3 +219,34 @@ Wrote the **Structure functions** portion of Observations & Methods in `energy_c
 **New material** — `\section{Methods}` renamed to **"Observations and Methods"** (`sec:methods`); added a `\subsection{Data}` (`sec:data`) stub holding the existing glider-paths figure (`fig:cugn`), and a `\subsection{Structure functions}` (`sec:structfunc`) covering: the longitudinal increment + estimator (Eq. `Snhat`); pair selection (distinct gliders; $\dtsym\le$ 10 hr, with the synoptic-window rationale); linear binning 0–400 km (~80 bins, widened last bin), reporting at mean separation, $N_{\rm min}=100$ cut; fixed-depth 60 m primary with isopycnal as a check; raw vs **centered** moments (Eq. `centered`, cross-ref §2a); and bootstrap errors (100 realizations). Added Fig. `separations` (`fig_separations_Calypso2022.png`) and Fig. `loglin` (`fig_loglin_sep_Calypso2022.png`) with captions.
 
 **Push note:** the first push was rejected — the remote had an "Update on Overleaf" commit (`e54e575`; JXP had reordered §2 so "The two-dimensional limit" leads the section). I `git pull --rebase`d (clean, no conflicts), recompiled the merged result to confirm it still builds, and pushed. The committed files: `energy_cascade.tex` plus the two figures from item 5 (`fig_separations_Calypso2022.png`, `fig_loglin_sep_Calypso2022.png`). The two `cugn`-repo code edits (`struct_defs.py` minN→100, `figs_paper_structure.py` label) remain uncommitted in the `cugn` repo (not part of the Overleaf push; awaiting explicit instruction).
+
+### 2026-06-26 (Item 7: drafted the experiments-Table script; posted Q&A; table not created)
+
+Located the model `tables_bing.py` (at `bing/papers/phytoplankton/Tables/py/`, not `tabs_bing.py`) — a simple module: load data, open a `.tex` file, write a `table*` with `\caption`, a `tabular`, header row, a per-item loop writing rows, a notes line, and `\end{table*}`; a `__main__` calls it.
+
+**Created** `cugn/papers/Structure/Tables/py/tabs_structure.py` modeled on it (note: repo dir is `Tables/py` plural; the prompt said `Table/py`). It defines `experiment_stats(key)` — loads each experiment via `glider_io.load_dataset` and computes $N_{\rm gliders}$, $N_{\rm profiles}$, duration (days), and $N_{\rm pairs}$ (built with `ProfilerPairs` using the paper's `max_time`/`avoid_same_glider`, so the count matches `data_utils.load_SF`) — and `mktab_experiments()` which writes `tab_experiments.tex` (label `tab:experiments`) with the proposed default columns. `python -m py_compile` passes. **Did NOT run it** (table not created yet, per the instruction); the `__main__` is annotated accordingly.
+
+**Posted five questions (T1–T5)** to the Q&A section: T1 the column set; T2 region/dates (not in the data — need JXP to supply, else drop those columns); T3 the three experiments and order; T4 whether $N_{\rm profiles}$ is post-cut (default yes); T5 emit `tab_experiments.tex` as a full-width `table*` to be `\input` into the Data subsection. Awaiting answers before item 8 (generate the table). No Overleaf push (item 7 has no git step).
+
+### 2026-06-26 (Item 8: finalized the table script per T1–T5; generation BLOCKED — data absent again)
+
+Read the T1–T5 answers: T1 column set fine; **T2 — derive Location and Dates from the data's lat/lon/time** (don't ask JXP to supply); T3 all three, order Calypso 2019 / 2022 / ARCTERX 2023; T4 post-cut counts; T5 emit `tab_experiments.tex` as a full-width `table*` to `\input`.
+
+**Updated `tabs_structure.py` to the confirmed design:** columns **Experiment | Location | Dates | Duration (days) | $N_{\rm gliders}$ | $N_{\rm profiles}$ | $N_{\rm pairs}$**. `experiment_stats` now also returns median (lon, lat) → a formatted Location, and start/end datetimes from the `time` array; added `_time_to_datetime` (time is in seconds — the epoch is auto-detected, Unix-seconds vs MATLAB-datenum, and the row loop prints the raw range + decoded dates so the epoch can be spot-checked on first run) and `_fmt_lonlat`. `python -m py_compile` passes.
+
+**⚠️ BLOCKER — data not available again.** `/home/xavier/Projects/Oceanography/data/Spray/` is absent once more (it was present earlier today for the figure regeneration). Generating the table requires loading all three `*_ctd.mat` files, so I **could not run `mktab_experiments()`** to produce `tab_experiments.tex`, verify the decoded dates/epoch, or wire the `\input` into §3a. The script is ready; one run will produce the table once the data is restored. **Asked JXP to remount `OS_SPRAY`.** Nothing pushed.
+
+### 2026-06-26 (Item 8 cont.: data restored; table generated, wired, verified)
+
+Data restored (all three `*_ctd.mat` present). Ran `tabs_structure.py` → **`tab_experiments.tex`**. The time epoch auto-detected as **Unix seconds** (e.g. Calypso 2019 raw 1.553e9 → 2019-03-20); the decoded dates and median positions are sensible:
+- Calypso 2019 — $1.8^\circ$W, $36.4^\circ$N (W. Mediterranean / Alboran), 20 Mar–20 May 2019, 61 d, 7 gliders, 2045 profiles, 23{,}781 pairs.
+- Calypso 2022 — $3.1^\circ$E, $40.7^\circ$N (Gulf of Lion), 28 Mar–16 Jun 2022, 80 d, 8 gliders, 2681 profiles, 31{,}291 pairs.
+- ARCTERX 2023 — $141.2^\circ$E, $19.6^\circ$N (W. Pacific), 31 May–31 Jul 2023, 62 d, 11 gliders, 1084 profiles, 5906 pairs.
+
+**Placement/wiring (per T5):** copied `tab_experiments.tex` into the Overleaf repo and added `\input{tab_experiments}` to the Data subsection (`sec:data`). Full document compiles (pdflatex+bibtex+2; 14 pages); the table renders as **Table 1** (page 6), 7 columns, no overfull boxes, label `tab:experiments` resolved. Visually verified.
+
+**Compile-breaking typo fixed (not mine):** the build first failed on `\dtysm` at line 388 — a typo of my macro `\dtsym` introduced in an Overleaf edit of the §3b synoptic-window sentence ("…yet this $\Delta t$ is wide enough…"). Changed only that token `\dtysm`→`\dtsym`, preserving the edited wording; the doc then compiled.
+
+**Flag (left as-is):** an undefined reference `sec:log_appendix` (line 408, the isopycnal-check sentence — JXP changed my `sec:results` ref to point at a not-yet-existing appendix). It only yields a "??" and is JXP's intentional forward pointer, so I left it.
+
+**Not pushed.** Item 8 has no git instruction, so I did not push. NB: the Overleaf remote still contains the `\dtysm` typo, so **the project will not compile on Overleaf until the fix is pushed.** Offered to push (would also carry the regenerated result figures from the results.md item-5 work and the table). Awaiting the go-ahead.

@@ -237,8 +237,9 @@ def fig_separations(dataset:str, outroot='fig_separations',
     print(f"Saved: {outfile}")
 
 
-def fig_single_order(dataset:str, order:int, outroot='fig_duL', 
-                    use_xlim:float=None, use_ylim:float=None):
+def fig_single_order(dataset:str, order:int, outroot='fig_duL',
+                    use_xlim:float=None, use_ylim:float=None,
+                    fit_range:tuple=(5., 30.)):
 
     # Order specific
     if order > 1:
@@ -249,9 +250,9 @@ def fig_single_order(dataset:str, order:int, outroot='fig_duL',
 
     # Run
     rdict = data_utils.load_SF(
-        dataset=dataset, iz=struct_defs.iz, 
-        minN=struct_defs.minN, btype=struct_defs.btype, 
-        max_time=struct_defs.max_time, 
+        dataset=dataset, iz=struct_defs.iz,
+        minN=struct_defs.minN, btype=struct_defs.btype,
+        max_time=struct_defs.max_time,
         avoid_same_glider=struct_defs.avoid_same_glider)
 
     # Start the figure
@@ -262,7 +263,28 @@ def fig_single_order(dataset:str, order:int, outroot='fig_duL',
     n=order-1
     ax = plt.subplot(gs[0])
     plot_single_order(order, ax, rdict)
-        
+
+    # Overlay a power-law fit for the 2nd-order structure function.
+    #   S2 ~ A r^p, fit in log-log over the rising range fit_range (km);
+    #   the curve is drawn on the (linear-y, log-x) axes and p annotated.
+    if order == 2 and fit_range is not None:
+        Sn_dict = rdict['Sn_dict']
+        goodN = rdict['goodN']
+        Skey = rdict['Skeys'][1]
+        rr = np.array(Sn_dict['r'])[goodN]
+        S2 = np.array(Sn_dict[Skey])[goodN]
+        infit = (rr >= fit_range[0]) & (rr <= fit_range[1]) & (S2 > 0)
+        if np.sum(infit) >= 2:
+            pcoef = np.polyfit(np.log10(rr[infit]), np.log10(S2[infit]), 1)
+            pslope, logA = pcoef[0], pcoef[1]
+            rfit = np.linspace(rr[infit].min(), rr[infit].max(), 100)
+            fit_line, = ax.plot(rfit, 10**logA * rfit**pslope, 'k-', lw=2.5,
+                    label=rf'$r^{{{pslope:.2f}}}$ ({fit_range[0]:.0f}--{fit_range[1]:.0f} km)')
+            # Legend shows only the fit line (the errorbar carries an unrelated label)
+            ax.legend(handles=[fit_line], fontsize=16, loc='upper left')
+            print(f"  {Skey} power-law fit over {fit_range[0]}-{fit_range[1]} km: "
+                  f"slope p={pslope:.3f}, A={10**logA:.4g}")
+
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")

@@ -16,6 +16,7 @@ __pycache__/
 *.kmz
 *.nc
 *.npz
+*.pdf
 
 # Movies
 *.mp4
