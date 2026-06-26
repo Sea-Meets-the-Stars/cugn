@@ -34,8 +34,10 @@ Our outline is in the cugn/papers/Structure/Writing/ folder.  It is named outlin
 4.  I have answered your questions in the Q&A section below.  Please read them and let me know if you have any more.  If so add them to the Q&A section below.  Log your work
     
 5. Read my answers.  Then make the figure changes that you suggested.  Log your work.
+
+6. Please modify all of the key results figures to use linear binning instead of log. Log your work.
     
-6. Proceed to write Results section 4a on Calypso 2002 of the paper in the Overleaf Project in the energy_cascade.tex file.  
+7. Proceed to write Results section 4a on Calypso 2002 of the paper in the Overleaf Project in the energy_cascade.tex file.  
 
     - Use my scientific writing style.  
     - Use macros and \ensuremath{} to render LaTeX expressions whenever you can.  
@@ -164,3 +166,13 @@ JXP restored `$OS_SPRAY` (confirmed `calypso2022_ctd.mat` present). Regenerated 
 **Code change** (`cugn` repo, uncommitted): `fig_single_order` gained a `fit_range=(5,30)` km parameter and the order-2 power-law overlay + legend fix.
 
 **Not pushed:** item 5 carries no git instruction (push is in item 6). The five regenerated figures sit staged in the Overleaf working tree, to go up with the §4 write/push. Ready for item 6.
+
+### 2026-06-26 (Item 6: wrote Results §4a Calypso 2022; resolved merge; pushed)
+
+Wrote **§4 Results → §4a Calypso 2022** in `energy_cascade.tex` (my style, macros + `\ensuremath`), embedding the three figures with captions, and pushed to Overleaf (commit `3f88032`, 18 pages, compiles clean).
+
+**Content (five paragraphs):** (1) intro — focus experiment, $\Nmin=100$ gives $r\approx4$–70 km, fixed depth 60 m with the isopycnal check noted; (2) $\Sn{1}$ — ~zero at small $r$, systematically positive ($\approx0.02$ m/s) for $r\gtrsim15$ km → residual inhomogeneity; (3) $\Sn{2}$ — rises $\approx5\times10^{-3}\to1.1\times10^{-2}$ (m/s)$^2$ (RMS 0.07–0.10 m/s), power law $p\approx0.4$ over 5–30 km (shallower than $r^{2/3}$, well below $r^2$), plateau ~30–50 km; (4) third moment — raw $S_3$ positive, $\to\approx7\times10^{-4}$ (m/s)$^3$; centered $\Snc{3}$ consistent with zero (1 of 19 bins $>2\sigma$); $r\approx50$ km bias accounts for nearly all the raw value; 67 km bin marginal (~1.6$\sigma$); (5) empirical null result, broad framing deferred to Discussion (per Q5). Figures `fig:duL`/`fig:duL2`(fit)/`fig:s3`(raw vs centered) as Figs 4–6, captioned. Macros added: `\mps`, `\mpss`, `\mpsss`, `\nbinscalypso`=19.
+
+**Merge/push:** push rejected → `git pull --rebase` conflicted in `energy_cascade.tex` (JXP had added a bare `\subsection{Calypso 2022}` heading via two "Update on Overleaf" commits). Resolved keeping the heading + my content (their side empty), recompiled clean, `rebase --continue`, pushed `3f88032`. The earlier `\dtysm` fix and §3b reproducibility edits rode along.
+
+**Open flags (for JXP):** (a) binning still `btype='log'` vs text "linear"; (b) `\valnboot=1000` (JXP) but figures used `nboot=100`; (c) `sec:log_appendix` undefined forward ref. None block compilation except (c) renders "??".
