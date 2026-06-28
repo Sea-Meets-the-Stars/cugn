@@ -47,6 +47,17 @@ Our outline is in the cugn/papers/Structure/Writing/ folder.  It is named outlin
     - Write figure captions for the figures.
     - Log your work
 
+8. Make these additional changes to the Results section:
+    - Comment that the leveling off in `<du_L^2>` at the smallest separations is likely due to the noise floor in the ADCP measurements.
+    - Log your work
+
+9. Make another pass on the existing Results section, incorporating the updated figures
+    - Push to the Overleaf GitHub
+    - Log your work
+
+10. Now write the second sub-section of the Results section which shows and describes the results for the other 2 experiments.  Log your work.
+
+
 ## Q&A
 
 Questions before writing the **Results** section. Each has my recommended default in **bold** — confirm or correct inline.
@@ -176,3 +187,67 @@ Wrote **§4 Results → §4a Calypso 2022** in `energy_cascade.tex` (my style, m
 **Merge/push:** push rejected → `git pull --rebase` conflicted in `energy_cascade.tex` (JXP had added a bare `\subsection{Calypso 2022}` heading via two "Update on Overleaf" commits). Resolved keeping the heading + my content (their side empty), recompiled clean, `rebase --continue`, pushed `3f88032`. The earlier `\dtysm` fix and §3b reproducibility edits rode along.
 
 **Open flags (for JXP):** (a) binning still `btype='log'` vs text "linear"; (b) `\valnboot=1000` (JXP) but figures used `nboot=100`; (c) `sec:log_appendix` undefined forward ref. None block compilation except (c) renders "??".
+
+### 2026-06-27 (Item 8: noise-floor comment on the small-separation $\langle\delta u_L^2\rangle$ leveling-off)
+
+Per item 8, added a sentence to the §4a second-order-moment paragraph: at the smallest separations $\Sn{2}$ levels off rather than continuing to decrease, attributed to the **noise floor of the individual ADCP velocity estimates** (a minimum measurable increment variance, not the turbulent field). Also softened the opening "rises monotonically" → "rises" so it no longer conflicts with the low-$r$ floor. Compiles clean (single pass, no errors; 17 pp).
+
+**Not pushed:** item 8 lists only "Log your work" (no git step, unlike item 7), so I left the one-line `energy_cascade.tex` change uncommitted in the Overleaf working tree. Offered to push.
+
+### 2026-06-27 (Pushed item-8 edit; verified the key figures are still log-binned)
+
+JXP asked me to check whether the linear-binning figures already exist, and to push the latest edits.
+- **Check:** they do **not**. `struct_defs.btype='log'`; the five §4a key figures (`fig_duL`, `fig_duL2`, `fig_duL3`, `fig_corrected_s3`, `fig_S1S3_other`, regen 06-25) are all **log-binned**. The only "lin" artifacts are `fig_structure_lin_z60_Calypso2022_duLduLduL.png` (a *different*, combined `fig_structure` panel from 2026-06-08 at minN=50, not used in §4a) and the `fig_loglin_sep` separations comparison. So **item 6 is still outstanding**.
+- **Push:** committed and pushed the item-8 noise-floor sentence (`a4623b1`, clean fast-forward, no conflict).
+
+**Recommended next (item 6), pending JXP go-ahead:** set `struct_defs.btype='lin'` and regenerate the five key figures. This will change the §4a numbers I quoted (currently from log binning: 19 good bins, slope $p\approx0.4$, the per-bin values), so I'll re-extract slope/bin-range/values and update the §4a text to match. Needs `OS_SPRAY` data present.
+
+### 2026-06-27 (Item 6: regenerated key figures with linear binning; updated §4a numbers)
+
+Data present. Set `struct_defs.btype='lin'` (also resolves open-flag (a): code now matches the "linear adopted" Methods text) and regenerated the five key figures, copied all to the Overleaf `Figures/` folder. The result panels now use a **linear $x$-axis** (the `set_xscale('log')` was gated on `btype=='log'`).
+
+**Linear-binning numbers (Calypso 2022, minN=100, 5-km bins):**
+- **14** good bins (was 19 with log), $r=3.4$–67.8 km, $N=111$–4960.
+- $\Sn{2}$: $5.4\times10^{-3}\to1.07\times10^{-2}$ \mpss\ (RMS 0.074–0.104 \mps); power-law slope **$p\approx0.40$** over 5–30 km (was 0.42).
+- $\Sn{1}$: $-0.011$ to $+0.018$ \mps.
+- raw $S_3$ up to $\approx1.4\times10^{-3}$ \mpsss\ (higher peak than log's $7\times10^{-4}$); centered $\Snc{3}$ **consistent with zero in all 14 bins — none exceeds $2\sigma$** (max $1.99\sigma$). At $r\approx48$ km the $3S_1S_2$ bias ($3.7\times10^{-4}$) accounts for nearly all the raw value ($4.1\times10^{-4}$).
+- The 67 km bin is now $0.8\sigma$ (consistent with zero); the largest centered deviation is a single sparse bin near 63 km at $\approx2\sigma$.
+
+**§4a text updated to match** (necessary — the log-derived numbers were now wrong): `\nbinscalypso` 19→14; "only one of the bins $>2\sigma$" → "none ... $>2\sigma$"; replaced the old "marginal 67 km, 1.6$\sigma$" exception with the linear reality (largest deviation ~2$\sigma$ at ~63 km, not significant); raw-$S_3$ peak $7\times10^{-4}\to1.4\times10^{-3}$. Compiles clean (18 pp). The null result is now even cleaner (no $>2\sigma$ bin).
+
+**Not pushed:** item 6 says "Log your work" only (no git step). Working tree holds the five linear figures + `energy_cascade.tex` (the `\nbinscalypso` and §4a third-moment edits), uncommitted. Offered to push. Remaining flags: (b) `\valnboot=1000` vs figures' `nboot=100`; (c) `sec:log_appendix` undefined forward ref.
+
+### 2026-06-27 (Item 9: consistency pass on §4a for the linear figures; pushed)
+
+Made another pass over §4a against the updated **linear** figures (item 6 had updated the third-moment numbers; this pass caught the rest) and pushed (commit `cd50b5c`, clean fast-forward, 18 pp).
+
+Fixes this pass (verified by viewing the linear `fig_duL`):
+- **$\Sn{1}$ description corrected.** The linear panel shows $\Sn{1}$ predominantly positive over ~15–60 km (peak $\approx0.018$ \mps\ near 60 km) but the **largest-separation bin (~68 km) is now negative** — so "reaching $\approx0.02$ at the largest separations" was wrong. Changed to "predominantly positive, reaching $\approx0.018$ \mps\ near 60 km"; softened "systematically"→"predominantly" in the body and the `fig:duL` caption.
+- **`fig:s3` caption fixed.** It still said "consistent with zero … except for the marginal largest-separation bin" — stale after the linear regen. Changed to "consistent with zero … across the resolved range" (matches the body, where no bin exceeds $2\sigma$).
+
+Re-verified the other §4a numbers against the linear data (slope $p\approx0.4$, $\Sn{2}$ $5\times10^{-3}\to1.1\times10^{-2}$ \mpss, RMS 0.07–0.10 \mps, raw $S_3$ peak $1.4\times10^{-3}$, $r\approx48$ km bias accounts for nearly all the raw value) — all consistent; left the ~30–50 km plateau wording (approximate, fine).
+
+**Pushed** the five linear figures + the reconciled `energy_cascade.tex` together (item 9 explicitly required the push). Remaining open flags unchanged: (b) `\valnboot=1000` macro vs figures generated with `nboot=100`; (c) `sec:log_appendix` undefined forward reference (renders "??").
+
+### 2026-06-27 (Resolved flag (b): regenerated key figures at nboot=1000)
+
+JXP: address the bootstrap mismatch by regenerating at 1000. Made `nboot` a `struct_defs` value (`nboot = 1000`) and wired it into `data_utils.load_SF` (`calc_Sn_vs_r(rbins, nboot=struct_defs.nboot)`, was hardcoded 100) — single source of truth now matching the `\valnboot=1000` macro. Regenerated the five key figures (linear binning, nboot=1000), copied to Overleaf, compiled (18 pp), pushed (`9160e3b`, clean fast-forward).
+
+**Numbers unchanged**, so no §4a text edits: 14 good bins, slope $p\approx0.40$, centered $\Snc{3}$ consistent with zero in **all** bins — max deviation now **1.81$\sigma$** (was 1.99 at nboot=100), still $<2\sigma$. The "$\approx2\sigma$ near 63 km" wording in §4a remains accurate. **Flag (b) resolved.**
+
+Only remaining flag: (c) `sec:log_appendix` undefined forward reference (JXP's intentional pointer to a future appendix; renders "??").
+
+**Note — item 6 still pending:** the renumbered list now has item 6 = "modify all key results figures to use linear binning instead of log" (this supersedes open-flag (a) — JXP chose to regenerate as linear). I have **not** done item 6 yet; JXP directed me straight to item 8. When asked, item 6 = set `struct_defs.btype='lin'` and regenerate `fig_duL`, `fig_duL2`, `fig_duL3`, `fig_corrected_s3`, `fig_S1S3_other` (+ likely re-extract the slope/bin numbers, which will change). Open flags (b) `nboot` and (c) `sec:log_appendix` also still stand.
+### 2026-06-27 (Item 10: wrote §4b — the other two experiments)
+
+Wrote the second Results subsection, `\subsection{Calypso 2019 and ARCTERX 2023}` (`sec:results_other`), after §4a. Re-ran `load_SF` (linear bins, `minN=100`, `nboot=1000`) for both datasets to ground the numbers, viewed the current `fig_S1S3_other.png`, and embedded it (`fig:s1s3other`) with a caption.
+
+**Extracted numbers (linear binning):**
+- *Calypso 2019:* 25 good bins, $r=2.8$–124 km; $|\Sn{1}|$ up to $\approx0.06$ \mps; raw $S_3$ $-5.4\times10^{-3}$..$+6.9\times10^{-3}$; centered $\Snc{3}$ consistent with zero (1/25 bins $>2\sigma$).
+- *ARCTERX 2023:* 14 good bins, $r=18$–83 km (sparser, $N=141$–331); strong negative mean flow $\Sn{1}\approx-0.10$ \mps; raw $S_3$ down to $-1.3\times10^{-2}$; centered $\Snc{3}$ consistent with zero (0/14 bins $>2\sigma$).
+
+**Narrative:** both experiments have larger $\Sn{1}$ than Calypso 2022 (ARCTERX dominated by a ~0.1 \mps\ mean flow), giving large raw-$S_3$ biases; but the centered third moment is consistent with zero in both, so neither determines the cascade sign. The null result holds across all three experiments (different regions, mean flows, sampling) → robust, not survey-specific. Broad framing reserved for Discussion (per Q5).
+
+Compiles clean (pdflatex+bibtex+2 passes, 19 pp, no undefined refs/citations).
+
+**Git state checked:** Overleaf remote is at `9160e3b` (linear + `nboot=1000` figure work and §4a edits all already pushed). The only pending change is this §4b text (`M energy_cascade.tex`), left **uncommitted** — item 10 says "Log your work" only (no push step, unlike item 9). Offered to push. Remaining flag: (c) `sec:log_appendix` undefined forward ref (JXP's intentional future-appendix pointer).

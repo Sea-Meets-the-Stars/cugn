@@ -16,5 +16,6 @@ dataset_binning = {
 iz = 5
 minN = 100
 max_time = 10.
-btype = 'log'
+btype = 'lin'
 avoid_same_glider = True
+nboot = 1000

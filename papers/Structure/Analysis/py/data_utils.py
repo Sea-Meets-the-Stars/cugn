@@ -75,7 +75,7 @@ def load_SF(dataset:str,
     gPairs.calc_delta(iz, variables, skip_velocity=False)
     gPairs.calc_Sn(variables)
 
-    Sn_dict = gPairs.calc_Sn_vs_r(rbins, nboot=100)
+    Sn_dict = gPairs.calc_Sn_vs_r(rbins, nboot=struct_defs.nboot)
     gPairs.calc_corr_Sn(Sn_dict)
     gPairs.add_meta(Sn_dict)
 
