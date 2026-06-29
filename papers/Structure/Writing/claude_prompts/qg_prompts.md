@@ -37,6 +37,10 @@ Our outline is in the cugn/papers/Structure/Writing/ folder.  It is named outlin
 
 4. That section is excellent.  Let us now prepare the Results section for QG.  Ask me questions in the Q&A/Results section. Log your work.
 
+5. I have answered your questions in the Q&A/Results section.  Read them and ask more questions if needed.  Log your work.
+
+6. I have answered your questions in the Q&A/Results section.  Proceed to making figures and writing the text.  When you are dowe writing, push your changes to Overleaf.  Log your work.
+
 ## Q&A
 
 ### Theory
@@ -254,6 +258,57 @@ independent eddies / decorrelation time, to characterize the statistical
 independence of the sampling), or drop it for now? Default: **drop unless you
 have a specific use; it is not essential to the cascade-sign argument.**
 > A: Hold off for now.
+
+---
+
+Follow-up after your R-answers (2026-06-29). Before drafting §4c I checked the
+sampling outputs against the in-box truth, and the numbers refine the R2 arc:
+
+I computed the centered \Snc{3} for the three samplings of the 100 km box over
+100 days, at both available QG start times, and counted how many separation
+bins ($5$–$70$ km) come out positive (the true sign):
+
+| start time | Eulerian (dense, all grid pairs) | drifter (121) | glider (10) |
+|---|---|---|---|
+| ts=5001 | 13/13 bins $>0$ ✓ | 3/8 ✗ | 4/9 ✗ |
+| ts=6001 | 11/13 ✓ | 8/8 ✓ | 8/9 ✓ |
+
+**R9 — The sampling result is realization-dependent; this refines R2.** Two
+points from the table contradict the arc as stated:
+- (a) **Duration is not the barrier for dense sampling.** The Eulerian (every
+  grid point, every day) in-box estimate recovers a positive \Snc{3} in *100
+  days*, not multi-year. So "the centered moment recovers only with multi-year
+  averaging" is true for *sparse track-based accumulation*, not for sampling
+  density in general.
+- (b) **Realistic sampling is realization-dependent.** The glider (10) and
+  drifter (121) recover the correct positive sign at ts=6001 but *fail* (sign
+  scattered, $\sim$half the bins negative) at ts=5001. And platform count
+  (10 vs 121) matters far less than *which* 100-day window is sampled.
+
+So the cleaner, more defensible message is: the underlying field has an
+unambiguous inverse cascade, but with a realistic $\sim$100-day glider survey
+the *recovered sign is unreliable --- it depends on the particular eddy
+realization sampled* --- whereas complete spatial sampling (Eulerian) is robust.
+This still supports "humans will not measure the sign," but via sampling
+sparsity + realization variance rather than averaging time alone. Do you want
+§4c framed this way? Default: **yes, reframe around realization-dependence /
+sampling sparsity, keeping the Eulerian-vs-sparse contrast central.**
+> A: Use the default.
+
+**R10 — Build an ensemble of realizations?** The realization-dependence in R9
+currently rests on only *two* start times. To claim it robustly (and to make a
+much stronger figure than a single 3-curve comparison), I'd run the
+glider/drifter/Eulerian sampling pipeline for an ensemble of start-time windows
+(say 10–20, optionally also a few box positions) and show the *distribution* of
+the recovered \Snc{3} sign/slope --- e.g.\ a histogram of recovered slopes with
+the true value marked, or the fraction of realizations recovering the correct
+sign. This needs the Julia+Python sampling pipeline (`qg_gliders`,
+`glider_analysis`) run against the full QG output (present in `$OS_DATA`). Do
+you want me to generate this ensemble, or keep the single-window
+(ts5001/ts6001) comparison for now? Default: **run a modest ensemble
+($\sim$12 windows) for the headline sampling figure, if the pipeline runs
+cleanly here; fall back to the two existing windows otherwise.**
+> A: Let's defer this for now.  Please remind me to consider it again later
 
 ## Logging
 
@@ -487,3 +542,103 @@ comparison and whether to show both platforms (R5); whether I should generate
 the missing figures (R6); whether to quote a quantitative \eflux\ from the
 full-box inverse-energy slope (R7); and whether to include $N_{\rm eddies}$
 vs.\ time (R8, default drop). Awaiting answers before drafting §4c.
+
+### 2026-06-29 (Read R1–R8 answers; verified sampling configs/data; posted follow-ups R9–R10)
+
+Completed item 5 under **Writing**: read the R1–R8 answers (all defaults
+confirmed: §4c placement; the three-step arc; single representative 100 km box
+with spread noted in text; include the time-evolution panel; include the
+glider+drifter sampling comparison; I generate the figures; quote \eflux\ from
+the full-box slope; hold $N_{\rm eddies}$). Then, rather than ask reflexively, I
+verified the sampling configurations and the data, and the numbers turned up a
+real issue that warranted two follow-ups.
+
+**Sampling configs (from `Analysis/Output/*.meta.json`).** Gliders: **10**
+platforms, 100 days, 3-hourly, realistic survey track
+(`100km100day10gliders3h.csv`) — the realistic case. Drifters: **121**
+Lagrangian particles on a 10-km grid in the 100 km box — *dense*, not sparse.
+Eulerian: all grid pairs in the box — the in-box truth. The "few platforms"
+framing fits the gliders; the drifters are denser than any real deployment.
+
+**Data.** Initially `$OS_DATA/QG/` looked empty (a double-slash `ls` glitch);
+the user then fixed/confirmed it. Present: `QGModelOutput20years.nc` and the
+three `SFQG_aver_pos_orien_5yearb*.nc`. Region SF (`SF_region_x300_y400_5years.nc`),
+the Eulerian `.nc`, and the drifter/glider SF JSONs are local in
+`Analysis/Output/`. So all figures (full-box, region-vs-full, time-evolution,
+sampling) are generatable here.
+
+**Key empirical finding (drove R9/R10).** I computed centered \Snc{3} for the
+three samplings of the 100 km box over 100 days at both start times and counted
+positive bins ($5$–$70$ km):
+
+- ts=5001 — Eulerian 13/13 ✓; drifter 3/8 ✗; glider 4/9 ✗
+- ts=6001 — Eulerian 11/13 ✓; drifter 8/8 ✓; glider 8/9 ✓
+
+This **refines the confirmed R2 arc**: (a) dense Eulerian sampling recovers the
+positive \Snc{3} in *100 days*, not multi-year — so duration is not the barrier
+for dense sampling; (b) the realistic glider/drifter recovery is
+**realization-dependent** (fails at ts5001, succeeds at ts6001), and platform
+count (10 vs 121) matters far less than which 100-day window is sampled. The
+cleaner message: the field has an unambiguous inverse cascade, but a realistic
+$\sim$100-day survey recovers the sign *unreliably* (depends on the eddy
+realization), while complete spatial sampling is robust.
+
+**Follow-ups posted (R9–R10 in Q&A/Results).** R9: reframe §4c around
+realization-dependence / sampling sparsity (vs.\ the averaging-time framing of
+R2), keeping the Eulerian-vs-sparse contrast central. R10: whether to build an
+ensemble of $\sim$12 start-time windows (and/or box positions) to show the
+*distribution* of recovered sign/slope — making the unreliability claim robust
+beyond the current $n=2$ — by running the `qg_gliders`/`glider_analysis`
+pipeline against the full QG output. Awaiting answers before drafting §4c and
+finalizing which figures to generate.
+
+### 2026-06-29 (Made QG results figures, wrote §4c, pushed to Overleaf)
+
+Completed item 6 under **Writing**: read the R9–R10 answers (R9: reframe around
+realization-dependence / sampling sparsity — use default; R10: defer the
+ensemble, use the two existing windows, **remind me later**), generated the
+figures, wrote §4c, and pushed to Overleaf.
+
+**🔔 REMINDER for JXP (per R10):** revisit whether to run an *ensemble* of
+$\sim$12 start-time windows (± box positions) to show the distribution of
+recovered \Snc{3} sign/slope and put the realization-dependence claim on firmer
+footing than the current $n=2$ (ts5001/ts6001). Deferred for now.
+
+**Figures generated** (new script `Figures/py/figs_qg_results.py`, env
+`ocean14`):
+- `fig_qg_time_evolution.png` — subregion ($x{=}300,y{=}400$, 100 km) \Sn{1}
+  (left) and centered \Snc{3} (right) averaged over 30 d → 5 yr vs.\ the exact
+  full-domain curves. Shows the mean \Sn{1} converges slowly while \Snc{3}
+  recovers the positive sign almost immediately for dense sampling.
+- `fig_qg_sampling.png` — centered \Snc{3} from 10 gliders (realistic track) and
+  121 drifters sampling the 100 km box over 100 days, vs.\ the exact in-box
+  (Eulerian) truth, for two start-time windows (panels scaled independently
+  because the in-box truth itself differs between windows). Realization A:
+  sparse platforms miss a strong positive signal (drifters $\approx0$); B: they
+  track a weaker one. Realization-dependent; not fixed by platform count.
+- Reused the existing `fig_qg_100km_vs_full.png` (subregion vs.\ full box) — it
+  was in the `Figures/` folder but had not been included in the tex; §4c now
+  includes it.
+
+**\eflux from the full-box slope (R7).** Through-origin fit of
+$\Sn{3}=\tfrac32\eflux r$ over the resolved rising branch (18–68 km) gives
+$\eflux \approx 1.7\times10^{-10}$; quoted in §4c as an order-of-magnitude
+$\eflux \approx 2\times10^{-10}\,{\rm m^2\,s^{-3}}$ (the branch is not a clean
+unit-slope power law, so I framed it as order-of-magnitude).
+
+**§4c "A quasi-geostrophic testbed"** (`\label{sec:results_qg}`), placed after
+§4b and before Discussion. Four paragraphs + three figures, following the R9
+arc: (1) the field has a known positive cascade, quote \eflux; (2) a
+survey-sized subregion carries a nonzero \Sn{1} that biases raw $S_3$ while the
+centered \Snc{3} recovers the truth — validating the centering correction
+against ground truth (Fig.\ qg\_subregion); (3) with dense sampling the
+centered moment recovers quickly — duration is not the obstacle (Fig.\
+qg\_timeevo); (4) **the payoff** — realistic sparse sampling (10 gliders / 121
+drifters, 100 d) recovers the sign only realization-dependently, explaining the
+observational null of §4a/b (Fig.\ qg\_sampling). Reused existing macros.
+
+**Compile + push.** Compiles cleanly (pdflatex + bibtex + 2 passes, **25
+pages**); all three new figure refs resolve; only the pre-existing
+`sec:log_appendix` / `Rudnick2016` warnings remain. Committed `energy_cascade.tex`
++ the two new PNGs, pulled --rebase (clean), and pushed to Overleaf
+(`bf1a49a..bc45213 main`). Build artifacts excluded.
