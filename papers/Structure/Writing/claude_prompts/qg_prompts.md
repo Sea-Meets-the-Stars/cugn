@@ -41,6 +41,12 @@ Our outline is in the cugn/papers/Structure/Writing/ folder.  It is named outlin
 
 6. I have answered your questions in the Q&A/Results section.  Proceed to making figures and writing the text.  When you are dowe writing, push your changes to Overleaf.  Log your work.
 
+7.  Going back a bit, please:
+    - Write a figure caption for Figure 2
+    - Move the Nmin=100 text on Figure 3 to the left (off the histogram)
+    - Push Figure 4 into the Appendix
+    - In the current Figure 8, the ARCTERX 2023 figure extends to too large of r-values.  Limit to 100km
+
 ## Q&A
 
 ### Theory
@@ -642,3 +648,44 @@ pages**); all three new figure refs resolve; only the pre-existing
 `sec:log_appendix` / `Rudnick2016` warnings remain. Committed `energy_cascade.tex`
 + the two new PNGs, pulled --rebase (clean), and pushed to Overleaf
 (`bf1a49a..bc45213 main`). Build artifacts excluded.
+
+### 2026-06-30 (Figure touch-ups: caption, label, appendix move, ARCTERX r-limit)
+
+Completed item 7 under **Writing** — four touch-ups to earlier figures.
+Confirmed the figure→number mapping from the document order (the user's hints
+matched): Fig 2 = `fig_experiments` (glider paths), Fig 3 =
+`fig_separations_Calypso2022`, Fig 4 = `fig_loglin`, Fig 8 = `fig_S1S3_other`.
+
+1. **Caption for Fig 2** (`fig:cugn`): replaced the stub "Glider paths" with a
+   real caption (three experiments, regions, color = individual glider, pointer
+   to Table~\ref{tab:experiments}).
+2. **Fig 3 \Nmin label**: in `figs_paper_structure.py::fig_separations`, moved
+   the $N_{\rm min}=100$ annotation from the right (x=0.97, `ha='right'`) to the
+   left (x=0.03, `ha='left'`), off the histogram bars.
+3. **Fig 4 → Appendix**: moved the `fig:loglin` (log-vs-linear binning) figure
+   out of §3 into a new appendix subsection "Sensitivity to separation binning"
+   (`sec:bin_appendix`). The in-text §3 reference still resolves.
+4. **Fig 8 ARCTERX r-limit**: in `fig_S1S3_other`, pass `use_xlim=(0,100)` for
+   the ARCTERX-2023 row so the panels span 0–100 km instead of 0–400.
+
+**⚠️ Bug caught & fixed (process note).** The figure functions save to the
+*current working directory* (`Figures/py/`), not `Figures/`. My first copy
+step `cd Figures/ && cp ...` therefore copied the **stale** `Figures/*.png`
+(unchanged) to Overleaf — a no-op — while the regenerated figures sat in
+`Figures/py/`. Caught it via `git show --stat` (the figure commit changed only
+the tex) and md5 comparison: `py/` versions (sep `749701…`, S1S3 `a627e4…`)
+differed from the stale `Figures/` versions (`c0df…`, `7a78…`). Re-copied the
+correct `py/` versions to both the canonical `Figures/` and Overleaf, and
+verified by extracting+viewing the committed blob. **Lesson:** these figure
+scripts write to CWD — always source figures from `Figures/py/` (or run from
+`Figures/`), and verify a figure commit's `--stat` actually lists the PNGs.
+
+**Compile + push.** Compiles cleanly (pdflatex + bibtex + 2 passes, **26
+pages**; the appendix figure adds a page). Two commits — `c7cf05c` (tex: caption
++ appendix move + code-aligned edits) and `a4beedd` (corrected PNGs) — pulled
+--rebase (clean, over a remote "Update on Overleaf"), pushed
+(`3f4bef8..a4beedd main`). Verified my edits survived the rebase. The
+`figs_paper_structure.py` / `figs_qg_results.py` code edits live in the cugn
+repo and are **not committed there** (no request to); they remain in the working
+tree. Pre-existing `sec:log_appendix` (isopycnal-coords appendix, separate from
+the new `sec:bin_appendix`) is still an undefined ref — pre-existing, untouched.

@@ -228,9 +228,9 @@ def fig_separations(dataset:str, outroot='fig_separations',
 
     # Add horizontal line at minN, labeled
     ax_r.axhline(struct_defs.minN, color='gray', linestyle='--')
-    ax_r.text(0.97, struct_defs.minN, rf'$N_{{\rm min}}={struct_defs.minN}$',
+    ax_r.text(0.03, struct_defs.minN, rf'$N_{{\rm min}}={struct_defs.minN}$',
               transform=ax_r.get_yaxis_transform(),
-              ha='right', va='bottom', color='gray', fontsize=13)
+              ha='left', va='bottom', color='gray', fontsize=13)
 
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
@@ -330,7 +330,11 @@ def fig_S1S3_other(datasets:str, outfile:str='fig_S1S3_other.png', use_xlim:tupl
             ax = plt.subplot(gs[row, col])
             #
             correct = True if order == 3 else False
-            plot_single_order(order, ax, rdict, corrected=correct)
+            # ARCTERX 2023 has sparse pairs out to very large r; restrict the
+            # axis to the well-sampled range for legibility.
+            xlim = (0., 100.) if dataset == 'ARCTERX-2023' else None
+            plot_single_order(order, ax, rdict, corrected=correct,
+                              use_xlim=xlim)
             # Label by dataset
             if order == 1:
                 ax.text(0.05, 0.95, dataset, transform=ax.transAxes,
