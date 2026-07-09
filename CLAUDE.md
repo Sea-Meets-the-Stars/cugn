@@ -6,6 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 CUGN (California Underwater Glider Network) is a Python package for analyzing oceanographic data from Spray underwater gliders operating along the California coast. The project processes glider profiles to study oxygen dynamics, water mass properties, and ocean structure.
 
+## Working Conventions
+
+- **Git:** The user (not Claude) will perform all git commands (add, commit, push, etc.). Do not run git commands unless explicitly asked.
+- **Calculations:** If you do any calculation, generate it as a Python script and write it to disk so that it can be added to the repository. Do not perform one-off calculations only in memory or in the chat.
+- **Python environment:** If you need to run Python, use the `ocean14` conda environment.
+
 ## Environment Setup
 
 **Required environment variable:**
