@@ -14,6 +14,11 @@ If you need to run Python, use the "ocean14" conda environment.
 
 1. This webpage `https://spraydata.ucsd.edu/products/cugn-climatology/` under Data Access has a list of NetCDF files.  Please download the files to the `$OS_SPRAY/CUGN/Climatology` directory.  If you have any questions, please ask in the Q&A section below.  Log your work.
 
+## Prompts for Claude Science
+
+1. I have just downloaded the 30 CUGN climatology NetCDF files from   
+https://spraydata.ucsd.edu/products/cugn-climatology/ and put them on this laptop in the $OS_SPRAY/CUGN/Climatology directory.  I wish for you to explore these data and report on your findings.  You are encouraged to ask me questions as we go.   Please ask them here and also log them in the file Oceanography/python/cugn/claude_prompts/prep_for_science.md.  Also log your work in the Logs section of that file.
+
 ## Logging
 
 Append an entry to the **Logs** section of this file using the format:
