@@ -25,7 +25,9 @@ If you need to run Python, use the "ocean14" conda environment.
 
 ## Explore
 
-1.  Reread this doc.  Make a quick examination of the data in the `data/` folder.  I am going to ask you to spend two hours examinibg the data in more detail using the Fable model.  But, let's get a sense of the data and how to read it in.  Please try and generate a brief Report below.  Use Python to read the data in and save all scripts in the `shane_telescope/` folder.  Use subfolders to organize the code if needed.  Before proceeding to the full effort, ask me questions in the Q&A section below and I will answer them.  Log your work in the "Logs" section below.
+1.  Reread this doc.  I am going to ask you to spend two hours examining the data in more detail using the Fable model. This will include: generating figures, writing a report, and writing code to read the data in.
+
+Before proceeding to the full effort, ask me questions in the Q&A section below and I will answer them.  Log your work in the "Logs" section below.
 
 2. I have answered all the questions in the Q&A section below.  Please read my responses and if you have additional questions, ask them.  Log your work.  Do not proceed to the full effort yet.
 
@@ -42,6 +44,7 @@ If you need to run Python, use the "ocean14" conda environment.
 1. **Line 56.** The climatology product provides only lines **66, 80, 90** — there
    is no Line 56.0, which the core `cugn` package (`defs.py`) expects. Is Line 56
    intentionally excluded from this product, or just not published yet?
+>A. It has been excluded.
 2. **`geostrophic_velocity`.** What is the reference level and the positive
    direction (along-line vs cross-line)?
 3. **`total` vs `anomaly`.** For downstream analysis, should we consume `anomaly`
