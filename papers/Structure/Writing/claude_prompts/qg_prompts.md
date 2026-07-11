@@ -47,6 +47,8 @@ Our outline is in the cugn/papers/Structure/Writing/ folder.  It is named outlin
     - Push Figure 4 into the Appendix
     - In the current Figure 8, the ARCTERX 2023 figure extends to too large of r-values.  Limit to 100km
 
+8. Ok, now I ask th
+
 ## Q&A
 
 ### Theory
