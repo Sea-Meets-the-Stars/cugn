@@ -80,7 +80,9 @@ def restrict_to_arcterx_box(profilers:list,
         lat_box, lon_box = Leg2_lat_box, Leg2_lon_box
 
     # Restrict to a box
-    for profiler in profilers:
+    #   profile_subset is now non-destructive (returns a new object), so we
+    #   assign the restricted profiler back into the list in place.
+    for ii, profiler in enumerate(profilers):
         # Calcualte dist, offset
         dist, offset = offsets.calc_dist_offset(
             profiler.lon, profiler.lat,
@@ -90,12 +92,9 @@ def restrict_to_arcterx_box(profilers:list,
         # Lie within the box
         good = ((dist < boxsize) & (offset < boxsize) &
                 (dist > -boxsize) & (offset > -boxsize))
-        #if np.any(~good):
-        #    print(f"Restricting {profiler.__class__.__name__} to ARCTERX box")
-        #    embed(header='Restricting to ARCTERX box')
-        
-        # Restrict
-        profiler.profile_subset(good, init=False)
+
+        # Restrict (reassign; profile_subset no longer mutates in place)
+        profilers[ii] = profiler.profile_subset(good, init=False)
 
         # Report max dist, offset
         print(f'Maximum dist: {np.max(dist[good]):.2f} km, '

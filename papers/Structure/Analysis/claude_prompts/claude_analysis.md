@@ -35,6 +35,8 @@ If you need to run Python code, please use the `ocean14` conda environment.
 
 4. Ok, please proceed with the analysis.  You can use 10 of the CPUs on this machine.  And do your work without stopping to ask questions.  Use Fable if you can. Log your work.
 
+5. Ok, please fix the bug you have identified; refactor and files in the cugn Repository as well. Log your work.
+
 ## Q&A
 
 *Claude's questions (2026-07-10), after reading the Analysis/ code, the notebooks, and
@@ -340,3 +342,31 @@ follow-up); the 2D Yaglom coefficient for $\chi$ is uncertain (χ is order-of-ma
 See `claude_reports/00_summary.md` for the full table and recommended paper use (scalar cascade =
 candidate new results subsection; isotropy + robustness = Methods/Appendix hardening; mean-flow /
 temporal = Discussion). Ran as Fable 5.
+
+### 2026-07-12 (Prompt 5 — fixed the profile_subset bug + refactored the analysis modules)
+
+**Bug fix (profiler package).** `ProfilerData.profile_subset(init=False)` set `pData = self` and
+mutated the object in place, returning `self`. It is now **non-destructive**: `init=False` makes a
+lightweight `copy.copy(self)` and subsets that (the fancy-indexed arrays are rebound on the copy,
+so the original is never touched); `init=True` still rebuilds from file. Updated the one caller
+that relied on the in-place side effect — `papers/ARCTERX/Analysis/py/arcterx_utils.py` (its box
+restriction now reassigns `profilers[ii] = profiler.profile_subset(...)` in the loop). All other
+callers already reassigned the return value, so they are unaffected. Removed the deep-copy
+workaround from `temporal.py`.
+
+**Refactor (cugn Analysis modules).** Created `papers/Structure/Analysis/py/sf_utils.py` holding
+the shared load→ProfilerPairs→increments boilerplate (`load_and_pair`, `build_pairs`) and a
+generic `binned_bootstrap`, and routed six modules through it — removing six near-identical
+`_build_pairs` copies and one duplicated binning helper: `full_d3`, `intermittency`, `anisotropy`,
+`scalar_sf`, `robustness` (via a thin alias with `calc_sn=True`), and `depth_dep`. `mean_flow`
+(needs the profilers object to fit/modify) and `temporal` (pairs from time-subsets) keep their
+bespoke pairing.
+
+**Verification.** Byte-compiled all 11 changed files (OK). Confirmed `profile_subset` now
+preserves the original (479→479 profiles, subset returns 10) and that every refactored module
+reproduces its prior numbers exactly: full_d3 isotropy 0.96 and centering match (2e-19); robustness
+0/14 >2σ (inflation 1.19); scalar Calypso 2019 T 17/25 >2σ; intermittency flatness 4.71; anisotropy
+Calypso 2022 mean flow 0.009 m/s; and — the key regression test — `temporal` now yields the same 3
+windows and identical `S1max=[0.083, 0.138, 0.157]` **without** the deep-copy, proving the fix. The
+paper baseline pipeline (`glider_io.load_dataset` → pairs, which uses `profile_subset(init=False)`)
+is unchanged. Ran as Fable 5.

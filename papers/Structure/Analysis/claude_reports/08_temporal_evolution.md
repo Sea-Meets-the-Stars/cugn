@@ -21,9 +21,9 @@ mid-times covers 53–69 of the ~60–80 nominal days (`fig_temporal_pairtimes.p
 — so the surveys *can* be subdivided in time. An initial attempt appeared to
 collapse to a single window; that was an artifact of `ProfilerData.profile_subset`
 **mutating the profiler in place**, so subsetting window 0 corrupted the shared
-profilers before windows 1–2 were built. Deep-copying each profiler before
-subsetting fixes it. (Worth a note in the profiler package: `profile_subset`
-mutates in place and returns self.)
+profilers before windows 1–2 were built. **This has since been fixed** (Prompt 5):
+`profile_subset` is now non-destructive (see the profiler package), and the
+temporal analysis no longer needs the deep-copy workaround.
 
 ## Results (3 time-quantile windows)
 

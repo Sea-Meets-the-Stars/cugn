@@ -61,4 +61,14 @@ the velocity energy cascade is undetectable.
 Each `figs_*.py` module has a `main()` that regenerates its figures and prints
 its numbers, e.g. from `papers/Structure/Analysis/py/`:
 `conda run -n ocean14 python figs_scalar.py`. Analysis lives in the sibling
-non-`figs_` modules.
+non-`figs_` modules; shared load→pair→increment boilerplate is in `sf_utils.py`.
+
+## Code-quality follow-ups done (Prompt 5)
+
+- **Fixed** `ProfilerData.profile_subset` (profiler package): it mutated the
+  profiler in place with `init=False`; it is now non-destructive (shallow copy).
+  Updated the one caller that relied on the side effect
+  (`papers/ARCTERX/Analysis/py/arcterx_utils.py`).
+- **Refactored** the six analysis modules onto `sf_utils.py`, removing the
+  duplicated `_build_pairs`/binning helpers. All modules verified to reproduce
+  their prior numbers.
