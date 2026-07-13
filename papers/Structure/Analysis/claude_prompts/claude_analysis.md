@@ -37,6 +37,8 @@ If you need to run Python code, please use the `ocean14` conda environment.
 
 5. Ok, please fix the bug you have identified; refactor and files in the cugn Repository as well. Log your work.
 
+6. This is great.  Can you generate a new LateX file in the Overleaf/ named new_analysis.tex and add a summary of all the new analysis to it.  Be sure to include the figures.  Log your work.
+
 ## Q&A
 
 *Claude's questions (2026-07-10), after reading the Analysis/ code, the notebooks, and
@@ -370,3 +372,23 @@ Calypso 2022 mean flow 0.009 m/s; and — the key regression test — `temporal`
 windows and identical `S1max=[0.083, 0.138, 0.157]` **without** the deep-copy, proving the fix. The
 paper baseline pipeline (`glider_io.load_dataset` → pairs, which uses `profile_subset(init=False)`)
 is unchanged. Ran as Fable 5.
+
+### 2026-07-13 (Prompt 6 — wrote new_analysis.tex in the Overleaf)
+
+Created `Projects/Overleaf/Energy_Cascade/new_analysis.tex`, a **standalone** article (its own
+`\documentclass`, compiles independently of the AMS paper) summarizing all eight new-analysis
+directions. Copied the 20 figures from `cugn/papers/Structure/Analysis/Figures_new/` into a new
+`Energy_Cascade/Figures_new/` folder (referenced via `\graphicspath{{Figures_new/}}`).
+
+Structure: abstract → overview + a verdict table (Table 1) → one section per direction, each with
+its key figure(s) and finding → recommendations for the paper. Nine figures embedded:
+mean-flow quiver; 2nd-order isotropy ($D_2$); full/centered $D_3$; the $\Delta t$ robustness scan;
+intermittency skew/flatness; anisotropy coherent fraction; the scalar mixed-moment (temperature);
+temporal evolution; and the depth sweep. The document leads with the robustness of the velocity
+null and foregrounds the scalar-variance cascade as the standout new physics, closing with the
+three concrete paper recommendations (scalar cascade = new results subsection; isotropy+robustness
+= Methods/Appendix; mean-flow+temporal = Discussion).
+
+Verified it compiles: two-pass `pdflatex` (in `ocean14`'s TeX Live), exit 0, 7 pages, all
+cross-references resolved and all figures found. Left `new_analysis.tex` + `new_analysis.pdf` in
+the Overleaf (aux files cleaned); did not commit/push. Ran as Fable 5.
