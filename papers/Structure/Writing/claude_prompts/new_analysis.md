@@ -564,3 +564,63 @@ pages**; the appendix figure adds a page). Two commits — `c7cf05c` (tex: capti
 repo and are **not committed there** (no request to); they remain in the working
 tree. Pre-existing `sec:log_appendix` (isopycnal-coords appendix, separate from
 the new `sec:bin_appendix`) is still an undefined ref — pre-existing, untouched.
+
+### 2026-07-16 (Ran the re-analysis via Fable; added robustness material to the paper; pushed)
+
+Completed item 2 under **Writing** (`new_analysis.md`). Answers absorbed: **D1**
+hold the scalar cascade out of the paper for now; **D2** run the
+mean-scalar-gradient check now; **D3** robustness concise in Methods + Appendix
+(default); **D4** hold front-matter reframe; **D5** re-run pipelines to verify
+numbers. Ran two **Fable** subagents in parallel for the compute ("use Fable if
+you can").
+
+**Re-analysis 1 — verification (D5).** Fable re-ran `figs_full_d3.py` (Dir 2) and
+`figs_robustness.py` (Dir R) under `ocean14`; regenerated the four figures.
+Numbers reproduce the reports. Isotropy medians exact: $D_{TT}$/iso-pred =
+0.79 / **0.96** / 1.39 (C2019 / **C2022** / ARCTERX), $D_{TT}/D_{LL}$ =
+1.17 / 1.20 / 1.54. Centered full $D_3$ bins$>2\sigma$: C2022 **1/14**
+(max$|z|$ 2.68), ARCTERX 3/14 (4.30), C2019 **10–11/25** (fluttered, see below).
+Bootstrap/DOF inflation 1.01 / 1.19 / 0.89, verdict unchanged. $\Delta t$ scan
+(C2022): 0 bins for $\Delta t\le10$ hr, 1 at 15 hr, **3–4** at 24 hr.
+**Caveat:** the pipelines use *unseeded* bootstrap, so two threshold-straddling
+counts flutter run-to-run — C2019 full-$D_3$ (10↔11/25) and C2022 $\Delta t{=}24$
+hr (3↔4). I wrote both as **ranges** in the paper. *Recommendation for later:
+seed the bootstrap for verbatim reproducibility.* Focus-experiment (C2022)
+numbers are all clean.
+
+**Re-analysis 2 — mean-scalar-gradient check (D2).** Fable wrote
+`Analysis/py/scalar_gradient.py` (mirrors `mean_flow.remove_flow_from_profilers`
+but on the T/S columns): fits/subtracts an affine $a+b\,E+c\,N$ mean scalar
+field at 60 m, recomputes the centered mixed Yaglom moment on the same pairs.
+**Verdict: the forward scalar-variance cascade survives** in 5/6
+experiment-scalar cases (sign, growth, significance essentially unchanged; the
+affine fit explains $\le26\%$ of scalar variance). **One caveat:** ARCTERX
+temperature attenuates ~83% in slope (its mean $\nabla T$ is 3–5× the others'),
+though still negative/growing at $r\gtrsim63$ km → its $\chi_T$ is an **upper
+bound**. Also: $\sigma_0$ is computable via GSW for 100% of 60-m profiles, so an
+isopycnal cross-check is feasible if we later want it. **This is deferred-scalar
+verification only — not written into the paper** (per D1).
+
+**Written into the paper (robustness only, per D1/D3).**
+- *Methods (§3.2):* a concise robustness paragraph after the bootstrap sentence
+  — isotropy relation to $\approx4\%$; centered full $D_3=D_{LLL}+D_{LTT}$ also
+  null (1 of \nbinscalypso\ bins for \focusexp); bootstrap error $\approx$
+  effective-DOF error ($\le20\%$ inflation); $\Delta t=10$ hr near-optimal.
+  Cites `xie2019`, `balwada2022`.
+- *Appendix:* new subsection **"Robustness of the null"**
+  (`sec:robust_appendix`), placed before the \kh-derivation appendix, with four
+  figures — isotropy (`fig:robust_iso`), full-$D_3$ (`fig:robust_d3`),
+  bootstrap-vs-DOF (`fig:robust_dof`), $\Delta t$ scan (`fig:robust_dt`) — and a
+  paragraph per test.
+- Copied the four PNGs from `Analysis/Figures_new/` → Overleaf `Figures/`
+  (heeding the CWD lesson). Compiles cleanly (**30 pages**); all new
+  labels/citations resolve; only the pre-existing `sec:log_appendix` warning
+  remains. Committed tex + 4 figures (`git show --stat` confirms the PNGs),
+  pushed to Overleaf (`34e1b1d..527e5a5 main`; no rebase needed).
+
+**Not added / deferred (unchanged from the plan):** scalar cascade §4d + figure
++ front-matter reframe (D1/D4 hold); Discussion §5 (Dir 1/6/4/3) and the 60 m /
+depth justification (Dir 7) — these were not requested in this prompt (which
+asked specifically for the *robustness* material) and remain available.
+`scalar_gradient.py` and the `figs_*` reruns live in the cugn repo, uncommitted
+there (no request to commit).
