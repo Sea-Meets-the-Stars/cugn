@@ -14,6 +14,7 @@ import sys
 import json
 
 import numpy as np
+import pandas as pd
 import xarray as xr
 import matplotlib
 matplotlib.use('Agg')
@@ -173,9 +174,75 @@ def fig_qg_sampling(x0=450, y0=450, nd=100, dx=100, rmax=55.,
     print(f'Saved: {outfile}')
 
 
+# #####################################################################
+def fig_qg_tracks(ts=5001, nd=100, x0=450, y0=450, dx=100,
+                  box=(450., 550.), outfile='fig_qg_tracks.png'):
+    """Glider and drifter tracks sampling the QG field.
+
+    Left: the 10 virtual gliders execute a fixed survey pattern that stays
+    within the deployment box.  Right: the 121 virtual drifters are seeded on
+    the same box but advect with the flow, dispersing across much of the
+    doubly-periodic domain over the 100-day experiment.  Both sample the same
+    QG realization (start time t = ts days).
+    """
+    tag = f'ts{ts}_nd{nd}_x{x0}_y{y0}_dx{dx}'
+    gl = pd.read_csv(os.path.join(OUTPUT, f'qg_glider_traj_{tag}.csv'))
+    dr = pd.read_csv(os.path.join(OUTPUT, f'qg_drifter_traj_{tag}.csv'))
+
+    fig = plt.figure(figsize=(10, 5))
+    gs = gridspec.GridSpec(1, 2)
+
+    # deployment box (km)
+    bx = [box[0], box[1], box[1], box[0], box[0]]
+    by = [box[0], box[0], box[1], box[1], box[0]]
+
+    # ---- Gliders (10), zoomed to the deployment box ----
+    axg = plt.subplot(gs[0])
+    gids = np.sort(gl.missid.unique())
+    cols = plt.cm.tab10(np.linspace(0, 1, len(gids)))
+    for gid, clr in zip(gids, cols):
+        t = gl[gl.missid == gid].sort_values('time')
+        axg.plot(t.x_m * 1e-3, t.y_m * 1e-3, '-', color=clr, lw=1.0, alpha=0.9)
+    axg.plot(bx, by, 'k--', lw=1.0, alpha=0.7)
+    axg.set_title(f'Gliders (N = {len(gids)})', fontsize=13)
+    axg.set_xlim(box[0] - 12, box[1] + 12)
+    axg.set_ylim(box[0] - 12, box[1] + 12)
+    axg.set_aspect('equal')
+
+    # ---- Drifters (121), full domain ----
+    axd = plt.subplot(gs[1])
+    ids = dr.ID.unique()
+    # color each drifter by its initial position (gives a sense of the mixing)
+    t0 = dr[dr.t == dr.t.min()].set_index('ID')
+    cmin, cmax = t0.x_m.min(), t0.x_m.max()
+    for did in ids:
+        t = dr[dr.ID == did].sort_values('t')
+        c = plt.cm.viridis((t0.loc[did, 'x_m'] - cmin) / (cmax - cmin))
+        axd.plot(t.x_m * 1e-3, t.y_m * 1e-3, '-', color=c, lw=0.4, alpha=0.6)
+    # start positions
+    axd.plot(t0.x_m * 1e-3, t0.y_m * 1e-3, 'k.', ms=1.5, alpha=0.6)
+    axd.plot(bx, by, 'k--', lw=1.0, alpha=0.8)
+    axd.set_title(f'Drifters (N = {len(ids)})', fontsize=13)
+    axd.set_xlim(0, 1000)
+    axd.set_ylim(0, 1000)
+    axd.set_aspect('equal')
+
+    for ax in (axg, axd):
+        ax.set_xlabel(r'$x$ [km]')
+        ax.set_ylabel(r'$y$ [km]')
+        _set_fontsize(ax, 12)
+        ax.grid(which='major', lw=0.8, alpha=0.5)
+
+    plt.tight_layout()
+    plt.savefig(outfile, dpi=300)
+    print(f'Saved: {outfile}')
+
+
 if __name__ == '__main__':
     flg = int(sys.argv[1]) if len(sys.argv) > 1 else 0
     if flg in (0, 1):
         fig_qg_time_evolution()
     if flg in (0, 2):
         fig_qg_sampling()
+    if flg in (0, 3):
+        fig_qg_tracks()

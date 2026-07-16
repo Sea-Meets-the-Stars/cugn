@@ -47,7 +47,7 @@ Our outline is in the cugn/papers/Structure/Writing/ folder.  It is named outlin
     - Push Figure 4 into the Appendix
     - In the current Figure 8, the ARCTERX 2023 figure extends to too large of r-values.  Limit to 100km
 
-8. Ok, now I ask th
+8. Please add a figure to the paper which shows the tracks for the gliders and drifters in the QG model.  Include a caption and be sure to reference and discuss this in the text. Log your work.
 
 ## Q&A
 
@@ -691,3 +691,39 @@ pages**; the appendix figure adds a page). Two commits — `c7cf05c` (tex: capti
 repo and are **not committed there** (no request to); they remain in the working
 tree. Pre-existing `sec:log_appendix` (isopycnal-coords appendix, separate from
 the new `sec:bin_appendix`) is still an undefined ref — pre-existing, untouched.
+
+### 2026-07-16 (Added QG glider/drifter tracks figure to §4c; pushed to Overleaf)
+
+Completed item 8 under **Writing**: added a figure showing the glider and
+drifter tracks in the QG model, with caption, referenced and discussed in §4c,
+and pushed to Overleaf.
+
+**Data & figure.** Loaded the trajectory CSVs in `Analysis/Output/`
+(`qg_glider_traj_ts5001…` = 10 gliders, 801 steps; `qg_drifter_traj_ts5001…` =
+121 drifters, 101 steps), start time $t=5001$ d (realization~A). Verified the
+positions are unwrapped (max single-step displacement 20 km ≪ 1000 km domain →
+no periodic-wrap line artifacts). New function `fig_qg_tracks` in
+`Figures/py/figs_qg_results.py` (flag 3): two panels —
+- Left, **gliders**: 10 tracks (tab10 colors) criss-crossing the fixed
+  $100\times100$ km deployment box (450–550 km, dashed), zoomed to the box.
+- Right, **drifters**: 121 tracks over the full $1000$ km domain, coloured by
+  initial $x$, seeded on the same box (dots) and dispersing across much of the
+  domain. Equal aspect on both.
+The contrast is the point: gliders densely/repeatedly sample a fixed region;
+drifters, though more numerous, spread out → sparse, non-stationary coverage of
+any fixed box — which is *why* the 121 drifters don't beat the 10 gliders.
+
+**Text.** In §4c, rewrote the opening of the "sparsity of real sampling"
+paragraph to introduce and discuss the tracks (Figure~\ref{fig:qg_tracks})
+before the sampling-result figure, and added the figure environment (with
+caption) between `fig:qg_timeevo` and `fig:qg_sampling` so floats match
+reference order.
+
+**Compile + push.** Copied the PNG from `Figures/py/` → canonical `Figures/`
+*and* Overleaf `Figures/` (heeding the last session's CWD lesson; md5s match).
+Compiles cleanly (28 pages; `fig:qg_tracks` resolves, no new undefined refs).
+Committed tex + the new PNG (`git show --stat` confirmed the PNG is in the
+commit), pulled --rebase over a remote "Update on Overleaf" (`6de8905`, which
+added a real title + Introduction — clean rebase, my additions survived), and
+pushed (`6de8905..34e1b1d main`). The `figs_qg_results.py` edit remains
+uncommitted in the cugn repo (no request to commit there).
