@@ -29,7 +29,9 @@ Our outline is in the cugn/papers/Structure/Writing/ folder.  It is named outlin
 
 ## Writing
 
-1. Read all of the new analysis that you have performed in the Analysis/claude_reports/ folder.  Then proceed to have a Discussion with me in the sectoin below on what to add to the paper and where.  Do not perform any writing yet.  Log your work.
+1. Read all of the new analysis that you have performed in the Analysis/claude_reports/ folder.  Then proceed to have a Discussion with me in the section below on what to add to the paper and where.  Do not perform any writing yet.  Log your work.
+
+2. Read my answers to the questions in the Discussion section below.  Run the agreed upon re-analysis.  And then add the robustness material to the paper, including figures.  If you have any new questions, ask me and I will answer them.  Use Fable if you can. Log your work.
 
 ## Discussion
 
@@ -95,31 +97,31 @@ The eight directions split cleanly into **one new positive result** and a
   without reframing the paper.
 - (c) **Defer** — leave it out of this paper (a companion/follow-up), keep this
   paper tightly on the velocity cascade.
-> A:
+> A:  This may become the headline, but I'm not ready to add to the paper yet.  So, hold off for now.
 
 **D2 — Prerequisite check before we headline the scalar result.** The reports
 themselves flag that a **mean scalar-gradient removal** (the scalar analogue of
 Direction 1) has *not* been done, and that a large-scale mean $\nabla\theta$
-crossed with the mean flow could masquerade as a $\langle\duL(\delta\theta)^2
+crossed with the mean flow could masquerade as a $\langle\delta u_L(\delta\theta)^2
 \rangle$ trend. If we go with D1(a), I recommend running that check (and, ideally,
 recomputing potential density via GSW for an isopycnal cross-check) *before*
 building the section, so we don't headline a result a referee can undo. Do that
 first? Default: **yes, run the mean-gradient check before writing §4d.**
-> A:
+> A:  Yes, run the check now.
 
 **D3 — How much robustness material in the main text vs. appendix?** The null is
 the paper's backbone, so I lean toward a compact **Methods** paragraph
 (isotropy to 4%; full-$D_3$ null; bootstrap≈DOF; Δt=10 hr) with the scans and
 tables in an **Appendix**. Alternative: put more of it in the Results. Default:
 **concise in Methods, details in Appendix.**
-> A:
+> A: Use your default.
 
 **D4 — Reframing the front matter.** If D1=(a), the abstract ("The energy
 cascade is difficult to measure") and the (currently placeholder) title should
 acknowledge the scalar result. Do you want me to propose a revised
 title/abstract as part of this, or keep the front matter untouched for now?
 Default: **propose a revised abstract; leave the title decision to you.**
-> A:
+> A: Hold off for now.
 
 **D5 — Are these `Fable 5` numbers ours to trust as-is?** The reports were
 produced by a different model and I have not re-run the pipelines. Before I
@@ -127,7 +129,7 @@ write any numbers into the paper I plan to re-execute the relevant `figs_*.py`
 / analysis modules (env `ocean14`) to confirm the key figures/numbers reproduce
 — especially the scalar result and the isotropy/robustness tables. Default:
 **yes, I re-verify each number I cite before it goes in the paper.**
-> A:
+> A: Sure, re-run
 
 ### Things I am *not* proposing to add
 
