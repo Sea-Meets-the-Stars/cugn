@@ -41,6 +41,11 @@ If you need to run Python code, please use the `ocean14` conda environment.
 
 7.  I am confused about one point.  Is the systematically negative values of the Scalar Structure Function simply due to the fact that duL is negative?  If not, why not?  Please discuss this in the `new_analysis.tex` file.  Log your work.  Push to Overleaf
 
+8. This is great.  Please now:
+
+    - Search the web for any similar analyses of the Scalar structure functions.  For the ocean or the atmosphere
+    - Perform all of the high-value follow-ups that you suggested at the end of the LateX file.  If you have any questions, ask me and I will answer them.  Log your work.
+
 ## Q&A
 
 *Claude's questions (2026-07-10), after reading the Analysis/ code, the notebooks, and
