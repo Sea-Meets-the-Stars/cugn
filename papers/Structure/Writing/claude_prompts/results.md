@@ -58,6 +58,7 @@ Our outline is in the cugn/papers/Structure/Writing/ folder.  It is named outlin
 10. Now write the second sub-section of the Results section which shows and describes the results for the other 2 experiments.  Log your work.
 
 
+
 ## Q&A
 
 Questions before writing the **Results** section. Each has my recommended default in **bold** — confirm or correct inline.

@@ -33,6 +33,10 @@ Our outline is in the cugn/papers/Structure/Writing/ folder.  It is named outlin
 
 2. Read my answers to the questions in the Discussion section below.  Run the agreed upon re-analysis.  And then add the robustness material to the paper, including figures.  If you have any new questions, ask me and I will answer them.  Use Fable if you can. Log your work.
 
+3. See the new_analysis.tex file in the Overleaf/ and all of the new results in Analysis/.  Please add one or more new sub-sections to the Results section to include the new results on the scalar structure function.  If you have any questions, ask me in the Q&A section below and I will answer them.  Do not make this the headline result, but do give it significant attention.  If you need to modify the Observations and Methods section, please do so.  Log your work.  Use Fable if you can.
+
+4. I've answered questions S1-S5 in the Q&A section below.  Please address those and then push the Overleaf.  Log your work. Use Fable if you can.
+
 ## Discussion
 
 I read all nine reports (`00_summary` + Directions 1–7, incl. the robustness
@@ -141,6 +145,47 @@ write any numbers into the paper I plan to re-execute the relevant `figs_*.py`
   only qualitatively ("data sense real turbulence").
 - Anything requiring new QG runs (the deferred ensemble from `qg_prompts.md` R10
   is still outstanding and tracked there).
+
+## Q&A
+
+(Prompt 3.) I had no blocking questions, so — per "act when you have enough" —
+I wrote and pushed §4d + Methods §3.3, distilling from `new_analysis.tex`. Here
+are the judgment calls I made; tell me if you'd like any changed.
+
+**S1 — Placement.** Scalar Results = new **§4d "A scalar-variance cascade,"
+after §4c (QG testbed)**, so the velocity arc (4a→4b→4c) stays contiguous and
+the scalar reads as a contrast/coda. Alternative: insert between 4b and 4c.
+> A: Yes, let's try that for now
+
+**S2 — Methods home for the Yaglom relation.** I added a short **Methods §3.3
+"Scalar structure functions"** (scalar increment, centered mixed moment, and
+Eq.\ \eqref{eqn:yaglom} $\langle\duL(\delta\theta)^2\rangle=-\tfrac4d\chi r$),
+rather than a new §2 Theory subsection — keeping Theory focused on the velocity
+K–H story and not elevating the scalar to headline. OK?
+> A: Ok, that sounds fine.
+
+**S3 — Figures (2, temperature only).** §4d shows the mixed-T detection
+(`fig:scalar_mixed`) and the mean-gradient-removal robustness (`fig:scalar_grad`).
+Salinity and the sign-decomposition are described in the text but not shown. I
+can add the salinity mixed-moment and/or the decomposition figure (they exist)
+if you want them in the main text or an appendix.
+> A: That also sounds fine.
+
+**S4 — Framing / caveats.** Presented as a genuine detection but **not the
+headline**: kept the velocity null as the through-line; called the signal
+"likely dominated by submesoscale frontal stirring rather than a canonical
+inertial range"; quoted $\chi_T$ order-of-magnitude only; flagged ARCTERX
+temperature $\chi_T$ as an **upper bound** (mean-gradient removal cuts it ~80%).
+Front matter (abstract/title/intro) left untouched (per D4). Agree with this
+level of hedging?
+> A: Yes, that sounds good.
+
+**S5 — Not yet done (available on request).** The isopycnal velocity-null check
+(`fig_isopycnal_S3`, from `new_analysis.tex` §isopycnal) would resolve the
+paper's dangling `sec:log_appendix` reference; the Discussion §5 (Dir 1/6/4/3)
+and the depth/60 m justification (Dir 7) also remain. None were in this prompt's
+scope. Want any of these next?
+> A:  Ok, please add that now.
 
 ## Logging
 
@@ -624,3 +669,101 @@ depth justification (Dir 7) — these were not requested in this prompt (which
 asked specifically for the *robustness* material) and remain available.
 `scalar_gradient.py` and the `figs_*` reruns live in the cugn repo, uncommitted
 there (no request to commit).
+
+### 2026-07-18 (Added the scalar-variance cascade to the paper: Methods §3.3 + Results §4d; pushed)
+
+Completed item 3 under **Writing**. Read `Overleaf/new_analysis.tex` (the
+standalone JXP+Fable note — already contains the full scalar analysis: the
+Yaglom relation, the sign-decomposition, the mean-gradient-removal check, and an
+isopycnal check) and distilled the scalar result into the main paper, with
+**significant attention but not as the headline** (per prompt).
+
+**Re-verification (Fable, per D5).** A Fable subagent re-ran `scalar_sf.py`,
+`decompose_mixed`, and `scalar_gradient.py` (env `ocean14`). **All headline
+scalar numbers reproduce within bootstrap flutter.** Detection (centered mixed
+moment negative, growing): bins$>2\sigma$ = C2019 17/25 (T), 20/25 (S); C2022
+2/14, 2/14; ARCTERX 4/14, 4/14; slopes all negative; $\chi_T\sim10^{-9}$
+(C2022) to $2.1\times10^{-7}$ (ARCTERX). Sign decomposition: both Calypso
+surveys $S_1>0$ in 86–88% of bins (median $+0.010$ to $+0.017$ \mps) while the
+centered moment is negative; ARCTERX centered negative in 71%. Gradient removal:
+C2022 T $-6.7\to-5.8\times10^{-6}$ (survives); ARCTERX T 83% attenuation but
+stays negative; salinity robust. σ0 computable for 100% of profiles. One nit:
+the note's "$\rho$ down to $-0.18$" is a per-bin extremum; medians reach $-0.14$.
+
+**Written into the paper.**
+- *Methods §3.3 "Scalar structure functions"* (`sec:scalar_methods`): scalar
+  increment $\delta\theta$ (in-situ T, practical S at 60 m), the centered mixed
+  moment $\langle u'q'^2\rangle$, and Yaglom's relation
+  $\langle\duL(\delta\theta)^2\rangle=-\tfrac4d\chi r$ (Eq.\ `yaglom`; $-\tfrac43
+  \chi r$ in 3D, $-2\chi r$ in 2D) with the *a-priori* fixed cascade direction.
+- *Results §4d "A scalar-variance cascade"* (`sec:results_scalar`), placed after
+  §4c QG and before Discussion: the centered mixed moment is negative and grows
+  with $r$ for T and S in all three surveys → forward scalar-variance cascade,
+  detected where the velocity cascade is null; $\chi_T$ order-of-magnitude;
+  measurable because sign is fixed + frontal SNR; two caveats addressed — not a
+  "$\duL<0$" artifact (Calypso $S_1>0$ yet centered negative) and survives
+  affine mean-gradient removal (except ARCTERX-T, cut ~80% → $\chi_T$ an upper
+  bound); framed as likely frontal stirring, genuine downgradient transfer.
+- Two figures: `fig_scalar_mixedT_z60.png` (`fig:scalar_mixed`) and
+  `fig_scalar_gradremoval_T_z60.png` (`fig:scalar_grad`). Salinity /
+  decomposition described in text, not shown (available if wanted — see Q&A S3).
+- `energy.bib`: added `yaglom1949`, `iyer2014`.
+
+**Compile + push.** Copied the two PNGs from `Analysis/Figures_new/` → Overleaf
+`Figures/` (CWD-safe). Compiles cleanly (**32 pages**); all scalar
+labels/citations resolve; only pre-existing `sec:log_appendix` warning remains.
+Committed tex + bib + 2 figures, pushed (`d6d70ab..aab3fb5 main`; no rebase
+needed).
+
+**Q&A posted (S1–S5)** documenting the judgment calls (placement §4d; Yaglom in
+Methods not Theory; 2 T-only figures; hedging/upper-bound framing; front matter
+untouched) and flagging what remains available (isopycnal check → would fix the
+`sec:log_appendix` dangling ref; §5 Discussion from Dir 1/6/4/3; Dir 7 depth
+justification). Not blocking — written and pushed; will adjust if JXP redirects.
+Front matter left untouched per D4. cugn-repo scripts (`scalar_gradient.py`,
+`verify_scalar.py`) uncommitted there (no request).
+
+### 2026-07-18 (Addressed S1–S5: added isopycnal + depth appendices, fixed dangling ref; pushed)
+
+Completed item 4 under **Writing**. Answers to **S1–S4** confirmed my prompt-3
+choices as-is (placement §4d after QG; Yaglom in Methods §3.3; two T-only
+figures; hedged framing / front matter untouched) — no changes needed. **S5**
+("please add that now") → I added the two ready, bounded items and held the
+larger §5 Discussion for a dedicated pass.
+
+**Re-verification (Fable, per D5).** A Fable subagent re-ran the isopycnal
+(`isopycnal.py`/`figs_followups.py`) and depth (`depth_dep.run_all`) pipelines
+(env `ocean14`). All numbers reproduce: σ0 finite for 100% of profiles; centered
+$S_3$ null both fixed-60 m and on the isopycnal in all three surveys; **Calypso
+2022 fixed-vs-isopycnal Pearson $r=+0.964$** (matches the "+0.96" I cited).
+Depth: energy $D_{LL}$ and $\max|\Sn{1}|$ surface-intensified; velocity \Snc{3}
+null at every depth (0–4 of 14–25 bins); temperature scalar slope negative at
+all depths, peaking mid-depth (ARCTERX $-7.6\times10^{-7}$ at 50 m). Minor note:
+Calypso 2019 has 1/25 bins at ~2.6σ on the isopycnal curve — chance-consistent
+with 25 bins, and my wording ("consistent with zero," not "no bin beyond 2σ")
+already accommodates it.
+
+**Written into the paper.**
+- *Appendix "Fixed-depth versus isopycnal coordinates"* (`sec:log_appendix`):
+  σ0 via GSW \citep{gsw}; centered $S_3$ on the target isopycnal vs fixed 60 m,
+  both null, $r=+0.96$ for \focusexp; figure `fig_isopycnal_S3_z60.png`
+  (`fig:isopycnal`). **This resolves the paper's long-standing dangling
+  `sec:log_appendix` reference** (two cite sites in §3.2 and §4a, reworded
+  "Section"→"Appendix") — the document now has **zero undefined references**.
+- *Appendix "Depth dependence"* (`sec:depth_appendix`): velocity null at all
+  depths 10–160 m, energy/bias surface-intensified, scalar cascade negative
+  throughout peaking 30–100 m; figure `fig_depth_sweep.png` (`fig:depth`).
+- *Methods §3.2:* one sentence noting the velocity null and scalar cascade
+  persist through the water column (→ `sec:depth_appendix`), justifying the 60 m
+  choice.
+
+**Compile + push.** Copied both PNGs (CWD-safe). Compiles cleanly (**34 pages**,
+**no undefined refs at all**). Committed tex + 2 figures, pushed
+(`aab3fb5..9243394 main`; no rebase needed).
+
+**Held for a dedicated pass (per S5, not done now):** the full **§5 Discussion**
+(Directions 1 mean-flow / 6 temporal / 4 anisotropy / 3 intermittency) — the
+paper's argumentative core, which benefits from JXP's framing input before I
+draft it, and §6 Conclusions. Everything else from the new-analysis plan is now
+in the paper (scalar §4d, robustness Methods+Appendix, isotropy/full-$D_3$,
+isopycnal, depth). Anisotropy (Dir 4) still to fold into §4b + Discussion.
