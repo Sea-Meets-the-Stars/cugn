@@ -103,3 +103,125 @@ S) and an order-of-magnitude $\chi$.
 - Mean scalar-gradient removal (analogue of Direction 1) to confirm robustness.
 - Depth dependence of $\chi$ (ties to the depth-dependence direction).
 - Compare $\chi_T$, $\chi_S$ and the density-compensation (spice) behavior.
+
+---
+
+## BGC extension — chlorophyll fluorescence (2026-08-31)
+
+**Date:** 2026-08-31
+**Author:** JXP & Claude (Fable 5)
+**Code:** `papers/Structure/Analysis/py/bgc_sf.py`, `figs_bgc.py` (plus a small
+additive extension of `glider_io.load_dataset` for extra profile-depth fields,
+and a `dFl` branch added to the shared `profiler.profilerpairs.calc_delta`,
+mirroring the existing `dT`/`dS` handling).
+**Figures:** `Figures_new/fig_bgc_D2_z60.png`, `Figures_new/fig_bgc_mixedFl_z60.png`
+**Data:** 60 m, $\Delta t\le10$ hr, linear bins, `minN=100`, 1000 bootstrap
+(identical setup to the T/S analysis above).
+
+### Data availability (checked before running anything)
+
+This was requested as "dissolved oxygen and Chl," but the underlying `.mat`
+CTD files were checked directly and neither is fully available:
+
+- **Dissolved oxygen is absent from all three experiments.** Calypso 2019/2022
+  and ARCTERX 2023 CTD files contain only CTD + ADCP-velocity fields
+  (`s`, `t`, `udop`, `vdop`, ...) plus, for two of the three, `fl`/`abs`.
+  `doxy` exists only in the unrelated CUGN-line NetCDF pipeline used by the
+  main `cugn` package — a different set of glider missions on fixed CalCOFI
+  lines, with a different survey/sampling geometry, not something that
+  plugs into this pair-based SF machinery. **Per JXP: oxygen is skipped
+  entirely for this direction.**
+- **Chlorophyll coverage is partial.** A fluorescence field `fl` (a standard
+  chlorophyll-a proxy) exists in Calypso 2019 and ARCTERX 2023, but **not**
+  in Calypso 2022 — the paper's own focus survey has no BGC sensor recorded
+  in its CTD file. **Per JXP: proceed with the two available experiments**
+  (Calypso 2022 excluded, and called out as such).
+- An additional optical field `abs` is present alongside `fl` in the same two
+  files (value range ~51–82, likely a beam-transmission/attenuation
+  percentage); its exact calibration/units were not confirmed, so it was left
+  out of this pass rather than guessed at.
+
+### Method
+
+Identical to the T/S mixed (Yaglom) moment above: second-order SF
+$D_{FlFl}(r)=\langle(\delta fl)^2\rangle$, and the raw and per-bin-*centered*
+mixed third moment $\langle\delta u_L\,(\delta fl)^2\rangle$, with bootstrap
+errors (1000 realizations).
+
+### Headline result — unlike T/S, chlorophyll does *not* show a clean, single-signed cascade
+
+| Experiment | centered mixed moment, bins beyond 2σ | pattern |
+|---|---|---|
+| Calypso 2019 | 14/25 (max \|z\|=5.2) | **negative** at small $r$ (≲45 km, weakly significant), **sign flips to strongly positive** at large $r$ (≳63 km, the most significant bins) |
+| ARCTERX 2023 | 2/14 (max \|z\|=3.8) | one negative bin at the smallest $r$, one isolated positive spike at mid $r$ — no coherent trend |
+
+This is a genuinely different result from temperature/salinity, not a weaker
+version of the same thing. T/S gave a **monotonic, single-signed, growing**
+mixed moment in all three surveys — the textbook signature of a
+passively-advected scalar cascading forward. Chlorophyll fluorescence instead
+shows a **scale-dependent sign reversal** in the one survey where it is well
+resolved (Calypso 2019), and is statistically indistinguishable from a null
+result in ARCTERX 2023.
+
+![Mixed (Yaglom) third moment for chlorophyll fluorescence, raw vs. centered,
+Calypso 2019 (left) and ARCTERX 2023 (right). Calypso 2019 shows a clean sign
+reversal — weakly negative below ~45 km, then a smooth, highly significant
+rise to positive values above ~63 km. ARCTERX 2023 scatters around zero with
+no coherent trend.](../Figures_new/fig_bgc_mixedFl_z60.png)
+
+![Second-order chlorophyll-fluorescence structure function
+$D_{FlFl}(r)=\langle(\delta fl)^2\rangle$ for the two available
+experiments.](../Figures_new/fig_bgc_D2_z60.png)
+
+### Interpretation
+
+Chlorophyll is not a passively conserved tracer the way temperature and
+salinity are: photosynthesis, grazing, sinking, and patch formation act as
+scale- and time-dependent sources and sinks superimposed on any stirring by
+the flow. A single-signed Yaglom relation assumes a materially conserved
+scalar with a steady, scale-independent variance production; chlorophyll has
+no reason to obey that assumption, and the data bear this out — the sign
+reversal at ~50–60 km in Calypso 2019 is consistent with biology (not
+turbulent stirring alone) setting the fluorescence field's small-vs-large-scale
+structure. Given this, **no transfer-rate ($\chi_{Chl}$) estimate is reported**
+here — fitting a single "$-2\chi r$" line through a moment that changes sign
+would misrepresent the result; unlike T/S, this is not a case where a
+noise-limited but single-signed trend can be described by one slope.
+
+The comparison is itself informative for the paper: **the platforms can
+resolve a genuine, high-significance third-moment signal in a biological
+tracer, but that signal has different structure than a physically conserved
+one** — supporting evidence that the clean T/S cascade detections above are a
+real conservative-tracer effect and not a generic artifact of the pair/binning
+method (a generic artifact would presumably show up the same way in
+chlorophyll too).
+
+### Caveats
+
+- ARCTERX 2023 has far fewer pairs per bin here (~140–330 vs. ~500–2000+ for
+  Calypso 2019 T/S), so its near-null result carries less statistical power
+  than Calypso 2019's — it should be read as "not resolved," not as
+  "confirmed absent."
+- Calypso 2022, the paper's own focus survey, has no BGC data at all in this
+  source file; if oxygen/chlorophyll is wanted for the focus survey
+  specifically, that requires locating/obtaining a BGC-equipped CTD file for
+  that mission (not currently in the repo) — flagged as a follow-up, not
+  attempted here.
+- `abs` (present alongside `fl`) was left unanalyzed pending confirmation of
+  what it actually measures.
+
+### Suggested paper use
+
+Not a new-physics headline the way T/S is, but a useful **contrast/robustness
+point**: cite it (briefly, e.g. in a footnote or appendix) as evidence that
+the T/S mixed-moment detection is tracer-specific (conservative vs.
+biologically active), not a generic property of the estimator.
+
+### Follow-up worth doing
+
+- Locate a BGC-equipped CTD source for Calypso 2022 so the focus survey can be
+  included.
+- Confirm what `abs` measures and analyze it alongside `fl`.
+- If oxygen is ever wanted, this would need a CUGN-line-based (not
+  Calypso/ARCTERX) version of the pair pipeline — a materially different
+  dataset/geometry, out of scope here.
