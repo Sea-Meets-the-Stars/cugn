@@ -17,6 +17,7 @@ IPython
 # Oceanography / gridding
 xarray
 h5netcdf
+netcdf4
 cftime
 gsw
 gsw-xarray
@@ -26,8 +27,10 @@ dask
 # I/O and plotting
 pymatreader
 bokeh
+cmocean
 importlib-metadata
 
-# Sibling package (not on PyPI): base profiler data classes and pair analysis.
+# Sibling package (not on PyPI): base profiler data classes, pair analysis, and
+# the along-line distance/offset helper (profiler.utils.offsets.calc_dist_offset).
 # Install from the local checkout alongside cugn (see CLAUDE.md):
 #   pip install -e ../profiler

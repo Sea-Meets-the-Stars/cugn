@@ -558,3 +558,79 @@ record start; how to fix the `calc_dist_offset` dependency (copy into
 run the full build unattended with subagents; whether to style figures for
 the later public one-pager. Nothing downloaded or installed, no code moved,
 report not started.
+
+### 2026-09-03 (Prompt 4: built the pipeline, downloaded all data, made 11 figures, wrote the September report)
+
+**Environment.** `conda install gsw cmocean` into `ocean14` (gsw 3.6.23, cmocean
+3.0.3); `pip install -e . --no-deps` so `cugn` imports from any directory (it
+had only worked from the repo root); `requirements.txt` and `setup.py` updated
+(cmocean, netcdf4, profiler note). `profiler` had been installed by the user.
+
+**Data downloaded (all 2026-09-03).** `$OS_SPRAY/CUGN/Line_66/binnedCUGN66.nc`
+(447 MB, 62,062 profiles 2007-04-19 → 2026-06-09; dated snapshot alongside) and
+`Line_66/DAC/sp025-20260611T1755.nc` (49 MB, 757 real-time profiles → 2026-09-03)
+plus our 10-m binned version. `$OS_CCS/Indices/ONI/` (official ONI + detrended
+Niño-3.4), `$OS_CCS/Indices/SCTI/` (10-day + monthly), `$OS_CCS/Upwelling/`
+(CUTI/BEUTI refreshed to 2026-08-30; Dec-2024 files kept as `*_2024.nc`),
+`$OS_CCS/SeaLevel/` (Monterey 9413450 + San Francisco 9414290 monthly MSL
+1991→2026-07, hourly Jun→Sep 2026, station metadata), `data/SST/OISST/`
+(regional 25–50 °N, 135–115 °W, one file per year 1991→2026 from the CoastWatch
+ERDDAP aggregate topped up with NCEI daily files).
+
+**Code (reusable, in `cugn/cugn/`).** `erddap.py` (SprayData + Glider-DAC
+download, flat→(profile, depth) pivot with along-line distance via
+`profiler.utils.offsets.calc_dist_offset`, QARTOD-flag-switchable 10-m binning
+of real-time data, no-double-counting combine); `annualcycle.py` (+
+`harmonic_design`, `fit_annual_cycle` = Gaussian-windowed WLS constant + 3
+harmonics, `evaluate_annual_cycle`; also fixed its broken `calc_dist_offset`
+import); `climatology.py` (profile anomalies, 10-day × 5-km bin grids without
+OI, TEOS-10 σθ, isopycnal interpolation, transect finder, section binning);
+`indices.py` (ONI, SCTI, CUTI/BEUTI, tide gauges, running mean, line
+temperature index, event windows; by subagent); `oisst.py` (download/update,
+load, box and track means, Hobday MHW, latest anomaly map; by subagent);
+`plotting.py` (+ `plot_xz_section`, `plot_xtime_hovmoller`,
+`plot_ztime_hovmoller`, `plot_index_with_oni`). Tests on synthetic data:
+`cugn/tests/test_{annualcycle,climatology,erddap,indices,oisst}.py`.
+Report drivers in `reports/El_Nino_2026/scripts/`: `build_products.py`
+(products → `$OS_SPRAY/CUGN/Line_66/products/`), `make_report_figs.py --date`
+(PNGs + `stats.json` → `figs/2026_09/`), `check_data_sources.py` (moved from
+`papers/ElNino/`).
+
+**Bugs met and fixed.** Profiles with NaT time / NaN position broke the
+distance projection and made the record's max time NaT (dropped 34 profiles);
+the DAC data lacked a `mission` coordinate for the concat; the isopycnal-depth
+fit had no data before 2017 when derived from the DO interpolation (now from
+T); the "latest complete transect" first picked the leg still under way (now a
+leg must also end within 15 % of the line range of either end); the event
+table's depth structure used a single 10-day bin at the peak, which could be a
+coverage gap (now ±45 days).
+
+**Results (Line 66.7 index = 10–100 m, 0–200 km, 3-month mean, 2008–2013
+base).** Positive since Jul 2025; peak **+1.90 °C, Apr 2026** (2015–16 peak
++1.78, Blob +1.39, 2009–10 +1.06; record +2.20 in a non-ENSO Nov-2017
+episode); latest **+1.32 °C** (window centred 24 Aug), higher than any past
+event at the same calendar stage. Peak 10-m anomaly +3.9 °C (15 Jun 2026,
+55 km). Unlike the Blob, the warmth reaches deep: +1.0 °C at 100 m and +0.5 at
+200 m at the peak (2015–16: +0.8/+0.3); isopycnals inshore 18–31 m deeper than
+normal in Jun–Sep 2026. Latest complete transect (offshore leg 24 Jul–10 Aug,
+149 profiles): +1.1 °C over 10–100 m, +0.45 over 100–500 m, max +4.7 at 40 m,
+thin near-normal upwelled surface layer inshore. Oxygen: ~0 on depth surfaces
+in the upper 100 m but **−30 / −19 / −10 µmol kg⁻¹ on σθ 25.5 / 26.0 / 26.5**
+(2017–2024 base). CUTI/BEUTI above normal since spring 2026; Monterey / SF
+July sea-level anomaly +6.1 / +5.0 cm; no Kelvin-wave arrival yet. ONI MJJ
++1.39; SCTI +1.27 (30 Jun).
+
+**Report.** `reports/El_Nino_2026/El_Nino_2026_09.md` (~4,300 words, 11
+sections per Q24, 11 figures per Q25, Table 1 of events), with
+`sources.md` (45 annotated entries) and `sources.bib` (49 entries, all DOIs
+verified by the bibliography subagent). Nothing committed (user does git).
+
+**OISST (subagent + figs 8–9).** Regional archive 1991→2026-09-01 in
+`data/SST/OISST/` (the subagent was still back-filling a few 1993–1998 gap
+days when the figures were made). 7-day anomaly ending 1 Sep: +0.9 °C region
+mean and along the Line 66.7 track, +3–4 °C in the SoCal Bight, Monterey box
++0.5 °C. Hobday MHW in the Monterey box: 164 of 489 days since 1 May 2025 in
+seven events, incl. a Strong event 16 Jun–7 Jul 2026 (peak +3.2 °C); not in
+MHW on 1 Sep. Fig 8 first rendered as a bare colorbar because cartopy's
+Natural-Earth features failed; redrawn on plain lon/lat axes with the OISST
+land mask.

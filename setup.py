@@ -25,7 +25,7 @@ setup_keywords['install_requires'] = [
     'cftime', 'bokeh', 'xarray', 'h5netcdf',  'gsw',
     'importlib-metadata', 'timm==0.3.2', 'netcdf4',
     'h5py',
-    'pymatreader', 'gsw-xarray', 'dask',
+    'pymatreader', 'gsw-xarray', 'dask', 'cmocean',
     'xhistogram']
 setup_keywords['zip_safe'] = False
 setup_keywords['use_2to3'] = False
