@@ -1,0 +1,123 @@
+{
+  "build": {
+    "build_date": "2026-09-03",
+    "keep_flags": [
+      1,
+      2
+    ],
+    "delayed_mode": {
+      "nprof": 62028,
+      "first": "2007-04-19",
+      "last": "2026-06-09"
+    },
+    "realtime": {
+      "missions": [
+        "sp025-20260611T1755"
+      ],
+      "nprof": 757,
+      "last": "2026-09-03"
+    },
+    "fit_xmax_km": 400.0,
+    "latest_section": {
+      "kind": "complete transect",
+      "t0": "2026-07-24 13:39",
+      "t1": "2026-08-10 19:51",
+      "direction": "offshore",
+      "nprof": 149
+    },
+    "index": {
+      "last_time": "2026-08-24",
+      "last_value": 1.317,
+      "record_max": 2.203,
+      "record_max_time": "2017-11-29",
+      "rank_of_last": 77,
+      "n_valid": 692,
+      "do_last": 0.71
+    }
+  },
+  "oisst_map": {
+    "end": "2026-09-01",
+    "monterey_box_anom": 0.5433374047279358,
+    "line66_track_anom": 0.9153157908742021,
+    "region_mean_anom": 0.902723491191864
+  },
+  "mhw": {
+    "events": [
+      {
+        "start": "2025-09-24",
+        "end": "2025-10-13",
+        "duration_days": "20",
+        "max_intensity": "3.0127050963589976",
+        "date_max": "2025-10-02",
+        "mean_intensity": "2.3941027997285",
+        "category": "1",
+        "category_label": "Moderate"
+      },
+      {
+        "start": "2025-10-18",
+        "end": "2025-10-24",
+        "duration_days": "7",
+        "max_intensity": "1.95619416375321",
+        "date_max": "2025-10-22",
+        "mean_intensity": "1.6892135614262271",
+        "category": "1",
+        "category_label": "Moderate"
+      },
+      {
+        "start": "2025-12-13",
+        "end": "2026-02-19",
+        "duration_days": "69",
+        "max_intensity": "2.0733927692545056",
+        "date_max": "2025-12-30",
+        "mean_intensity": "1.7532512560261873",
+        "category": "1",
+        "category_label": "Moderate"
+      },
+      {
+        "start": "2026-02-24",
+        "end": "2026-03-04",
+        "duration_days": "9",
+        "max_intensity": "1.9573386078993202",
+        "date_max": "2026-03-01",
+        "mean_intensity": "1.7364178712597584",
+        "category": "1",
+        "category_label": "Moderate"
+      },
+      {
+        "start": "2026-03-31",
+        "end": "2026-04-30",
+        "duration_days": "31",
+        "max_intensity": "2.181374781557148",
+        "date_max": "2026-04-13",
+        "mean_intensity": "1.9309959649674322",
+        "category": "1",
+        "category_label": "Moderate"
+      },
+      {
+        "start": "2026-06-16",
+        "end": "2026-07-07",
+        "duration_days": "22",
+        "max_intensity": "3.1633456529655284",
+        "date_max": "2026-06-24",
+        "mean_intensity": "2.469810623650903",
+        "category": "2",
+        "category_label": "Strong"
+      },
+      {
+        "start": "2026-08-10",
+        "end": "2026-08-16",
+        "duration_days": "7",
+        "max_intensity": "2.125598324279977",
+        "date_max": "2026-08-12",
+        "mean_intensity": "1.9533073729520167",
+        "category": "1",
+        "category_label": "Moderate"
+      }
+    ],
+    "current_category": "0",
+    "last_day": "2026-09-01",
+    "last_anom": 0.6431576644158241,
+    "mhw_days_since_2025_05": 165,
+    "days_since_2025_05": 489
+  }
+}
