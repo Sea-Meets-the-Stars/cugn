@@ -52,7 +52,176 @@ Do not write the report yet.  Use Fable if you can. Log your work.
 
 4. Ok, I have answered the last round of questions.  Please proceed with the report.  Use Fable if you can. Log your work.
 
+### One pager
+
+1. We now wish to turn the full report into a one pager for UCSC leadership.  We will:
+
+    - Choose one figure that is most digestible and most informative for a general audience.
+    - Make a one page Google doc
+    - Put it in on my Google Drive (jxp@ucsc.edu) under `Oceanography/Research/Rudnick/BOONUS/El Nino` and call it `El_Nino_Sep2026`.
+
+Before you do so, please discuss this with me in Q&A/One pager.
+Use Fable if you can.  Log your work.
+
+2. I have answered your questions in Q&A/One pager.  Please read my responses and ask another round of questions before doing anything.  I expect this will be the last round before proceeding with the one pager. Use Fable if you can. Log your work.
+
+3. I have answered your questions in Q&A/One pager.  Please read my responses, then generate the one pager.  Use Fable if you can.  Log your work.
+
 ## Q&A
+
+## One pager
+
+**Ground work (2026-09-04).** I only looked; nothing was created on Drive. The
+target folder exists: `Oceanography/Research/Rudnick/BOONUS/El Nino`
+(Drive folder id `1VhaeeiDFbDxC8iBR4AamWOlVRKuPNha2`, created by you this
+morning, inside `BOONUS`). The Drive connector can create a Google Doc from
+uploaded content (text, HTML, or a `.docx` converted on upload), but it cannot
+insert an image into an existing Doc. `python-docx` is not in `ocean14`;
+LibreOffice is on this machine, so the reliable path to a one-page Doc *with a
+figure* is: write the page as HTML → convert to `.docx` with LibreOffice →
+upload with conversion to a Google Doc (images survive that route). Questions:
+
+1. **Which figure?** For a general audience I recommend a **redesigned version
+   of Fig. 7 (the event composite)**: one axis, four or five lines, plain
+   labels ("2015–16 El Niño", "2014–15 'Blob'", "the past year", "now"), a
+   headline reading "Monterey Bay waters enter this El Niño warmer than at the
+   same stage of any past event", larger fonts, no ONI axis, °C with °F noted
+   once. Alternatives: (b) a simplified Fig. 1 (local ocean vs El Niño index
+   over 20 years; two axes, harder to read), or (c) the latest section (Fig. 5;
+   vivid but needs oceanographic explanation). Your pick?
+>A. Let's actually try for 2 figures.  Your redesign of Fig 7 and a simplified Fig 1. It is ok if the one pager is 2 pages long.
+
+2. **Framing for UCSC leadership.** What is BOONUS, and what should the page
+   convince the reader of? Options: (a) UCSC (you) is delivering timely
+   analysis of a major climate event affecting the Monterey Bay region, in
+   collaboration with Scripps; (b) the science itself (the heatwave → El Niño
+   handoff); (c) regional impacts (fisheries, kelp, coastal flooding/erosion,
+   campus coastal facilities). My default is (a) with (b) as the content and one
+   sentence of (c). Also: should the AI-assisted workflow (Claude) be mentioned
+   at all, and if so how prominently?
+>A. (a) and (c).  We are trying to convince UCSC leadership to fund additional analysis and perhaps data collection.
+
+3. **Structure (one US-Letter page, 11 pt).** Proposed: title + date line;
+   a two-sentence lede; three bullets of findings (ocean already ~1.3 °C warm
+   and warm to depth, El Niño forecast very strong and peaking Dec–Jan, the
+   Kelvin wave/sea-level rise due in October); the figure (about half the page)
+   with a one-sentence caption; "What to watch next month" (two lines); footer
+   with data credit (CUGN, D. Rudnick, Scripps IDG; NOAA CPC; NOAA CO-OPS),
+   your name and contact, and a note that this is a monthly series. OK to cut
+   or add?
+>A. Yes on data credit.  No need to add my name; they will know it comes from me.
+
+4. **Voice and numbers.** Plain English, no "isopycnal", "ONI", or
+   "anomaly" without explanation; temperatures as "about 1.3 °C (2.3 °F) above
+   normal"; no more than five numbers on the page. Agreed?
+>A. Right, plain English.
+
+5. **Credit and review.** The underlying data are Dan Rudnick's. Should the page
+   list him as a co-author, as a data credit only, or be sent to him before it
+   goes to leadership? I suggest a data credit plus a footer line "Preliminary
+   analysis; not yet reviewed by the CUGN team", unless you plan to have Dan
+   review it first.
+>A. Data credit only
+
+6. **Mechanics.** Doc title `El_Nino_Sep2026` in the `El Nino` folder, created
+   from a LibreOffice-built `.docx` so the figure is embedded; the source
+   (HTML/Markdown), the redesigned PNG, the `.docx` and a PDF also saved in
+   `reports/El_Nino_2026/one_pager/` so the repo holds the record. Leave the
+   Doc's sharing at the default (private to you) for you to share. OK?
+>A. Ok, save a .docx file.  No need to make a PDF.
+
+7. **Monthly cadence.** Make the one-pager part of the monthly cycle
+   (`El_Nino_Oct2026`, ...) driven by a script that regenerates the figure and
+   page from the report products, or a one-off for now?
+>A. Yes, for a script.  I don't think we'll make another one pager for the Leadership.
+But maybe we should have one for the public.
+
+8. **Anything to avoid.** Any figures, numbers, or statements from the full
+   report that should not go to leadership (e.g. the oxygen result, which is
+   the most novel but hardest to explain)?
+>A. Let's include the oxygen result, briefly  
+
+---
+
+**Round 2 (2026-09-04), final before building.** Settled: two figures
+(redesigned Fig. 7 and a simplified Fig. 1), up to two pages, framing (a)+(c)
+with the goal of persuading UCSC leadership to fund further analysis and
+possibly data collection, plain English, data credit only, no author line,
+`.docx` saved in the repo (no PDF), a script, oxygen included briefly.
+Mechanics verified: LibreOffice headless converts HTML → `.docx` with the
+figures embedded when they are inlined as base64 data URIs (a plain `<img
+src="file.png">` is only linked); the `.docx` then uploads to Drive with
+conversion to a Google Doc. Remaining choices:
+
+9. **The ask.** The page needs a short "What we propose" block. What exactly
+   should it request? Candidates: (a) continue the monthly Line 66.7 analysis
+   through the 2027 decay of the event; (b) extend the analysis to Lines 80,
+   90 and 56.7 (the whole coast) and to oxygen/chlorophyll; (c) data
+   collection — e.g. added glider missions or oxygen sensors on Line 66.7,
+   or Monterey Bay-specific sampling; (d) graduate-student/postdoc support.
+   Should the block carry a dollar figure or duration, or stay qualitative?
+   Also: how should the effort be named (the folder says BOONUS — is that a
+   program name to use on the page)?
+>A. (a) and (d) and maybe (c).
+
+10. **Regional impacts to cite (framing c).** I propose three, one sentence
+    each with a footnoted source: coastal flooding and erosion from the
+    El Niño sea-level rise (Kelvin wave due in October; ~1 ft in 2015–16;
+    record levels expected — SF Chronicle / Gizmodo, Merrifield); marine life
+    in Monterey Bay (kelp recovery at risk, seabird die-offs, species shifts —
+    KQED, Monterey Bay Aquarium); and reduced upwelling/nutrients affecting
+    fisheries (NOAA CCIEA). Add winter storms/rainfall, or keep it to the
+    ocean? Any impact you would rather not assert?
+>A. I like all 3.
+
+11. **How to describe UCSC's role.** Without naming you, I would write
+    "UCSC Ocean Sciences analysis of Scripps glider data". Is "UCSC Ocean
+    Sciences" the right unit, and is it fair to call the pipeline a UCSC
+    capability (it is; Scripps supplies the data)? Should the page mention that
+    the analysis is AI-assisted (I would put one clause in the footer, e.g.
+    "analysis pipeline built with Claude"), or leave that out?
+>A. Yes, UCSC Ocean Sciences. No need to mention Claude.  
+
+12. **Fig. 1 simplification.** To avoid a dual axis for a general reader I
+    propose two stacked panels sharing the time axis: top, the El Niño index
+    (NOAA ONI, shaded red/blue) 2007–2026; bottom, the Line 66.7 upper-ocean
+    temperature departure from normal, with the Blob, 2015–16 El Niño and
+    "the past year" labelled in the plot. °C axis with °F ticks on the right.
+    OK, or keep the single-panel two-axis version with bigger labels?
+>A. I think a dual axis is ok.  Won't have much space for 2 panels.  But do make the labels bigger.
+
+13. **Fig. 7 redesign.** Keep five curves (2009–10, Blob, 2015–16, past year,
+    now) or drop 2009–10 for clarity (four curves)? Thick line for "now"
+    (Jul–Aug 2026), an arrow/label "we are here", month names on the axis,
+    and a subtitle giving the definition ("average of the top 100 m within
+    200 km of the coast, relative to 2008–2013"). OK?
+>A. 4 curves and yes to a subtitle.
+
+14. **Page layout.** Page 1: title, date, two-sentence lede, three findings
+    (ocean already warm and warm to depth; El Niño forecast very strong,
+    peaking Dec–Jan; sea-level/Kelvin wave due in October), Fig. 7 with
+    caption. Page 2: Fig. 1 with caption, "What this means for the Monterey Bay
+    region" (Q10), the oxygen result in two sentences, "What we propose" (Q9),
+    "What to watch next month", footer credits. Reorder or trim?
+>A. No need for a Title nor date.  The rest is good.
+
+15. **Title.** Suggested: "The 2026–27 El Niño reaches Monterey Bay: what
+    the gliders see (September 2026 briefing)". Alternatives welcome.
+>A. No title
+
+16. **Drive deliverables.** Upload the `.docx` with conversion so the folder
+    holds a native Google Doc `El_Nino_Sep2026`; also drop the original
+    `.docx` and the two PNGs in the same folder, or the Doc only?
+>A. Yes, I wish for a native Google Doc.
+
+17. **Script.** `reports/El_Nino_2026/scripts/make_one_pager.py --date
+    2026-09-03` builds the two figures (reading the report products), writes
+    `reports/El_Nino_2026/one_pager/El_Nino_Sep2026.html` and `.docx`
+    (LibreOffice), and prints the figure numbers; the Drive upload is done by me
+    via the connector, not by the script. The text of the page lives in the
+    script as a template with the numbers filled from `stats.json`, so a public
+    version later can reuse it. OK?
+>A. Ok
 
 ### Report
 
@@ -625,12 +794,78 @@ sections per Q24, 11 figures per Q25, Table 1 of events), with
 `sources.md` (45 annotated entries) and `sources.bib` (49 entries, all DOIs
 verified by the bibliography subagent). Nothing committed (user does git).
 
-**OISST (subagent + figs 8–9).** Regional archive 1991→2026-09-01 in
-`data/SST/OISST/` (the subagent was still back-filling a few 1993–1998 gap
-days when the figures were made). 7-day anomaly ending 1 Sep: +0.9 °C region
-mean and along the Line 66.7 track, +3–4 °C in the SoCal Bight, Monterey box
-+0.5 °C. Hobday MHW in the Monterey box: 164 of 489 days since 1 May 2025 in
-seven events, incl. a Strong event 16 Jun–7 Jul 2026 (peak +3.2 °C); not in
-MHW on 1 Sep. Fig 8 first rendered as a bare colorbar because cartopy's
-Natural-Earth features failed; redrawn on plain lon/lat axes with the OISST
-land mask.
+**OISST (subagent + figs 8–9).** Regional archive 1991-01-01 → 2026-09-02 in
+`data/SST/OISST/` (36 yearly files, 338 MB, 0 missing days; the CoastWatch
+aggregate turned out to have ~1,200 missing days, mostly 1992–1998, which the
+subagent back-filled from NCEI daily files). Figures 8–9 were rerun on the
+completed archive. 7-day anomaly ending 2 Sep: +0.9 °C region mean and along
+the Line 66.7 track, +3–4 °C in the SoCal Bight, Monterey box +0.5 °C. Hobday
+MHW in the Monterey box: 155 of 490 days since 1 May 2025 in six events, incl.
+a Strong event 16 Jun–7 Jul 2026 (peak +3.2 °C); +0.9 °C and not in MHW on
+2 Sep. Fig 8 first rendered as a bare colorbar because cartopy's Natural-Earth
+features failed; redrawn on plain lon/lat axes with the OISST land mask.
+
+### 2026-09-04 (One pager, prompt 1: ground work and questions; nothing created)
+
+Read the new "One pager" prompt (turn the report into a one-page Google Doc for
+UCSC leadership in `Oceanography/Research/Rudnick/BOONUS/El Nino`, titled
+`El_Nino_Sep2026`). Searched Drive read-only: the `El Nino` folder exists (id
+`1VhaeeiDFbDxC8iBR4AamWOlVRKuPNha2`, inside `BOONUS`, created 2026-09-04).
+Checked tooling: the Drive connector creates Docs from uploaded content but
+cannot insert images into an existing Doc; `python-docx` is absent from
+`ocean14`; LibreOffice is installed, so the plan is HTML → `.docx` via
+LibreOffice → upload with conversion to a Google Doc. Posted eight questions in
+Q&A/One pager: figure choice (recommend a redesigned Fig. 7 event composite),
+framing and what BOONUS is, page structure, plain-language rules, credit/review
+by Dan Rudnick, mechanics and repo copies, monthly cadence, anything to leave
+out. No files created on Drive or in the repo.
+
+### 2026-09-04 (One pager, prompt 2: read the answers; posted the final round of 9 questions; nothing built)
+
+Answers absorbed: two figures (Fig. 7 redesign + simplified Fig. 1), two pages
+allowed, framing = UCSC delivering timely regional analysis + regional impacts,
+purpose = persuade UCSC leadership to fund further analysis / data collection,
+plain English, data credit only, no author line, `.docx` in repo, no PDF,
+script yes, probably no further leadership one-pager (maybe a public one),
+oxygen included briefly. Tested LibreOffice headless HTML → `.docx`: images
+referenced by path are only linked (no `word/media`), images inlined as base64
+data URIs are embedded — that is the route. Posted questions 9–17: the funding
+ask and program name (BOONUS?), which regional impacts to cite, how to name
+UCSC's role and whether to mention AI assistance, Fig. 1 as stacked panels,
+Fig. 7 curve set and annotations, two-page layout, title, Drive deliverables
+(Doc only vs also `.docx`/PNGs), and the script design. No files created.
+
+### 2026-09-04 (One pager, prompt 3: built the two-page leadership briefing and uploaded it as a Google Doc)
+
+**Answers applied (9–17).** Ask = continue the monthly Line 66.7 analysis +
+graduate-student/postdoc support + (maybe) targeted data collection, no dollar
+figure, BOONUS not named; three regional impacts with footnotes; "UCSC Ocean
+Sciences analysis of Scripps glider data", no mention of Claude; Fig. 1
+simplified as a dual-axis plot with big labels; Fig. 7 redesigned with four
+curves and a subtitle; no title, no date, no author; native Google Doc.
+
+**Script.** `reports/El_Nino_2026/scripts/make_one_pager.py --date 2026-09-03`
+reads `line66_index.csv`, the official ONI and `figs/2026_09/stats.json`,
+draws `onepager_fig1_past_events.png` (Blob / 2015–16 / past year / now by
+calendar month from July, °C + °F axes, "we are here") and
+`onepager_fig2_index_oni.png` (20-year index vs ONI, shaded, event labels),
+computes the isopycnal-oxygen anomaly as a percentage of the 2017–2024 mean on
+σθ = 25.5 (−30 of 210 µmol/kg = −14 %), fills an HTML template with the numbers
+(figures inlined as base64 so they embed), and converts to `.docx` with
+LibreOffice. Outputs in `reports/El_Nino_2026/one_pager/`
+(`El_Nino_Sep2026.html`, `El_Nino_Sep2026.docx`, two PNGs). Rendered to PDF in
+the scratchpad only to check layout: two US-Letter pages after trimming body
+font to 10.5 pt and Fig. 2 to 560 px (first drafts spilled one line onto a
+third page). Lesson: `make_report_figs.py --only` overwrites `stats.json` with
+a partial set; ran the full figure set again to restore it.
+
+**Upload.** The Drive connector cannot take a 360 KB file without inlining it
+as base64, so I used the machine's `rclone` remote `GDrive` (My Drive; sees
+`Oceanography/Research/Rudnick/BOONUS/El Nino`) with `--drive-import-formats
+docx`, which converts on upload. Result: native Google Doc **El_Nino_Sep2026**
+(id `1MyHq22MatCdC61X3o0j6bGJr6IYYFNGQPYcK_jOVPd4`) in the `El Nino` folder,
+verified via the Drive connector. Note: the `GDrive` remote is authenticated as
+xavier@ucolick.org, so that account is the file's owner although it sits in
+jxp@ucsc.edu's folder; transfer ownership in Drive if that matters. Google's
+import may reflow the layout relative to the LibreOffice render (fonts, page
+breaks); worth a look in the browser.

@@ -563,7 +563,11 @@ def download_year(year, overwrite=False, agg_last=None, verbose=True):
         if verbose:
             print(f'[oisst] {year}: ERDDAP {y0:%Y-%m-%d}..{t1:%Y-%m-%d}', flush=True)
         tmp = os.path.join(OISST_DIR, f'oisst_ccs_{year}.erddap.tmp')
-        parts.append(download_erddap(y0, t1, tmp))
+        erddap_ds = download_erddap(y0, t1, tmp)
+        # ERDDAP snaps the time bounds to the nearest *existing* index, so
+        # when Jan 1 or Dec 31 is a gap the response spills into the
+        # neighbouring year; keep only this calendar year
+        parts.append(erddap_ds.sel(time=slice(y0, y1)))
         time.sleep(REQUEST_PAUSE)
 
     # --- NCEI part: every expected day not yet held as a final field
@@ -600,6 +604,7 @@ def download_year(year, overwrite=False, agg_last=None, verbose=True):
                   f'{n_skip} unavailable', flush=True)
 
     ds = _combine(parts)
+    ds = ds.sel(time=slice(y0, y1))        # belt and braces: this year only
     _write_netcdf(ds, path)
     if verbose:
         print(f'[oisst] wrote {path} ({ds.time.size} days, '
@@ -612,8 +617,9 @@ def update(start_year=FIRST_YEAR, end_year=None, verbose=True):
 
     Years whose file is missing are downloaded.  A file is rebuilt when
     its year is at or after the ERDDAP aggregate's last year, when it
-    contains preliminary days, or when it lacks calendar days (e.g. gaps
-    of the ERDDAP aggregate not yet filled from NCEI).  Rebuilding reuses
+    contains preliminary days, or when its days are not exactly the
+    calendar days of the year (aggregate gaps not yet filled from NCEI,
+    or spill-over days from a neighbouring year).  Rebuilding reuses
     the final days already on disk, re-fetches the ERDDAP part, tops up
     from NCEI, and replaces preliminary days by finals when available.
 
@@ -645,9 +651,10 @@ def update(start_year=FIRST_YEAR, end_year=None, verbose=True):
         if os.path.exists(path) and not refresh:
             with xr.open_dataset(path) as old:
                 has_prelim = bool(old.preliminary.values.any()) if 'preliminary' in old else True
-                ndays = old.time.size
-            # Refresh if preliminary days remain or calendar days are missing
-            refresh = has_prelim or ndays < expected_days(year, today).size
+                have = pd.DatetimeIndex(old.time.values)
+            # Refresh if preliminary days remain, or the stored days are not
+            # exactly the calendar days of the year (missing or spill-over)
+            refresh = has_prelim or not have.equals(expected_days(year, today))
         if os.path.exists(path) and not refresh:
             paths.append(path)
             continue
