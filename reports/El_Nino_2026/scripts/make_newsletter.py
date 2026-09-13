@@ -86,15 +86,18 @@ def cm2in(cm):
     return cm / 2.54
 
 
-def figs_from_products(fig1, fig2):
-    """ Draw the two newsletter figures from the glider products.
+def figs_from_products(fig1, fig2=None):
+    """ Draw the newsletter figures from the glider products.
 
     Fig. 1 is drawn by `fig_past_events_public` (restyled for a public audience);
     Fig. 2 re-uses the leadership-briefing figure code.
 
     Parameters
     ----------
-    fig1, fig2 : str, output PNG paths
+    fig1 : str, output PNG path for Fig. 1
+    fig2 : str or None, output PNG path for Fig. 2.  `None` leaves an existing
+        Fig. 2 untouched, which keeps it consistent with the numbers quoted in
+        the text (they come from the report's stats.json, not from live feeds).
 
     Returns
     -------
@@ -106,10 +109,10 @@ def figs_from_products(fig1, fig2):
     import make_one_pager as mop  # imports cugn, which needs $OS_SPRAY
 
     idx = pd.read_csv(os.path.join(mop.PRODUCTS, 'line66_index.csv'), parse_dates=['time'])
-    from cugn import indices
-    oni = indices.load_oni('official')
     peaks = fig_past_events_public(idx, fig1)   # public restyling of the composite
-    mop.fig_index_oni(idx, oni, fig2)
+    if fig2 is not None:
+        from cugn import indices      # ONI cache in $OS_CCS; only Fig. 2 needs it
+        mop.fig_index_oni(idx, indices.load_oni('official'), fig2)
     return peaks
 
 
@@ -438,6 +441,9 @@ def main():
     ap.add_argument('--date', default='2026-09-03', help='report date (YYYY-MM-DD)')
     ap.add_argument('--figs', default='auto', choices=['auto', 'products', 'html'],
                     help='draw figures from the glider products or recover them from the briefing HTML')
+    ap.add_argument('--redraw-fig2', action='store_true',
+                    help='also redraw Fig. 2 from the products; by default an existing Fig. 2 is kept, '
+                         'because the live ONI feed has moved on from the value stats.json quotes in the text')
     args = ap.parse_args()
     date = pd.Timestamp(args.date)
     os.makedirs(FIG_DIR, exist_ok=True)
@@ -458,8 +464,10 @@ def main():
         except Exception:
             mode = 'html'
     if mode == 'products':
-        figs_from_products(fig1, fig2)
-        print('figures drawn from the glider products')
+        redo2 = args.redraw_fig2 or not os.path.exists(fig2)
+        figs_from_products(fig1, fig2 if redo2 else None)
+        print('figures drawn from the glider products' if redo2
+              else 'Fig. 1 drawn from the glider products; Fig. 2 kept as it stands')
     else:
         src = figs_from_html(fig1, fig2, date)
         print('figures recovered from', src)

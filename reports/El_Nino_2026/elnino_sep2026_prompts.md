@@ -155,3 +155,45 @@ and the single left-hand °C axis all come out as specified.
 works — which means any *new* figure design, like this one, forces a product
 rebuild. Worth considering caching `line66_index.csv` in the repository (it is a
 few tens of kB) so newsletter figures can be redrawn anywhere.
+
+### 2026-09-13 (Newsletter Fig. 1 regenerated from the products)
+
+The Line 66.7 products are now on this laptop
+(`$OS_SPRAY/CUGN/Line_66/products/`, build date 2026-09-03, index last value
+1.317 °C on 2026-08-24 — the same build the September report and its stats.json
+came from), so Figure 1 was redrawn for real with `fig_past_events_public()`:
+
+```
+python reports/El_Nino_2026/scripts/make_newsletter.py --date 2026-09-03 --figs products
+```
+
+This rewrote `newsletter/figs/newsletter_fig1_past_events_Sep2026.png`,
+`newsletter/README.md`, `newsletter/El_Nino_public_Sep2026.md` and
+`newsletter/El_Nino_public_Sep2026_wordpress.html`.
+
+**Two changes to the build were needed.**
+
+1. `$OS_CCS/Indices/ONI/oni.ascii.txt` was missing, and `figs_from_products()`
+   loaded the ONI before drawing either figure, so Fig. 1 could not be drawn.
+   The ONI load now happens only when Fig. 2 is actually being drawn, and the
+   file was fetched with `cugn.indices.download_oni('official')`.
+2. The fresh CPC file runs to **JJA 2026 = +1.80 °C**, whereas the newsletter
+   text quotes **+1.4 °C** from stats.json (the 2026-09-03 build). Redrawing
+   Fig. 2 would therefore have put a curve in the page that disagrees with the
+   sentence next to it, so `figs_from_products(fig1, fig2=None)` now leaves an
+   existing Fig. 2 alone; `--redraw-fig2` forces it. Fig. 2 is unchanged on disk
+   (md5 0715b123…), and prompt 2 replaces it anyway.
+
+**The figure.** Red 2026–2027 curve starts at 1.41 °C and runs to 1.32 °C on
+2026-08-24 (the 3-month running mean ends there); yellow 2025–2026 peaks at
+1.90 °C in April; orange Blob peaks at 1.39 °C. The "warmer at this point in the
+year than any past event" claim in the title and caption checks out against the
+index: July starts are 2026 **1.41**, 2015 0.93, 2025 0.68, 2014 0.63, 2009 0.15
+(`scratchpad/check_start.py`). Yellow on the pale pink background is legible at
+lw 3.2; the blue band below zero is visible but empty, as expected for these
+three warm periods.
+
+**Learned.** Live feeds (ONI) and the frozen report products (stats.json) drift
+apart between monthly builds; any figure that mixes them needs to be pinned to
+the report date or the page contradicts itself. Worth doing the same check for
+the sea-level and MHW numbers when the October update is built.

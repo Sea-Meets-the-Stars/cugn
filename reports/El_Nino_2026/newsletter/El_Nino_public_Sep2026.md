@@ -36,12 +36,14 @@ El Niño is reaching our coast. Here is where things stand.
   expected at San Francisco in early-to-mid October. Sea level at Monterey is so
   far only about 6 cm (2 in) above normal.
 
-![Line chart of how far above normal the upper ocean off Monterey Bay was, month by month from July to June, during four warm periods. The line for this year starts at about 1.3 °C above normal, higher than any of the others at the same point in the year.](figs/newsletter_fig1_past_events_Sep2026.png)
+![Line chart of how far above normal the upper ocean off Monterey Bay was, month by month from July to June, during three warm periods. The red line for this year starts at about 1.3 °C above normal, higher than either of the others at the same point in the year. Pink shading marks warmer than normal, blue cooler.](figs/newsletter_fig1_past_events_Sep2026.png)
 
-**Figure 1.** How warm the upper ocean off Monterey Bay was during four warm
-periods, lined up by month starting in July. The black line is this year: it
-begins higher than the 2015–16 El Niño did (red), and last year (green) rose above
-that event's peak. "Normal" is the average seasonal cycle for 2008–2013.
+**Figure 1.** How warm the upper ocean off Monterey Bay was during three warm
+periods, lined up by month starting in July. The red line is this year
+(2026–2027): it starts warmer than last year's heatwave (yellow) or the 2014–15
+"Blob" (orange) did at the same point in the year — and warmer than any past
+El Niño in the twenty-year record. Pink shading is water warmer than normal, blue
+cooler; "normal" is the average seasonal cycle for 2008–2013.
 
 ![Time series from 2007 to 2026 of ocean temperature off Monterey Bay next to NOAA's El Niño index. The two rise and fall together, with the ocean unusually warm during the 2014–15 heatwave and again over the past year.](figs/newsletter_fig2_index_oni_Sep2026.png)
 
