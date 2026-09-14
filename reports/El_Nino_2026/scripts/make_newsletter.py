@@ -1,27 +1,28 @@
 """ Build the public newsletter (one Markdown page for GitHub) from the report products.
 
 The page is written for a general audience in the Monterey Bay region and carries
-two figures:
+two figures, both drawn for this page rather than inherited from the leadership
+briefing:
 
   * Fig. 1 -- the event composite ("we are here"), the most digestible statement
     of the result: the local ocean enters this El Nino warmer than at the same
     stage of any past event in the glider record.  Drawn by
-    `fig_past_events_public`, a simplified restyling of the briefing version.
-  * Fig. 2 -- twenty years of the Line 66.7 index next to NOAA's El Nino index,
-    which shows a reader why we expect the coming winter to matter locally.
+    `fig_past_events_public` from the Line 66.7 index.
+  * Fig. 2 -- satellite sea-surface temperature off Central California compared
+    with normal, zoomed on Monterey Bay.  Drawn by `make_newsletter_sst.py`,
+    which also holds its own small OISST cache.
 
 Outputs (in `reports/El_Nino_2026/newsletter/`):
   * `figs/newsletter_fig1_past_events_<Mon><YYYY>.png`
-  * `figs/newsletter_fig2_index_oni_<Mon><YYYY>.png`
+  * `figs/newsletter_fig2_sst_map_<Mon><YYYY>.png`
   * `README.md`  -- GitHub renders this at the folder URL, which is the target
     for the redirect from the UCSC web page.
 
-Figures are made from the glider products when they are on disk (`--figs
-products`).  When the products directory is absent -- it lives under $OS_SPRAY,
-which is not always mounted -- the script falls back to the copies embedded as
-base64 in the leadership briefing HTML (`--figs html`), so the page can always be
-rebuilt from what the repository itself holds.  `--figs auto` (the default)
-picks products if available, else the HTML.
+The figures need the glider products under $OS_SPRAY (and, for Fig. 2, the OISST
+cache).  When they are missing the script says so and leaves the figures that are
+already on disk alone, still rebuilding the text from the report's stats.json --
+it never substitutes a figure from another document, which would put a picture on
+the page that the words do not describe.
 
 Usage (ocean14):
     python reports/El_Nino_2026/scripts/make_newsletter.py --date 2026-09-03
@@ -32,7 +33,6 @@ import os
 import re
 import sys
 import json
-import base64
 import shutil
 import argparse
 
@@ -45,13 +45,14 @@ REPORT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPT_DIR = os.path.join(REPORT_DIR, 'scripts')
 OUT_DIR = os.path.join(REPORT_DIR, 'newsletter')
 FIG_DIR = os.path.join(OUT_DIR, 'figs')
-ONE_PAGER_DIR = os.path.join(REPORT_DIR, 'one_pager')
 # 2017-2024 mean oxygen on sigma_theta = 25.5 inshore (umol/kg), computed by
 # make_one_pager.oxygen_percent() when the products are on disk; kept here so the
 # percentage in the text can still be quoted without them.
 O2_NORMAL_SIGMA255 = 210.0
 # Fig. 1 runs July -> June, the natural "El Nino year" for this coast
 MONTHS = ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
+# Numbers from the Fig. 2 map (filled by figs_from_products; see make_newsletter_sst)
+SST_STATS = {}
 
 
 def c2f(dc):
@@ -86,18 +87,19 @@ def cm2in(cm):
     return cm / 2.54
 
 
-def figs_from_products(fig1, fig2=None):
-    """ Draw the newsletter figures from the glider products.
+def figs_from_products(fig1, fig2=None, end=None):
+    """ Draw the newsletter figures from the glider products and the OISST cache.
 
-    Fig. 1 is drawn by `fig_past_events_public` (restyled for a public audience);
-    Fig. 2 re-uses the leadership-briefing figure code.
+    Fig. 1 is drawn by `fig_past_events_public` from the Line 66.7 index; Fig. 2
+    by `make_newsletter_sst.fig_sst_public`, whose numbers land in `SST_STATS`
+    for the caption.
 
     Parameters
     ----------
     fig1 : str, output PNG path for Fig. 1
-    fig2 : str or None, output PNG path for Fig. 2.  `None` leaves an existing
-        Fig. 2 untouched, which keeps it consistent with the numbers quoted in
-        the text (they come from the report's stats.json, not from live feeds).
+    fig2 : str or None, output PNG path for Fig. 2; `None` leaves an existing
+        Fig. 2 untouched (and skips the OISST fetch)
+    end : pandas.Timestamp or None, last day of the Fig. 2 averaging window
 
     Returns
     -------
@@ -111,8 +113,9 @@ def figs_from_products(fig1, fig2=None):
     idx = pd.read_csv(os.path.join(mop.PRODUCTS, 'line66_index.csv'), parse_dates=['time'])
     peaks = fig_past_events_public(idx, fig1)   # public restyling of the composite
     if fig2 is not None:
-        from cugn import indices      # ONI cache in $OS_CCS; only Fig. 2 needs it
-        mop.fig_index_oni(idx, indices.load_oni('official'), fig2)
+        import make_newsletter_sst as mns       # fetches/uses its own OISST cache
+        ds = mns.load_zoom(end)
+        SST_STATS.update(mns.fig_sst_public(mns.anomaly_map(ds), fig2))
     return peaks
 
 
@@ -174,33 +177,6 @@ def fig_past_events_public(idx, path):
     return peaks
 
 
-def figs_from_html(fig1, fig2, date):
-    """ Recover the two figures from the base64 images in the leadership briefing HTML.
-
-    Parameters
-    ----------
-    fig1, fig2 : str, output PNG paths
-    date : pandas.Timestamp, sets the briefing file name (El_Nino_<Mon><YYYY>.html)
-
-    Returns
-    -------
-    str : the briefing file the images came from
-
-    Generated by JXP and Claude
-    """
-    src = os.path.join(ONE_PAGER_DIR, f'El_Nino_{date:%b%Y}.html')
-    with open(src) as fh:
-        html = fh.read()
-    # The briefing inlines each PNG as a data URI so LibreOffice embeds it in the .docx
-    imgs = re.findall(r'src="data:image/png;base64,([^"]+)"', html)
-    if len(imgs) < 2:
-        raise RuntimeError(f'expected 2 inline figures in {src}, found {len(imgs)}')
-    for b64, path in zip(imgs[:2], [fig1, fig2]):
-        with open(path, 'wb') as fh:
-            fh.write(base64.b64decode(b64))
-    return src
-
-
 def oxygen_numbers(stats):
     """ Oxygen deficit on the sigma_theta = 25.5 surface, in umol/kg and per cent.
 
@@ -226,7 +202,7 @@ def oxygen_numbers(stats):
         return anom, O2_NORMAL_SIGMA255, 100 * anom / O2_NORMAL_SIGMA255
 
 
-def build_markdown(stats, o2, date, fig1_name, fig2_name):
+def build_markdown(stats, o2, date, fig1_name, fig2_name, sst):
     """ Fill the newsletter template with the numbers from stats.json.
 
     Parameters
@@ -235,6 +211,8 @@ def build_markdown(stats, o2, date, fig1_name, fig2_name):
     o2 : tuple (anomaly, normal, per cent) from oxygen_numbers()
     date : pandas.Timestamp, the report date
     fig1_name, fig2_name : str, PNG file names inside `newsletter/figs/`
+    sst : dict, the Fig. 2 numbers (the JSON sidecar written beside that PNG by
+        make_newsletter_sst.fig_sst_public)
 
     Returns
     -------
@@ -253,6 +231,13 @@ def build_markdown(stats, o2, date, fig1_name, fig2_name):
     mhw_days = stats['mhw']['mhw_days_since_2025_05']
     mhw_total = stats['mhw']['days_since_2025_05']
     o2anom, _, o2pct = o2
+    sst_end = pd.Timestamp(sst['end'])               # last day of the satellite window
+    sst_box = sst['box_mean']                        # Monterey Bay box mean anomaly
+    sst_off = sst['offshore_mean']                   # the water just seaward of that box
+    sst_line = sst['line66_mean']                    # mean along the glider line
+    # The map has been all-warm this year; say so only while it is true
+    sst_cool = ('nowhere on the map was cooler than normal' if sst['vmin'] > -0.1
+                else 'only small patches were cooler than normal')
     next_month = (date + pd.offsets.MonthBegin(1)).strftime('%B %Y')
 
     md = f"""# El Niño and the ocean off Monterey Bay
@@ -302,12 +287,15 @@ periods, lined up by month starting in July. The red line is this year
 El Niño in the twenty-year record. Pink shading is water warmer than normal, blue
 cooler; "normal" is the average seasonal cycle for 2008–2013.
 
-![Time series from 2007 to 2026 of ocean temperature off Monterey Bay next to NOAA's El Niño index. The two rise and fall together, with the ocean unusually warm during the 2014–15 heatwave and again over the past year.]({fig2_name})
+![Satellite map of how far the sea surface off Central California was from normal in the week ending {sst_end:%-d %B %Y}. The water in Monterey Bay itself is close to normal, while the ocean just offshore is about one degree, and in places two degrees, warmer than normal.]({fig2_name})
 
-**Figure 2.** Twenty years of glider measurements off Monterey Bay (green, left
-axis; red shading = warmer than normal) next to NOAA's El Niño index (black, right
-axis). Our local ocean generally follows El Niño — with two big exceptions: the
-2014–15 "Blob" and the past year.
+**Figure 2.** The sea surface off our coast in the week ending {sst_end:%-d %B %Y},
+measured by satellite and compared with the average for that week over
+1991–2020. Red is warmer than normal, blue cooler; this week {sst_cool}. Monterey
+Bay itself (dashed box) was only {sst_box:+.1f} °C from normal, because summer upwelling
+keeps a thin cool layer against the coast. Just outside the bay the surface ran
+{sst_off:+.1f} °C, and {sst_line:+.1f} °C averaged along the whole 250-mile glider line (black).
+Below that cool skin the gliders find the upper 100 m {now:.1f} °C above normal.
 
 ## What this could mean for the Monterey Bay region
 
@@ -439,13 +427,14 @@ def main():
     """ Build the newsletter figures, Markdown page and WordPress paste file. Generated by JXP and Claude """
     ap = argparse.ArgumentParser()
     ap.add_argument('--date', default='2026-09-03', help='report date (YYYY-MM-DD)')
-    ap.add_argument('--figs', default='auto', choices=['auto', 'products', 'html'],
-                    help='draw figures from the glider products or recover them from the briefing HTML')
-    ap.add_argument('--redraw-fig2', action='store_true',
-                    help='also redraw Fig. 2 from the products; by default an existing Fig. 2 is kept, '
-                         'because the live ONI feed has moved on from the value stats.json quotes in the text')
+    ap.add_argument('--no-figs', action='store_true',
+                    help='rebuild only the text, leaving the figures on disk untouched')
+    ap.add_argument('--sst-end', default=None,
+                    help='last day of the Fig. 2 satellite window (YYYY-MM-DD); default: the day before --date, '
+                         'so the map matches the report the numbers come from')
     args = ap.parse_args()
     date = pd.Timestamp(args.date)
+    end = pd.Timestamp(args.sst_end) if args.sst_end else date - pd.Timedelta('1D')
     os.makedirs(FIG_DIR, exist_ok=True)
 
     figdir = os.path.join(REPORT_DIR, 'figs', date.strftime('%Y_%m'))
@@ -454,26 +443,29 @@ def main():
 
     # month-stamped names so the dated copy of the page keeps pointing at its own figures
     fig1 = os.path.join(FIG_DIR, f'newsletter_fig1_past_events_{date:%b%Y}.png')
-    fig2 = os.path.join(FIG_DIR, f'newsletter_fig2_index_oni_{date:%b%Y}.png')
-    mode = args.figs
-    if mode == 'auto':  # products live under $OS_SPRAY and may not be mounted
-        try:
-            sys.path.insert(0, SCRIPT_DIR)
-            import make_one_pager as mop
-            mode = 'products' if os.path.exists(os.path.join(mop.PRODUCTS, 'line66_index.csv')) else 'html'
-        except Exception:
-            mode = 'html'
-    if mode == 'products':
-        redo2 = args.redraw_fig2 or not os.path.exists(fig2)
-        figs_from_products(fig1, fig2 if redo2 else None)
-        print('figures drawn from the glider products' if redo2
-              else 'Fig. 1 drawn from the glider products; Fig. 2 kept as it stands')
+    fig2 = os.path.join(FIG_DIR, f'newsletter_fig2_sst_map_{date:%b%Y}.png')
+    if args.no_figs:
+        print('figures left as they are (--no-figs)')
     else:
-        src = figs_from_html(fig1, fig2, date)
-        print('figures recovered from', src)
+        try:
+            figs_from_products(fig1, fig2, end=end)
+            print('figures drawn from the glider products and OISST')
+        except Exception as exc:   # products or OISST cache absent: keep what is on disk
+            if not (os.path.exists(fig1) and os.path.exists(fig2)):
+                raise                  # nothing to fall back on
+            print(f'could not redraw the figures ({exc.__class__.__name__}: {exc});'
+                  ' keeping the ones already on disk')
+
+    # Fig. 2's numbers ride along in a JSON sidecar, so the text can be rebuilt
+    # (--no-figs, or a failed redraw) without recomputing the satellite map
+    sst_json = os.path.splitext(fig2)[0] + '.json'
+    if not os.path.exists(sst_json):
+        raise SystemExit(f'missing {sst_json}: run make_newsletter_sst.py --date {date:%Y-%m-%d} first')
+    with open(sst_json) as fh:
+        sst = json.load(fh)
 
     md = build_markdown(stats, oxygen_numbers(stats), date,
-                        'figs/' + os.path.basename(fig1), 'figs/' + os.path.basename(fig2))
+                        'figs/' + os.path.basename(fig1), 'figs/' + os.path.basename(fig2), sst)
     out = os.path.join(OUT_DIR, 'README.md')
     with open(out, 'w') as fh:
         fh.write(md)

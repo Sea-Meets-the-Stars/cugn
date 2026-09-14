@@ -77,7 +77,7 @@ Do not write the report yet.  Use Fable if you can. Log your work.
 
 If you have any questions, ask them in the Q&A section.  Use Fable if you can.  Log your work.
 
-2. For the second figure, I would like to show the anoomolies of 
+2. For the second figure, I would like to show the anomalies of 
 SST off the coast of California.  Similar to Figure 8 of the main 
 report, but zoomed in more on Monterey Bay.  And for a public
 audience.  Please generate one.  
@@ -97,6 +97,20 @@ If you have any questions, ask them in the Q&A section.  Use Fable if you can.  
 3. With the 2015-16 curve gone, the headline claim ("warmer than in any past
    event") is no longer shown by a curve on the plot. Keep the title as is, or
    soften it to something the three plotted curves support on their own?
+
+### Newsletter Fig. 2 (2026-09-13)
+
+1. Zoom extent: I used 34-39.5 N, 127-120.5 W (Point Conception to Cape
+   Mendocino, out past the offshore end of Line 66.7). Tighter on Monterey, or
+   is this the right amount of coast for context?
+2. Colour scale: symmetric +/-3 degC, so the blue half sits unused this month --
+   which is itself the message ("nothing out there is cooler than normal"). Keep
+   it symmetric, or rescale to 0-3 when the field is all warm?
+3. The hottest water on the map (+2.9 degC) is in the far south near Point
+   Conception, outside the Monterey story. Leave it in for context, or crop the
+   domain so the figure stays about our coast?
+4. The old Fig. 2 (Line 66.7 index vs ONI) is gone from the newsletter. It still
+   lives in the leadership briefing -- do you want it retired there too, or kept?
 
 ## Logging
 
@@ -197,3 +211,61 @@ three warm periods.
 apart between monthly builds; any figure that mixes them needs to be pinned to
 the report date or the page contradicts itself. Worth doing the same check for
 the sea-level and MHW numbers when the October update is built.
+
+### 2026-09-13 (Newsletter Fig. 2: a public SST-anomaly map for Monterey Bay)
+
+Replaced the newsletter's second figure (Line 66.7 index vs NOAA ONI) with a
+zoomed, public-audience version of Fig. 8 of the main report: satellite
+sea-surface temperature off Central California compared with normal.
+
+**New script** `reports/El_Nino_2026/scripts/make_newsletter_sst.py`.
+
+- Map: 34-39.5 N, 127-120.5 W, NOAA OISST v2.1, 7 days ending 2026-09-02 (the
+  same window as report Fig. 8), against a 1991-2020 day-of-year climatology
+  computed with the report's own `cugn.oisst.gridded_climatology`.
+- Public treatment: Natural Earth coastline and land instead of the grey OISST
+  land mask; Point Reyes, San Francisco, Santa Cruz, Big Sur and Morro Bay
+  labelled with white haloes; the glider line drawn and named; the Monterey Bay
+  box outlined with its own number on it; a plain-language colour bar
+  ("Cooler than normal <- degC -> Warmer than normal"); headline
+  "Near normal at the shore, warm water just offshore".
+- Numbers (7 days ending 2026-09-02, vs 1991-2020): Monterey Bay box **+0.45**,
+  just outside the bay (36-37.5 N, 124-122.6 W) **+1.28**, along Line 66.7
+  **+0.84**, map range **-0.06 to +2.94** (the maximum is down at 34.4 N,
+  120.6 W, near Point Conception). Report Fig. 8 has +0.51 for the box and +0.89
+  for the line from the gap-filled archive; the 0.05-0.06 degC difference is the
+  climatology caveat below.
+- The figure writes a JSON sidecar next to the PNG so the caption numbers can be
+  rebuilt without recomputing the map (`make_newsletter.py --no-figs`).
+
+**Data.** The full California Current OISST archive (~1 GB) is not on this
+laptop and is not on the AIO rclone remote either, so the script keeps its own
+small cache in `<OISST_DIR>/newsletter_zoom/`: the zoom box only, fetched from
+the CoastWatch ERDDAP aggregate in decade chunks (4 requests, ~27 MB, ~11 min --
+that server takes 75-230 s to answer), plus the five days after the aggregate's
+end (2026-08-28) from NCEI daily files, which came back preliminary. The
+aggregate's ~1200 missing days in 1992-1998 are simply absent here rather than
+back-filled one NCEI file at a time, which is the reason for the small offset
+from the report's numbers; `aggregate_last_time()` results are now cached for 12
+hours so reruns do not pay the 75 s query again.
+
+**Newsletter plumbing** (`make_newsletter.py`).
+
+- `figs_from_products()` now draws Fig. 1 from the index and Fig. 2 from the new
+  script; `--sst-end` pins the satellite window, `--no-figs` rebuilds text only.
+- Removed `figs_from_html()` and the `--figs html` fallback. It recovered the
+  two figures from the leadership briefing's inline base64, but both newsletter
+  figures are now bespoke, so that path would have put the briefing's pictures
+  under captions that describe different ones. When the data are missing the
+  script now says so and keeps the PNGs already on disk.
+- Fig. 2's caption and alt text are generated from the sidecar numbers, and the
+  "nowhere on the map was cooler than normal" clause is conditional on the map's
+  minimum, so it will not survive into a month when it stops being true.
+- Deleted `newsletter/figs/newsletter_fig2_index_oni_Sep2026.png`.
+
+**Note for committing.** The repository's `.gitignore` excludes `*.png` and
+`*.json`, so the new figure and its sidecar need `git add -f`.
+
+**Learned.** `ax.set_title` does not render on the cartopy GeoAxes used here (it
+vanished from two renders); `fig.suptitle` plus `fig.text` is the reliable way to
+get a headline and a provenance line onto this figure.

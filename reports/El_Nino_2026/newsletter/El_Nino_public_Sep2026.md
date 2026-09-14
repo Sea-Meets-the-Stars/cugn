@@ -45,12 +45,15 @@ periods, lined up by month starting in July. The red line is this year
 El Niño in the twenty-year record. Pink shading is water warmer than normal, blue
 cooler; "normal" is the average seasonal cycle for 2008–2013.
 
-![Time series from 2007 to 2026 of ocean temperature off Monterey Bay next to NOAA's El Niño index. The two rise and fall together, with the ocean unusually warm during the 2014–15 heatwave and again over the past year.](figs/newsletter_fig2_index_oni_Sep2026.png)
+![Satellite map of how far the sea surface off Central California was from normal in the week ending 2 September 2026. The water in Monterey Bay itself is close to normal, while the ocean just offshore is about one degree, and in places two degrees, warmer than normal.](figs/newsletter_fig2_sst_map_Sep2026.png)
 
-**Figure 2.** Twenty years of glider measurements off Monterey Bay (green, left
-axis; red shading = warmer than normal) next to NOAA's El Niño index (black, right
-axis). Our local ocean generally follows El Niño — with two big exceptions: the
-2014–15 "Blob" and the past year.
+**Figure 2.** The sea surface off our coast in the week ending 2 September 2026,
+measured by satellite and compared with the average for that week over
+1991–2020. Red is warmer than normal, blue cooler; this week nowhere on the map was cooler than normal. Monterey
+Bay itself (dashed box) was only +0.4 °C from normal, because summer upwelling
+keeps a thin cool layer against the coast. Just outside the bay the surface ran
++1.3 °C, and +0.8 °C averaged along the whole 250-mile glider line (black).
+Below that cool skin the gliders find the upper 100 m 1.3 °C above normal.
 
 ## What this could mean for the Monterey Bay region
 
