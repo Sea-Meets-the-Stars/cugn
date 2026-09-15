@@ -358,7 +358,7 @@ def fig_sst_public(anom, path, box=MONTEREY_BOX, vmax=3.0):
     ax.plot([bx[0], bx[1], bx[1], bx[0], bx[0]], [by[0], by[0], by[1], by[1], by[0]],
             color='k', lw=1.8, ls='--', transform=proj, zorder=4)
     box_anom = box_mean(anom, box)
-    ax.text(bx[1] - 0.25, by[0] - 0.12, f'Monterey Bay  {box_anom:+.1f} °C',
+    ax.text(bx[1] - 1.05, by[0] + 0.62, f'Monterey Bay\n{box_anom:+.1f} °C',
             fontsize=12.5, fontweight='bold', ha='right', va='top', color='0.1',
             transform=proj, zorder=5, path_effects=halo)
 

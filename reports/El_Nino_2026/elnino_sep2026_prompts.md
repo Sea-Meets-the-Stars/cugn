@@ -84,6 +84,19 @@ audience.  Please generate one.
 
 If you have any questions, ask them in the Q&A section.  Use Fable if you can.  Log your work.
 
+3. I have edited the text for the Newsletter by hand.  Please also:
+
+    - Add links to the CUGN websites provided in Context
+    - Add a comment or two on the negative consequences of the Blob on Monterey Bay and/or nearby ocean ecosystems
+    - If you can find a link on the CUGN website that describes upwelling, link to it.  If not, see if you can find something at MBARI
+    - More generally, add links wherever you think it is sensible so the public can learn more about the ocean and the environment.
+    - Perform the calculation of the heat energy required to heat the Monterey Bay by 1.0 °C
+    using the power plan at Moss Landing.  Create a Python script for this.  Then update the text accordingly
+
+If you have any questions, ask them in the Q&A section.  Use Fable if you can.  Log your work.
+
+4. Oops, I should have said to limit the energy calculation to the upper 200m.  Please do so and revise everything accordingly.  Use Fable if you can.  Log your work.
+
 ## Q&A
 
 ### Newsletter Fig. 1 (2026-09-12)
@@ -111,6 +124,27 @@ If you have any questions, ask them in the Q&A section.  Use Fable if you can.  
    domain so the figure stays about our coast?
 4. The old Fig. 2 (Line 66.7 index vs ONI) is gone from the newsletter. It still
    lives in the leadership briefing -- do you want it retired there too, or kept?
+
+### Newsletter text, links and the heat calculation (2026-09-14)
+
+1. Your hand edits were in `El_Nino_public_Sep2026.md` only, which
+   `make_newsletter.py` regenerates from a template -- so the next rebuild would
+   have wiped them. I folded every one of them into the template instead
+   (checked line by line), and the page now rebuilds with your wording. Keep
+   working that way, or would you rather the Markdown became the master copy and
+   the script stopped generating the text?
+2. "The entire Monterey Bay" is the water inside the line from Santa Cruz to
+   Point Pinos, full depth: 530 km2, 43 km3, mean depth 80 m, deepest point
+   702 m (the canyon head). Is that the bay you meant, or did you want the
+   bigger box drawn on Fig. 2, or just the top 100 m?
+3. The answer came out in years rather than days (1,975 days = 5.4 years at
+   1,020 MW). I wrote both numbers into the text; say if you would rather quote
+   just one.
+4. The comparison treats the plant's *electrical* output as if it all went into
+   the water. Worth a parenthesis saying so, or is that more precision than a
+   public reader wants?
+5. I added `check_links.py` to test the 17 outbound links each month. Delete it
+   if you would rather not carry it.
 
 ## Logging
 
@@ -269,3 +303,111 @@ hours so reruns do not pay the 75 s query again.
 **Learned.** `ax.set_title` does not render on the cartopy GeoAxes used here (it
 vanished from two renders); `fig.suptitle` plus `fig.text` is the reliable way to
 get a headline and a provenance line onto this figure.
+
+### 2026-09-14 (Newsletter: your hand edits folded in, links added, Moss Landing heat calculation)
+
+**Your hand edits.** They were in `newsletter/El_Nino_public_Sep2026.md`, which is
+generated from the template inside `make_newsletter.py` -- the next build would
+have overwritten them. I moved all of them into the template, so they now survive
+a rebuild: the new title and "monthly newsletter", "dives down to ... back up",
+the dropped °F conversions in the bullets, "not yet driven by this year's
+El Niño", "90%"/"69%" without spaces, "expected to reach San Francisco",
+the rewritten Fig. 1 caption ("The excess warmth ... two previous warm periods"),
+the Fig. 2 wording ("the entire scene was warmer than normal", "+0.4 °C above
+normal"), the Christmas-tides parenthesis, and the deletion of the closing
+"Nothing here is a forecast" paragraph. The one place I did not take your text
+literally: "the entire scene was warmer than normal" is now generated from the
+map's own minimum, so in a month when some patch *is* cooler the sentence changes
+itself instead of lying.
+
+**Heat calculation** -- new script `scripts/monterey_heat.py`.
+
+- Bathymetry: SRTM30_PLUS (30 arcsec) from the CoastWatch ERDDAP, cached in
+  `$OS_CCS/Bathymetry/`.
+- The bay: ocean cells landward of the Santa Cruz -> Point Pinos mouth line,
+  full depth. That gives **530 km2**, mean depth **80 m**, deepest point
+  **702 m**, volume **42.5 km3** -- the 530 km2 matches the commonly quoted area
+  of the bay, which is a decent check on the geometry.
+- Water properties from TEOS-10 (`gsw`): rho = 1025.6 kg/m3, c_p = 3991.9 J/kg/K.
+- **Result: 1.74e17 J = 174 million GJ = 48.3 TWh** to warm the whole bay by
+  1.0 °C, which is **1,975 days (5.4 years)** of around-the-clock generation at
+  the Moss Landing Power Plant (1,020 MW net, the two combined-cycle units).
+- Two other volumes are computed for context: the top 100 m of the bay (114
+  million GJ, 3.6 years) and the top 100 m of the Fig. 2 box (901 million GJ,
+  28 years).
+- The numbers are cached in `newsletter/figs/monterey_heat_<Mon><YYYY>.json` and
+  the text is generated from that file, so the sentence cannot drift from the
+  calculation.
+
+**Links** -- 17 unique, all checked (see below).
+
+- CUGN/Scripps: the project page, the Spray glider page, the climatology
+  product, the El Niño product and SprayData itself.
+- Upwelling: the CUGN site does have an upwelling page
+  (`/products/mean-upwelling-circulation`), so that is linked as asked; because
+  it opens on Ekman transport and thermal wind, NOAA's plain-language
+  "What is upwelling?" is linked alongside it for a general reader.
+- Also linked: NOAA CPC's ONI page, the Monterey tide gauge (station 9413450),
+  marineheatwaves.org for the marine-heatwave definition, NOAA's California
+  Current ecosystem assessments, NOAA OISST, the IOOS Glider DAC, and the Moss
+  Landing Power Plant.
+
+**Blob consequences.** Added to "Changes in what lives here": the 2014-16 domoic
+acid bloom that delayed the opening of the 2015-16 Dungeness crab season to late
+March 2016, and whale entanglements going from about ten a year before 2014 to
+53 in 2015 and 55 in 2016 as the warm water compressed whales and their prey
+against the coast. Sourced to the UC Santa Cruz study (Santora et al.) and NOAA
+Fisheries -- the UCSC link is a nice fit since this newsletter goes out under
+UCSC Ocean Sciences.
+
+**New script** `scripts/check_links.py` checks every link in the page; 17 links,
+all resolve. UCSC News answers 403 to scripted requests, so the script reports
+403 as "blocked (check by hand)" rather than broken -- that page was verified
+separately and is live.
+
+**Learned.** The generated-text design means any hand edit to the Markdown is one
+rebuild away from being lost. Worth deciding (Q&A 1) whether the script or the
+Markdown is the master copy before next month; right now it is the script.
+
+### 2026-09-14b (Heat calculation limited to the upper 200 m)
+
+Redid the Moss Landing comparison for the **upper 200 m** of Monterey Bay instead
+of the full water column, and revised everything that quoted it. This also
+answers Q&A 2 of the previous round.
+
+**New numbers** (bay proper, 530 km2, capped at 200 m depth per cell):
+
+| quantity | upper 200 m | (previous) full depth |
+|---|---|---|
+| volume | **34.1 km3** | 42.5 km3 |
+| mean thickness | 64 m | 80 m |
+| heat for 1.0 °C | **1.397e17 J = 140 million GJ = 38.8 TWh** | 1.74e17 J = 174 million GJ |
+| Moss Landing at 1020 MW | **1,585 days = 4.3 years** | 1,975 days = 5.4 years |
+
+The 200 m layer holds **80 %** of the bay's water -- most of the bay is shelf
+shallower than 100 m, so the cap only removes the deep Monterey Canyon, which is
+below the depth at which the gliders still see this year's anomaly. That makes
+the limit physically tidy: the layer being warmed is now the same layer the
+newsletter says the warmth reaches ("measurable to 200 m").
+
+**Changes.**
+
+- `monterey_heat.py`: `ZMAX = 200.` and a `--zmax` option; `summarize()` now
+  leads with `bay_top_layer`, names it in a `headline` key, and reports
+  `layer_fraction_of_bay`. The context cases are the full column, the top 100 m,
+  and the top 200 m of the wider Fig. 2 box (1,559 million GJ, 48 years).
+- `make_newsletter.py` reads `heat['cases'][heat['headline']]`, so the text
+  follows whatever layer the script is run with rather than a hard-coded case.
+- The sentence now reads: "the top 200 m of Monterey Bay — the layer this warmth
+  reaches, and about 80% of all the water in the bay — holds some 34 cubic
+  kilometres. Heating all of it by 1.0 °C would take about 140 million GJ of heat
+  energy: 1,585 days, or 4.3 years, of around-the-clock generation at the power
+  plant at Moss Landing."
+- Deleted the cached `figs/monterey_heat_Sep2026.json` so it rebuilt, and
+  regenerated `README.md`, `El_Nino_public_Sep2026.md` and the WordPress HTML.
+  The figures are unchanged.
+
+**Learned.** Caching the calculation in JSON paid off immediately: changing the
+depth limit was one constant plus a rebuild, and nothing in the prose could drift
+out of step with the number, because every quantity in that sentence -- volume,
+energy, days, years, and the 80 % -- is read from the file the script wrote.

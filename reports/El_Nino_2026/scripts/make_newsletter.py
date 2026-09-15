@@ -12,6 +12,10 @@ briefing:
     with normal, zoomed on Monterey Bay.  Drawn by `make_newsletter_sst.py`,
     which also holds its own small OISST cache.
 
+The text also quotes the heat needed to warm the upper 200 m of Monterey Bay by
+1 degC, computed by `monterey_heat.py` and cached in
+`figs/monterey_heat_<Mon><YYYY>.json`.
+
 Outputs (in `reports/El_Nino_2026/newsletter/`):
   * `figs/newsletter_fig1_past_events_<Mon><YYYY>.png`
   * `figs/newsletter_fig2_sst_map_<Mon><YYYY>.png`
@@ -202,7 +206,7 @@ def oxygen_numbers(stats):
         return anom, O2_NORMAL_SIGMA255, 100 * anom / O2_NORMAL_SIGMA255
 
 
-def build_markdown(stats, o2, date, fig1_name, fig2_name, sst):
+def build_markdown(stats, o2, date, fig1_name, fig2_name, sst, heat):
     """ Fill the newsletter template with the numbers from stats.json.
 
     Parameters
@@ -213,6 +217,7 @@ def build_markdown(stats, o2, date, fig1_name, fig2_name, sst):
     fig1_name, fig2_name : str, PNG file names inside `newsletter/figs/`
     sst : dict, the Fig. 2 numbers (the JSON sidecar written beside that PNG by
         make_newsletter_sst.fig_sst_public)
+    heat : dict, the Monterey Bay heat-energy numbers from monterey_heat.summarize()
 
     Returns
     -------
@@ -236,13 +241,21 @@ def build_markdown(stats, o2, date, fig1_name, fig2_name, sst):
     sst_off = sst['offshore_mean']                   # the water just seaward of that box
     sst_line = sst['line66_mean']                    # mean along the glider line
     # The map has been all-warm this year; say so only while it is true
-    sst_cool = ('nowhere on the map was cooler than normal' if sst['vmin'] > -0.1
+    sst_cool = ('the entire scene was warmer than normal' if sst['vmin'] > -0.1
                 else 'only small patches were cooler than normal')
+    # Warming the upper 200 m of the bay by 1 degC, in units a reader can picture
+    bay = heat['cases'][heat['headline']]
+    heat_zmax = heat['zmax_m']                       # depth of the layer (m)
+    heat_frac = 100 * heat['layer_fraction_of_bay']  # per cent of the bay's water
+    heat_vol = bay['volume_m3'] / 1e9                # cubic kilometres
+    heat_mgj = bay['energy_GJ'] / 1e6                # millions of gigajoules
+    heat_days = bay['moss_landing']['days']
+    heat_years = bay['moss_landing']['years']
     next_month = (date + pd.offsets.MonthBegin(1)).strftime('%B %Y')
 
-    md = f"""# El Niño and the ocean off Monterey Bay
+    md = f"""# El Niño, Monterey Bay, and our nearby ocean
 
-### A monthly update from UCSC Ocean Sciences — {date:%B %Y}
+### A monthly newsletter from UCSC Ocean Sciences — {date:%B %Y}
 
 **A very strong El Niño is building in the tropical Pacific and is forecast to peak
 this winter. Underwater gliders that have been diving off Monterey Bay for twenty
@@ -250,49 +263,64 @@ years show that our local ocean is already about {now:.1f} °C ({c2f(now):.1f} �
 normal — warmer, at this point in the year, than at the start of any past El Niño
 in that record.**
 
-Since 2007, Scripps Institution of Oceanography has kept robotic gliders flying a
-line that runs from Monterey Bay some 250 miles out to sea. Each glider dives to
-500 m and back every few hours, measuring temperature, saltiness and oxygen. At UC
-Santa Cruz we analyse that stream of data each month to track how the 2026–27
-El Niño is reaching our coast. Here is where things stand.
+Since 2007, [Scripps Institution of Oceanography](https://scripps.ucsd.edu/) has
+kept [robotic gliders](https://spraydata.ucsd.edu/about/spray-glider) flying a
+[line](https://spraydata.ucsd.edu/projects/cugn) that runs from Monterey Bay some
+250 miles out to sea. Each glider dives down to 500 m and back up every few hours,
+measuring temperature, saltiness and oxygen. At UC Santa Cruz we analyse that
+stream of data each month to track how the 2026–27 El Niño is reaching our coast.
+Here is where things stand.
 
 ## What the gliders see
 
 - **The water is already warm — and the warmth is deep.** The upper ocean off
-  Monterey Bay has been warmer than normal without a break since July 2025. It
-  peaked in April 2026 at {peak:.1f} °C ({c2f(peak):.1f} °F) above normal, higher than the peak of the
-  big 2015–16 El Niño ({peak1516:.1f} °C), and today it sits at about {now:.1f} °C ({c2f(now):.1f} °F) above
+  Monterey Bay has been [warmer than
+  normal](https://spraydata.ucsd.edu/products/cugn-climatology) without a break
+  since July 2025. It
+  peaked in April 2026 at {peak:.1f} °C above normal, higher than the peak of the
+  big 2015–16 El Niño ({peak1516:.1f} °C), and today it sits at about {now:.1f} °C above
   normal. Unlike the 2014–15 "Blob", this warmth is not just a surface skin: it is
-  still about {a100:.1f} °C above normal 100 m (330 ft) down, and measurable to 200 m.
-- **So far this is a marine heatwave, not yet El Niño.** The warming began a year
-  before the tropical Pacific heated up. Satellite records count {mhw_days} marine-heatwave
-  days in Monterey Bay out of the {mhw_total} days since May 2025. Summer upwelling — the
-  wind-driven welling-up of cold water that makes our coast foggy and productive —
+  still about {a100:.1f} °C above normal 100 m down, and measurable to 200 m.
+  To give perspective, the top {heat_zmax:.0f} m of Monterey Bay — the layer this warmth
+  reaches, and about {heat_frac:.0f}% of all the water in the bay — holds some {heat_vol:.0f} cubic
+  kilometres. Heating all of it by 1.0 °C would take about {heat_mgj:.0f} million GJ of heat
+  energy: {heat_days:,.0f} days, or {heat_years:.1f} years, of around-the-clock generation at
+  the [power plant at Moss Landing](https://en.wikipedia.org/wiki/Moss_Landing_Power_Plant).
+- **So far this is a marine heatwave, not yet driven by this year's El Niño.** The warming began a year
+  before the tropical Pacific heated up. Satellite records count {mhw_days} [marine-heatwave](https://marineheatwaves.org/)
+  days in Monterey Bay out of the {mhw_total} days since May 2025. Summer
+  [upwelling](https://oceanservice.noaa.gov/facts/upwelling.html) — the
+  wind-driven welling-up of cold water that makes our coast foggy and productive,
+  and which the gliders
+  [map along the whole coast](https://spraydata.ucsd.edu/products/mean-upwelling-circulation) —
   has been strong this year and has kept a thin, cool layer at the surface. The
   heat is sitting just below it.
-- **The El Niño signal is on its way.** NOAA's El Niño index stands at +{oni:.1f} °C, and
-  NOAA gives better than a 90 % chance of a "very strong" event this winter — with a
-  69 % chance it becomes the strongest since records began in 1950. A pulse of
+- **The El Niño signal is on its way.** NOAA's [El Niño
+  index](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ONI_v5.php)
+  stands at +{oni:.1f} °C, and
+  NOAA gives better than a 90% chance of a "very strong" event this winter — with a
+  69% chance it becomes the strongest since records began in 1950. A pulse of
   raised sea level travelling up the coast from the tropics (a coastal Kelvin
   wave) lifted sea level 9–14 inches in Central America in late August and is
-  expected at San Francisco in early-to-mid October. Sea level at Monterey is so
+  expected to reach San Francisco by early-to-mid October. [Sea level at
+  Monterey](https://tidesandcurrents.noaa.gov/stationhome.html?id=9413450) is so
   far only about {sl_m:.0f} cm ({cm2in(sl_m):.0f} in) above normal.
 
 ![Line chart of how far above normal the upper ocean off Monterey Bay was, month by month from July to June, during three warm periods. The red line for this year starts at about {now:.1f} °C above normal, higher than either of the others at the same point in the year. Pink shading marks warmer than normal, blue cooler.]({fig1_name})
 
-**Figure 1.** How warm the upper ocean off Monterey Bay was during three warm
-periods, lined up by month starting in July. The red line is this year
-(2026–2027): it starts warmer than last year's heatwave (yellow) or the 2014–15
+**Figure 1.** The excess warmth in the upper ocean off Monterey Bay during two previous warm
+periods (yellow, orange) and this year (red), lined up by month starting in July. 
+This year starts warmer than last year's heatwave (yellow) or the 2014–15
 "Blob" (orange) did at the same point in the year — and warmer than any past
 El Niño in the twenty-year record. Pink shading is water warmer than normal, blue
-cooler; "normal" is the average seasonal cycle for 2008–2013.
+cooler; "normal" (0 °C) is the average seasonal cycle for 2008–2013.
 
 ![Satellite map of how far the sea surface off Central California was from normal in the week ending {sst_end:%-d %B %Y}. The water in Monterey Bay itself is close to normal, while the ocean just offshore is about one degree, and in places two degrees, warmer than normal.]({fig2_name})
 
 **Figure 2.** The sea surface off our coast in the week ending {sst_end:%-d %B %Y},
 measured by satellite and compared with the average for that week over
 1991–2020. Red is warmer than normal, blue cooler; this week {sst_cool}. Monterey
-Bay itself (dashed box) was only {sst_box:+.1f} °C from normal, because summer upwelling
+Bay itself (dashed box) was only {sst_box:+.1f} °C above normal, because summer upwelling
 keeps a thin cool layer against the coast. Just outside the bay the surface ran
 {sst_off:+.1f} °C, and {sst_line:+.1f} °C averaged along the whole 250-mile glider line (black).
 Below that cool skin the gliders find the upper 100 m {now:.1f} °C above normal.
@@ -300,25 +328,31 @@ Below that cool skin the gliders find the upper 100 m {now:.1f} °C above normal
 ## What this could mean for the Monterey Bay region
 
 - **Higher water at the coast.** Strong El Niños raise California sea level by up to
-  about a foot for months at a time. Stacked on winter storms and high tides, that
+  about a foot for months at a time. Stacked on winter storms and high tides (Christmas
+  will bring one of the highest tides of the decade), that
   means more coastal flooding and beach and bluff erosion; Scripps researchers
   expect the highest coastal sea levels ever recorded in California this winter.
 - **Changes in what lives here.** The past year's heatwave has already brought
   seabird die-offs, warm-water species farther north than usual, and renewed stress
-  on kelp forests. A strong El Niño tends to prolong those conditions.
+  on kelp forests. A strong El Niño tends to prolong those conditions. The last big
+  marine heatwave shows how costly that can be locally: during the 2014–16 "Blob" a
+  toxic algal bloom put enough domoic acid into Dungeness crab that California
+  delayed the opening of the 2015–16 season until late March 2016, and
+  entanglements of whales in
+  fishing gear — about ten a year before 2014 — jumped to 53 in 2015 and 55 in 2016
+  as the warm water squeezed whales and the fish they eat into a narrow band near
+  shore ([UC Santa Cruz research](https://news.ucsc.edu/2020/01/whale-entanglements/);
+  [NOAA Fisheries](https://www.fisheries.noaa.gov/feature-story/looking-back-blob-chapter-2-marine-heat-wave-intensifies-completely-chart)).
 - **A leaner ocean.** El Niño weakens upwelling, and with it the nutrients that feed
   the plankton at the base of the food web that supports our salmon, anchovy,
-  seabirds and whales. NOAA's ecosystem assessments flag reduced productivity as
-  the main ecological risk for 2026–27.
+  seabirds and whales. [NOAA's ecosystem
+  assessments](https://www.integratedecosystemassessment.noaa.gov/regions/california-current)
+  flag reduced productivity as the main ecological risk for 2026–27.
 - **Less oxygen at depth.** The gliders also measure dissolved oxygen. Water arriving
-  along our coast now carries roughly {abs(o2anom):.0f} µmol/kg ({abs(o2pct):.0f} %) less oxygen than usual for
+  along our coast now carries roughly {abs(o2anom):.0f} µmol/kg ({abs(o2pct):.0f}%) less oxygen than usual for
   its density — a sign that warm, oxygen-poor water from the south is being carried
   northward along the coast. That matters for fish and invertebrates that live near
   the seafloor.
-
-Nothing here is a forecast of a particular storm, wave or fish season. It is a
-description of the ocean the coming winter will start from — and that starting
-point is unusually warm.
 
 ## What we are watching next month
 
@@ -329,15 +363,22 @@ the El Niño.
 
 ---
 
-*Data: the California Underwater Glider Network (D. Rudnick, Scripps Institution of
+*Data: the [California Underwater Glider
+Network](https://spraydata.ucsd.edu/projects/cugn) (D. Rudnick, Scripps Institution of
 Oceanography, Instrument Development Group), via
 [SprayData](https://spraydata.ucsd.edu/) and the
-[IOOS Glider Data Assembly Center](https://ioos.github.io/glider-dac/); NOAA
-Climate Prediction Center (El Niño index and forecasts); NOAA CO-OPS (sea level);
-NOAA OISST (satellite sea-surface temperature). Analysis: UCSC Ocean Sciences.
+[IOOS Glider Data Assembly Center](https://ioos.github.io/glider-dac/); [NOAA
+Climate Prediction
+Center](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ONI_v5.php)
+(El Niño index and forecasts); [NOAA
+CO-OPS](https://tidesandcurrents.noaa.gov/stationhome.html?id=9413450) (sea level);
+[NOAA OISST](https://www.ncei.noaa.gov/products/optimum-interpolation-sst)
+(satellite sea-surface temperature); bathymetry for the heat calculation from
+SRTM30_PLUS. Analysis: UCSC Ocean Sciences.
 Preliminary results, {date:%B %Y}; updated monthly — next update {next_month}.
 Scripps also publishes its own
-[El Niño glider product](https://spraydata.ucsd.edu/products/el-nino/).*
+[El Niño glider product](https://spraydata.ucsd.edu/products/el-nino) and
+[California climatologies](https://spraydata.ucsd.edu/products/cugn-climatology).*
 """
     return md
 
@@ -464,8 +505,21 @@ def main():
     with open(sst_json) as fh:
         sst = json.load(fh)
 
+    # Heat needed to warm Monterey Bay by 1 degC: computed once, then cached, since
+    # it only changes if the bathymetry or the plant's capacity does
+    heat_json = os.path.join(FIG_DIR, f'monterey_heat_{date:%b%Y}.json')
+    if not os.path.exists(heat_json):
+        sys.path.insert(0, SCRIPT_DIR)
+        import monterey_heat
+        with open(heat_json, 'w') as fh:
+            json.dump(monterey_heat.summarize(dT=1.0, verbose=False), fh, indent=2)
+        print('wrote', heat_json)
+    with open(heat_json) as fh:
+        heat = json.load(fh)
+
     md = build_markdown(stats, oxygen_numbers(stats), date,
-                        'figs/' + os.path.basename(fig1), 'figs/' + os.path.basename(fig2), sst)
+                        'figs/' + os.path.basename(fig1), 'figs/' + os.path.basename(fig2),
+                        sst, heat)
     out = os.path.join(OUT_DIR, 'README.md')
     with open(out, 'w') as fh:
         fh.write(md)
