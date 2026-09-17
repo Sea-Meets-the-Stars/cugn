@@ -97,6 +97,12 @@ If you have any questions, ask them in the Q&A section.  Use Fable if you can.  
 
 4. Oops, I should have said to limit the energy calculation to the upper 200m.  Please do so and revise everything accordingly.  Use Fable if you can.  Log your work.
 
+### Tides
+
+1. Please do a deep dive into the tides on Monterey Bay as measured at the Santa Cruz Wharf.  Is there any evidence for these to be higher than normal?  
+Generate a report named `tides_monterey_bay_sep2026.md` in the `Oceanography/python/cugn/reports/El_Nino_2026/tides` directory.  Use Fable if you can.  Log your work.
+
+
 ## Q&A
 
 ### Newsletter Fig. 1 (2026-09-12)
@@ -145,6 +151,26 @@ If you have any questions, ask them in the Q&A section.  Use Fable if you can.  
    public reader wants?
 5. I added `check_links.py` to test the 17 outbound links each month. Delete it
    if you would rather not carry it.
+
+### Tides at the Santa Cruz Wharf (2026-09-16)
+
+1. There is no tide gauge at the Santa Cruz Wharf: NOAA 9413745 is a
+   *subordinate* station that publishes predictions derived from Monterey
+   (x0.97, 6 minutes earlier), and the CeNCOOS shore station on the wharf
+   measures water properties, not water level. The report therefore uses
+   Monterey observations translated to Santa Cruz. Do you know of a local
+   water-level record at the wharf (city, UCSC, CDIP) worth adding?
+2. Wave runup, not water level, is what damages the wharf -- on the day of the
+   December 2024 collapse the high tide was 0.70 m *below* the minor flooding
+   level. Should next month's version bring in CDIP buoy 158 wave data and do
+   total water level (tide + surge + runup), or stay with still-water level?
+3. The report is written as a technical deep dive. Do you also want a public
+   paragraph for the newsletter? The Christmas king tide plus a typical
+   El Nino residual lands right on NOAA's minor flooding level, which is a
+   concrete thing to tell readers.
+4. I extended the daily high/low record back to 1980 (it starts in August 1979)
+   so that 1982-83 is included. Worth doing the same for the hourly record, or
+   is high/low enough?
 
 ## Logging
 
@@ -411,3 +437,70 @@ newsletter says the warmth reaches ("measurable to 200 m").
 depth limit was one constant plus a rebuild, and nothing in the prose could drift
 out of step with the number, because every quantity in that sentence -- volume,
 energy, days, years, and the 80 % -- is read from the file the script wrote.
+
+### 2026-09-16 (Tides deep dive: Santa Cruz Wharf / Monterey Bay)
+
+Wrote `reports/El_Nino_2026/tides/tides_monterey_bay_sep2026.md` with six figures
+and `tide_stats.json`, all produced by the new
+`reports/El_Nino_2026/scripts/santa_cruz_tides.py`.
+
+**The finding that shaped the report.** NOAA 9413745 "Santa Cruz, Monterey Bay"
+is a **subordinate station**: predictions only, no observations, no datums, no
+flood thresholds. Its predictions come from Monterey (9413450) via published
+offsets -- high waters x0.97 and 6 min earlier, low waters x0.99 and 11 min
+earlier. The CeNCOOS station on the wharf measures water properties, not water
+level. So all observations are Monterey's, translated where useful; the report
+says so up front rather than implying a wharf gauge exists.
+
+**Answer to the question asked.** Yes, the water is running high -- but it is
+not the tide.
+
+- Astronomy: an 18.613-year sinusoid fitted to the annual highest predicted tide
+  gives an amplitude of only **+/-3.5 cm**, with the modelled nodal maximum in
+  **mid-2024**. The highest predicted tide of the coming season at Santa Cruz is
+  **2.078 m MLLW on 24 Dec 2026 17:21** -- highest of 2026, second of the 2020s
+  behind 5 Dec 2025 (2.090 m). This confirms the newsletter's "one of the highest
+  tides of the decade" line for Christmas.
+- Sea level: Monterey's August 2026 monthly anomaly is **+8.9 cm**, second-highest
+  August of 53 years (Aug 1983, +13.1 cm, leads); the last 12 months average
+  **+6.4 cm**. Trend over 1973-2026 is **+1.8 mm/yr**, worth **+6.4 cm** against
+  the 1983-2001 datum epoch the predictions use.
+- Residual: the daily higher-high water has run **+11.6 cm above prediction** over
+  the last 12 months, against a climatological **+1.8 +/- 8.3 cm**, with 223 of
+  365 days more than 10 cm high.
+- Winter composite: Nov-Feb mean residual by winter puts **1997-98 first
+  (+17.5 cm)**, **1982-83 second (+14.9 cm)** and **2025-26 fourth (+11.1 cm)** of
+  47 winters -- and 2025-26 got there without an El Nino.
+- Flooding: **2026 already has 10 days above NOAA's minor high-tide-flooding
+  level, the most of any year**, against 42 days in all of 1980-2026. They came in
+  three clusters -- 1-4 Jan, 14-16 Jun, 13-15 Jul; the summer ones are the
+  telling part, because summer king tides do not normally reach flood level here.
+- Outlook: prediction alone never floods this winter; + the typical strong-El-Nino
+  residual (+10 cm) puts 23-24 December over the minor level; + a 1997-98-scale
+  response (+29 cm on its worst days) gives 2.43 m on 20 days, above the 1983
+  record and within 4 cm of moderate flooding.
+- ENSO regression: **+4.5 cm of winter sea level per degC of ONI, r = 0.80,
+  n = 53 winters**.
+
+**Two checks that the pipeline is right.** The highest water level the analysis
+finds in 47 years -- 2.401 m above MLLW on 27 January 1983 -- is exactly the
+station record NOAA publishes in its datums metadata; and counting days above the
+minor flood level in the downloaded high waters reproduces NOAA's own high-tide-
+flooding counts year by year.
+
+**A caution written into the report.** On 23 December 2024, when 150 feet of the
+Santa Cruz Wharf collapsed in high surf, the day's higher-high water at Monterey
+was **1.49 m -- 0.70 m below the minor flooding level**, residual +5 cm. Water
+level is not what broke the wharf; long-period swell was. The report says
+explicitly that it analyses still-water level, not runup.
+
+**Data.** CO-OPS high/low waters and predictions, one calendar year per request,
+cached one file per year under `$OS_CCS/SeaLevel/tides/` (about 150 files). The
+per-year caching was added after a DNS drop mid-fetch lost a whole span; retries
+now back off progressively too. Monthly means, ONI and the anomaly fit reuse
+`cugn.indices` unchanged.
+
+**Learned.** Worth knowing for next month: the daily high/low record at Monterey
+starts in **August 1979**, not 1990 -- extending to 1980 brought 1982-83 into
+every statistic and changed the story from "highest since 1990" to "third-highest
+in 47 years, behind the two days of the great El Nino".
