@@ -102,6 +102,24 @@ If you have any questions, ask them in the Q&A section.  Use Fable if you can.  
 1. Please do a deep dive into the tides on Monterey Bay as measured at the Santa Cruz Wharf.  Is there any evidence for these to be higher than normal?  
 Generate a report named `tides_monterey_bay_sep2026.md` in the `Oceanography/python/cugn/reports/El_Nino_2026/tides` directory.  Use Fable if you can.  Log your work.
 
+2. I shared our initial explortation with David Barcelo and Mike Beck and have pasted their comments below.  Please read them and respond to them by improving our report.  Use Fable if you can.  Log your work.
+
+#### David Barcelo's comments
+
+>Looks good. I'll dive a bit deeper later, but wanted to send this before you go to bed.
+Mike and I have been looking at the tides around here because of the nodal and perigean cycles peaks.
+I have had a look at the tides report, and I see that everything considers NOAAs gauge in Monterey.
+It may be worth adding to the recipe the data from the tide gauge that the City of Santa Cruz has in the wharf.
+
+>https://dashboard.hohonu.io/map-page/hohonu-12/SantaCruzWharf
+
+>If you cannot get the bulk data (because of the way that dashboard works), we can contact the city (I should already have access to it, but things go slow on that end).
+
+#### Mike Beck's comments
+
+>Ditto to these points. Also not sure that NOAA flood lines are something used for planning or widely followed. This will likely be a foot! Of extra water on every high tide and storm. 
+I would have also appreciated a couple of bullets at the top by way of summary of the main points. And then we can also share with the City and others. 
+
 
 ## Q&A
 
@@ -171,6 +189,26 @@ Generate a report named `tides_monterey_bay_sep2026.md` in the `Oceanography/pyt
 4. I extended the daily high/low record back to 1980 (it starts in August 1979)
    so that 1982-83 is included. Worth doing the same for the hourly record, or
    is high/low enough?
+
+### Tides, round 2 -- David's and Mike's comments (2026-09-20)
+
+1. **The City's gauge is the blocker.** Hohonu's API
+   (`dashboard.hohonu.io/api/v1/stations/hohonu-12/statistic/`) answers 401
+   without a key; the route and its from/to/datum parameters are confirmed, and
+   the code path is written and cached-ready. Can David get us a read key or a
+   CSV export? The first thing it buys us is a *measured* wharf-to-Monterey
+   height ratio to replace NOAA's assumed 0.97.
+2. For Mike: I answered "a foot" with the distribution rather than a single
+   number (typical El Nino winter day +4 in, a quarter of days >= 6 in, 1 day in
+   25 >= 1 ft, worst days ~1 ft). Is that the right way to put it for the City,
+   or would a single planning number be more useful even if cruder?
+3. Scenarios are now also given as feet above MHHW, since Mike says the NOAA
+   flood lines are not widely used for planning. Is MHHW the right reference for
+   the City, or do they work in NAVD88? Easy to switch -- the Hohonu API can
+   return NAVD directly.
+4. Wave runup is still outside the analysis, and the December 2024 wharf
+   collapse shows it is what does the damage. Add CDIP buoy 158 and a total
+   water level next month?
 
 ## Logging
 
@@ -504,3 +542,66 @@ now back off progressively too. Monthly means, ONI and the anomaly fit reuse
 starts in **August 1979**, not 1990 -- extending to 1980 brought 1982-83 into
 every statistic and changed the story from "highest since 1990" to "third-highest
 in 47 years, behind the two days of the great El Nino".
+
+### 2026-09-20 (Tides report revised for David Barcelo's and Mike Beck's comments)
+
+Rewrote `tides/tides_monterey_bay_sep2026.md` (now 9 sections, 7 figures) and
+extended `scripts/santa_cruz_tides.py`. Each comment, and what was done:
+
+**David: "add the data from the tide gauge that the City of Santa Cruz has in the
+wharf."** Confirmed the gauge exists on the Hohonu network (station `hohonu-12`)
+and that the bulk record is behind an API key: the dashboard reads
+`https://dashboard.hohonu.io/api/v1/stations/hohonu-12/statistic/`, which returns
+**401 Unauthorized**, not 404 -- so the route and its `from`/`to`/`datum`
+parameters are right and only the key is missing. Also checked CeNCOOS ERDDAP
+(nothing; their Santa Cruz wharf datasets are water properties) and the Next.js
+data route (empty). Wrote the ingestion anyway so it runs the moment a key
+arrives: `hohonu_token()` (reads `$HOHONU_API_KEY` or `~/.hohonu_token`),
+`hohonu_fetch()` (cached CSV, returns None and prints a notice when there is no
+key, so the rest of the analysis still runs) and `compare_wharf_to_monterey()`,
+which fits the wharf-to-Monterey height ratio and time lag and so **tests NOAA's
+assumed 0.97 / -6 min offsets against a real Santa Cruz record for the first
+time**. The report states the ask plainly.
+
+**David: "nodal and perigean cycle peaks."** Added a proper treatment using
+`astropy`'s ephemeris. Fitting 18.613-yr and 8.847-yr harmonics jointly to the
+annual highest predicted tide gives **nodal +/-3.5 cm (peak mid-2024)** and
+**perigee-precession +/-0.2 cm** -- the perigee cycle barely modulates the annual
+maximum, because every year gets a good perigee-syzygy alignment. What it does
+control is timing, and `perigee_events()` shows this winter is emphatic: the
+**24 December 2026 perigee is 356,649 km, the closest of the season and second
+closest of the 2020s, and falls 11 hours from syzygy**, with the season's highest
+tide 8.7 hours later. New figure `fig_perigee_winter.png`; `fig_nodal_cycle.png`
+is now two panels (annual maxima + the closest perigee-at-syzygy each year).
+Worth stating clearly: the entire astronomical spread of the annual maximum over
+1990-2045 is **16 cm**, smaller than what El Nino and sea-level rise contribute.
+
+**Mike: "not sure NOAA flood lines are used for planning ... likely a foot of
+extra water ... would have appreciated a couple of bullets at the top."**
+- Added a seven-bullet **Summary** at the top, written to be shared with the City.
+- Added section 5, "How much extra water, in inches -- and is it a foot?", giving
+  the *distribution* rather than one number: all winters +0.8 in mean, 9 % of days
+  >= 6 in, 1 % >= 1 ft; **strong El Nino winters +3.9 in mean, 27 % >= 6 in, 4 %
+  (1 day in 25) >= 1 ft**; last 12 months +4.6 in mean, 26 % >= 6 in. So Mike's
+  foot is right for the bad days and 4-6 in is the typical elevated day.
+- Every scenario is now also quoted as **feet above MHHW**: Christmas tide alone
+  1.7 ft, + typical El Nino 2.0 ft, + a 1997-98 winter 2.7 ft, against the 1983
+  record at 2.5 ft. NOAA's lines are kept as one reference, with Mike's caveat
+  stated.
+
+**A real bug found and fixed while doing this.** The residual was computed by
+differencing the daily *maximum* observed and predicted high waters on the same
+calendar day. When the higher-high falls near midnight those are two different
+tide cycles, which manufactured residuals up to **0.9 m** -- every one of the
+record's top residuals was a July or August day-boundary artefact.
+`residual_series()` now matches each observed high water to the **nearest
+predicted high water within 3 hours** (`pd.merge_asof`), and everything is shifted
+to **local standard time** before a calendar day is taken, which is how NOAA
+counts flooding days. The artefacts are gone (the last-12-month maximum drops from
+a spurious 34.6 in to 14.9 in) and no headline number moved by more than 2 mm --
+and the flood-day counts still reproduce NOAA's exactly, which is the check that
+matters.
+
+**Learned.** Two things worth carrying forward: a 401 rather than a 404 is useful
+information when probing an API (it confirms the route); and daily-maximum
+matching is a trap for mixed tides -- always pair tide-by-tide.
