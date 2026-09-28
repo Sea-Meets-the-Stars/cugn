@@ -378,7 +378,8 @@ SRTM30_PLUS. Analysis: UCSC Ocean Sciences.
 Preliminary results, {date:%B %Y}; updated monthly — next update {next_month}.
 Scripps also publishes its own
 [El Niño glider product](https://spraydata.ucsd.edu/products/el-nino) and
-[California climatologies](https://spraydata.ucsd.edu/products/cugn-climatology).*
+[California climatologies](https://spraydata.ucsd.edu/products/cugn-climatology).
+You can also watch the temperatures right off the [Santa Cruz wharf](https://sccoos.github.io/el-nino-dashboard/?site=Santa+Cruz+Wharf).*
 """
     return md
 
