@@ -21,12 +21,12 @@ if os.path.exists('README.md'):
 setup_keywords['provides'] = [setup_keywords['name']]
 setup_keywords['requires'] = ['Python (>3.9.0)']
 setup_keywords['install_requires'] = [
-    'torch',  'IPython',
-    'torchvision', 'seaborn', 'smart-open[s3]', 'pyarrow',
-    'scikit-learn', 'scikit-image', 'tqdm', 'astropy', 'astropy-healpix',
-    'healpy', 'cftime', 'bokeh', 'umap-learn', 'llvmlite', 'boto3',
-    'xarray', 'h5netcdf',  'gsw',
-    'importlib-metadata', 'timm==0.3.2']
+    'IPython', 'seaborn', 
+    'cftime', 'bokeh', 'xarray', 'h5netcdf',  'gsw',
+    'importlib-metadata', 'timm==0.3.2', 'netcdf4',
+    'h5py',
+    'pymatreader', 'gsw-xarray', 'dask', 'cmocean',
+    'xhistogram']
 setup_keywords['zip_safe'] = False
 setup_keywords['use_2to3'] = False
 setup_keywords['packages'] = find_packages()

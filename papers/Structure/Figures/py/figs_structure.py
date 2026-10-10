@@ -1,60 +1,86 @@
-""" Figures for the structure function paper. """
+""" Figures for development of the structure function paper. """
 
 
 # imports
 import os
 import sys
+import glob
 from importlib import resources
 
 import numpy as np
-
+import xarray
 
 from matplotlib import pyplot as plt
 import matplotlib as mpl
+from matplotlib.ticker import MultipleLocator
 import matplotlib.gridspec as gridspec
 
 import seaborn as sns
 
 from ocpy.utils import plotting
 
-from cugn import gliderdata
-from cugn import gliderpairs
+from profiler import gliderdata
+from profiler import profilerpairs
+from profiler import io as p_io
 from cugn import io as cugn_io
 from cugn import utils as cugn_utils
 from cugn import plotting as cugn_plotting
 
 from IPython import embed
 
+# Local
+sys.path.append(os.path.abspath("../Analysis/py"))
+import qg_utils
+import qg_uL_SF
+import qg_observe
+import qg_io
+import glider_io
+import struct_defs
+import data_utils
+
 Sn_lbls = cugn_plotting.Sn_lbls
 
-def fig_separations(dataset:str, outroot='fig_sep', max_time:float=10.):
+def fig_separations(dataset:str, outroot='fig_sep', max_time:float=10.,
+                    fsz:float=10., ncol:int=2):
     outfile = f'{outroot}_{dataset}.png'
 
     # Load dataset
-    gData = gliderdata.load_dataset(dataset)
+    profilers = glider_io.load_dataset(dataset)
+    #embed(header='45 of figs_structure')
     
-    # Cut on valid velocity data 
-    gData = gData.cut_on_good_velocity()
 
     # Generate pairs
-    gPairs = gliderpairs.GliderPairs(gData, max_time=max_time)
+    #gPairs = gliderpairs.GliderPairs(gData, max_time=max_time)
+    gPairs = profilerpairs.ProfilerPairs(profilers, 
+                                          max_time=max_time,
+                                          debug=False,
+                                          randomize=True)
+
 
     # Start the figure
     fig = plt.figure(figsize=(12,6))
     plt.clf()
     gs = gridspec.GridSpec(1,2)
 
+
     # Lat/lon
     ax_ll = plt.subplot(gs[0])
 
-    for mid in np.unique(gPairs.data('missid',2)):
-        idx = gPairs.data('missid',2) == mid
+    for mid in np.unique(gPairs.data('missida',2).astype(int)):
+        marker = '+'
+        idx = gPairs.data('missida',2) == mid
         ax_ll.scatter(gPairs.data('lon', 2)[idx], 
-            gPairs.data('lat', 2)[idx], s=1, label=f'MID={mid}')
+            gPairs.data('lat', 2)[idx], s=2, label=f'MID={mid}',
+            marker=marker)
 
     ax_ll.set_xlabel('Longitude [deg]')
     ax_ll.set_ylabel('Latitude [deg]')
-    ax_ll.legend(fontsize=15)
+    ax_ll.legend(fontsize=fsz, ncol=ncol,
+                 loc='upper left')
+
+    ax_ll.grid()
+    ax_ll.xaxis.set_major_locator(MultipleLocator(1.0))  # Major ticks every 2 units
+
 
     # Separations
     ax_r = plt.subplot(gs[1])
@@ -76,11 +102,77 @@ def fig_separations(dataset:str, outroot='fig_sep', max_time:float=10.):
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
 
+
+def fig_loglin_separations(dataset:str, outroot='fig_loglin_sep', max_time:float=10.,
+                    fsz:float=10., ncol:int=2, xmax:float=None):
+    outfile = f'{outroot}_{dataset}.png'
+    clr = struct_defs.dataset_clrs[dataset]
+
+    # Load dataset
+    profilers = glider_io.load_dataset(dataset)
+    #embed(header='45 of figs_structure')
+    
+
+    # Generate pairs
+    #gPairs = gliderpairs.GliderPairs(gData, max_time=max_time)
+    gPairs = profilerpairs.ProfilerPairs(profilers, 
+                                          max_time=max_time,
+                                          debug=False,
+                                          randomize=True)
+
+
+    # Start the figure
+    fig = plt.figure(figsize=(12,6))
+    plt.clf()
+    gs = gridspec.GridSpec(1,2)
+
+
+    # Log Separations
+    rbins = data_utils.rbinning('log', dataset)
+    #embed(header='132 of figs_structure')
+    #rbins = 50
+    ax_r = plt.subplot(gs[0])
+    _ = sns.histplot(gPairs.r, bins=rbins, ax=ax_r, color=clr)#, log_scale=True)
+    # Label
+    ax_r.set_xlabel('Separation [km]')
+    ax_r.set_ylabel('Count')
+
+    # Add dataset
+    lsz = 16.
+    ax_r.text(0.1, 0.9, dataset, transform=ax_r.transAxes, fontsize=lsz)
+    # Label time separation
+    ax_r.text(0.1, 0.8, f't < {max_time} hours', transform=ax_r.transAxes, fontsize=15)
+    ax_r.set_xscale('log')
+
+    # Linear Separations
+    rbins = data_utils.rbinning('lin', dataset)
+    ax_lr = plt.subplot(gs[1])
+    _ = sns.histplot(gPairs.r, bins=rbins, log_scale=False, ax=ax_lr, color=clr)
+    # Label
+    ax_lr.set_xlabel('Separation [km]')
+    ax_lr.set_ylabel('Count')
+
+    # Add dataset
+    lsz = 16.
+    ax_r.text(0.1, 0.9, dataset, transform=ax_r.transAxes, fontsize=lsz)
+    # Label time separation
+    ax_r.text(0.1, 0.8, f't < {max_time} hours', transform=ax_r.transAxes, fontsize=15)
+
+
+    for ax in [ax_lr, ax_r]:
+        plotting.set_fontsize(ax, 15) 
+        ax.set_xlim(None, xmax)
+        #ax.set_yscale('log')
+        
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
 def fig_dtimes(dataset:str, outroot='fig_dtime', max_time:float=10.):
     outfile = f'{outroot}_{dataset}.png'
 
     # Load dataset
-    gData = gliderdata.load_dataset(dataset)
+    gData = glider_io.load_dataset(dataset)
     
     # Cut on valid velocity data 
     gData = gData.cut_on_good_velocity()
@@ -123,7 +215,7 @@ def fig_dus(dataset:str, outroot='fig_du', max_time:float=10., iz:int=4):
     outfile = f'{outroot}_z{(iz+1)*10}_{dataset}.png'
 
     # Load dataset
-    gData = gliderdata.load_dataset(dataset)
+    gData = glider_io.load_dataset(dataset)
     
     # Cut on valid velocity data 
     gData = gData.cut_on_good_velocity()
@@ -177,18 +269,45 @@ def fig_dus(dataset:str, outroot='fig_du', max_time:float=10., iz:int=4):
 def fig_structure(dataset:str, outroot='fig_structure',
                   variables = 'duLduLduL',
                   iz:int=5, tcut:tuple=None,
+                  outfile:str=None,
+                  skip_vel:bool=False,
+                  stretch:bool=False,
+                  no_labeling:bool=False,
+                  Sn_dict:dict=None,
+                  gpair_file:str=None,
+                  use_xlim:tuple=None,
+                  use_ylim:tuple=None,
                   minN:int=10, avoid_same_glider:bool=True,
                   show_correct:bool=True):
 
+    # Set in_field=True to load in-field data
+    #kwargs = {}
+    #if variables in ['duLduLduL']:
+    #    kwargs['in_field'] = True
+    #    kwargs['adcp_on'] = True
+    #    skip_vel = False
+
+    # Load dataset
+    if Sn_dict is None:
+        profilers = glider_io.load_dataset(dataset)
+
     # Outfile
-    outfile = f'{outroot}_z{(iz+1)*10}_{dataset}_{variables}.png'
+    if outfile is None:
+        if iz >= 0:
+            outfile = f'{outroot}_z{(iz+1)*10}_{dataset}_{variables}.png'
+        else:
+            outfile = f'{outroot}_iso{np.abs(iz)}_{dataset}_{variables}.png'
+        if stretch:
+            outfile = outfile.replace('.png', '_stretch.png')
 
     # Load
-    gpair_file = cugn_io.gpair_filename(
-        dataset, iz, not avoid_same_glider)
-    gpair_file = os.path.join('..', 'Analysis', 'Outputs', gpair_file)
+    #gpair_file = cugn_io.gpair_filename(
+    #    dataset, iz, not avoid_same_glider)
+    #gpair_file = os.path.join('..', 'Analysis', 'Outputs', gpair_file)
 
-    if tcut is None:
+    if Sn_dict is not None:
+        print(f'Loaded: {Sn_dict}')
+    elif gpair_file is not None:
         Sn_dict = gliderpairs.load_Sndict(gpair_file)
         print(f'Loaded: {gpair_file}')
     else:
@@ -197,31 +316,40 @@ def fig_structure(dataset:str, outroot='fig_structure',
         # Cut on valid velocity data 
         nbins = 20
         rbins = 10**np.linspace(0., np.log10(400), nbins) # km
-        # Load dataset
-        gData = gliderdata.load_dataset(dataset)
-        gData = gData.cut_on_good_velocity()
-        gData = gData.cut_on_reltime(tcut)
-
         # Generate pairs
-        gPairs = gliderpairs.GliderPairs(
-            gData, max_time=10., 
-            avoid_same_glider=avoid_same_glider)
-        gPairs.calc_delta(iz, variables)
+        #gData = gliderdata.load_dataset(dataset)
+        gPairs = profilerpairs.ProfilerPairs(
+            profilers, max_time=10.,
+            avoid_same_glider=avoid_same_glider,
+            remove_nans=True,
+            debug=False, 
+            randomize=False)
+        # Isopycnals?
+        if iz < 0:
+            gPairs.prep_isopycnals('t')
+        #gData = gData.cut_on_good_velocity()
+        #gData = gData.cut_on_reltime(tcut)
+
+        gPairs.calc_delta(iz, variables, skip_velocity=skip_vel)
         gPairs.calc_Sn(variables)
 
-        Sn_dict = gPairs.calc_Sn_vs_r(rbins, nboot=10000)
-        gPairs.calc_corr_Sn(Sn_dict) 
+        Sn_dict = gPairs.calc_Sn_vs_r(rbins, nboot=100)
+        gPairs.calc_corr_Sn(Sn_dict)
         gPairs.add_meta(Sn_dict)
 
     #embed(header='fig_structure: 215')
 
     # Start the figure
-    fig = plt.figure(figsize=(19,6))
+    if stretch:
+        fig = plt.figure(figsize=(19,4))
+    else:
+        fig = plt.figure(figsize=(19,6))
     plt.clf()
     gs = gridspec.GridSpec(1,3)
 
     goodN = np.array(Sn_dict['config']['N']) > minN
     
+    #embed(header='280 of figs')
 
     # Generate the keys
     if variables == 'duLduLduL':
@@ -269,14 +397,26 @@ def fig_structure(dataset:str, outroot='fig_structure',
         # Label time separation
         if n == 2:
             same_glider = 'True' if avoid_same_glider else 'False'
-            ax.text(0.1, 0.8, 
-                    f'{dataset}\n depth = {(iz+1)*10} m, t<{int(Sn_dict['config']['max_time'])} hr\nAvoid same glider? {same_glider}\n {variables}', 
-                transform=ax.transAxes, fontsize=16, ha='left')
+            if stretch:
+                text = f'{dataset}'
+                ytxt = 0.9
+                tsz = 18.
+            else:
+                text = f'{dataset}\n depth = {(iz+1)*10} m, t<{int(Sn_dict['config']['max_time'])} hr\nAvoid same glider? {same_glider}\n {variables}' 
+                ytxt = 0.8
+                tsz = 16.
+            if not no_labeling:
+                ax.text(0.1, ytxt, text,
+                transform=ax.transAxes, fontsize=tsz, ha='left')
         # 0 line
         ax.axhline(0., color='red', linestyle='--')
 
         plotting.set_fontsize(ax, 19) 
         ax.grid()
+        if use_xlim:
+            ax.set_xlim(use_xlim)
+        if n == 2 and use_ylim is not None:
+            ax.set_ylim(use_ylim)
         
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
@@ -547,7 +687,1470 @@ def fig_Sn_distribution(dataset:str, outfile:str,
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
     print(f"Saved: {outfile}")
+
+def fig_region_dus(outroot:str='fig_qg_region_dul', 
+                   calc_du3:bool=False,
+                   Ndays:int=None,
+                   tot_time='5years'):
+    """
+    Examine the QG structure function
+    """
+
+    # Grab files
+    output_files = glob.glob(f'../Analysis/Output/SF_region_*_{tot_time}.nc')
+    output_files.sort()
+
+    if len(output_files) == 0:
+        print(f'No output files found for {tot_time}')
+        return
+
+    # Loop on em
+    for ss, output_file in enumerate(output_files):
+        # Parse for x,y
+        ix = output_file.find('_x')
+        xval = int(output_file[ix+2:ix+5])
+        iy = output_file.find('_y')
+        yval = int(output_file[iy+2:iy+5])
+        # Outfile
+        outfile = f'{outroot}_x{xval}_y{yval}.png'
+        # Do it
+        if calc_du3:
+            fig_region_dul3(output_file, outfile,
+                       title=f'QG: x={xval}-{xval+100}km, y={yval}-{yval+100}km',
+                       Ndays=Ndays)
+        else:
+            fig_region_dul(output_file, outfile,
+                       title=f'QG: x={xval}-{xval+100}km, y={yval}-{yval+100}km',
+                       Ndays=Ndays)
+
+def fig_region_dul(output_file:str, outfile:str, title:str=None,
+                   Ndays:int=None):
+    """
+    Generate and save a plot of the <du_L> in the structure function region
+    for daily and total time series (5 years).
+
+    Parameters:
+    -----------
+    output_file : str
+        Path to the input NetCDF file containing the dataset.
+    outfile : str
+        Path to save the generated figure.
+    title : str, optional
+        Title of the plot. If None, no title will be displayed.
+
+    Description:
+    ------------
+    This function loads a dataset from the specified NetCDF file, 
+    generates a plot of the structure function region, and saves 
+    the figure to the specified output file. The plot includes 
+    individual time series as well as the mean over time. The x-axis 
+    represents the radial distance in kilometers, and the y-axis 
+    represents the longitudinal velocity difference.
+
+    Notes:
+    ------
+    - The function uses the `xarray` library to load the dataset.
+    - The `cugn_plotting.set_fontsize` function is used to adjust 
+        the font size of the plot.
+    - The figure is saved with a resolution of 300 DPI.
+
+    Returns:
+    --------
+    None
+    """
+    if Ndays is None:
+        Ndays = 60
+    # Load
+    SFds = xarray.load_dataset(output_file)
+    #embed(header='fig_region_dul: 648')
+
+    # Cut on time
+    i1 = -1*Ndays
+    times = np.arange(i1, i1 + Ndays)
+    SFds = SFds.isel(time=times)
+
+    # Start the figure
+    fig = plt.figure(figsize=(10,10))
+    plt.clf()
+    ax = plt.gca()
+
+    ax.plot(SFds.dr.values[0,:]*1e-3, SFds.ulls.T, '-k', linewidth=0.5, alpha=0.3)
+    ax.plot(SFds.dr.mean('time')*1e-3, SFds.ulls.T.mean('time'), '-r', linewidth=1.5)
+    ax.set_xlabel(r'$r$ [km]')
+    ax.set_ylabel(r'$\delta u_L(r, t)$ [m s$^{-1}$]')
+
+    if title is not None:
+        ax.set_title(title, fontsize=23.)
+
+    cugn_plotting.set_fontsize(ax, 20)
+
+    ax.minorticks_on()
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+def fig_region_dul3(output_file:str, outfile:str,
+                   title:str=None, Ndays:int=None):
+    """
+    Generate and save a figure illustrating the structure functions of a region 
+    over a specified number of days.
+
+    Parameters
+    ----------
+    output_file : str
+        Path to the input dataset file containing structure function data.
+    outfile : str
+        Path to save the generated figure.
+    title : str, optional
+        Title of the figure. If None, no title will be added. Default is None.
+    Ndays : int, optional
+        Number of days to consider for the analysis. If None, defaults to 90 days.
+    Notes
+    -----
+    - The function loads the dataset from `output_file` and computes the 
+        structure functions (du1, du2, du3) and their corrected versions.
+    - The figure consists of three subplots:
+        1. Mean longitudinal velocity differences (`<δu_L>`).
+        2. Mean squared longitudinal velocity differences (`<δu_L^2>`).
+        3. Mean cubed longitudinal velocity differences (`<δu_L^3>`) and its corrected version.
+    - The x-axis represents the spatial separation `r` in kilometers, and the y-axes 
+        represent the respective structure function values.
+    - The function uses data from both the full grid and the specified region for comparison.
+    Outputs
+    -------
+    - A figure saved to the specified `outfile` in PNG format with a resolution of 300 DPI.
+    - Prints a confirmation message with the saved file path.
+    Example
+    -------
+    fig_region_dul3(
+        output_file="/path/to/input.nc",
+        outfile="/path/to/output.png",
+        title="Structure Functions",
+        Ndays=90
+    )
+    """
+    if Ndays is None:
+        Ndays = 90
+
+    # Parse
+    rr1, rrr1, du1, du2, du3, du3_corr, dull_mn, du2_mn_duL, du3_mn_duL = \
+        qg_uL_SF.parse_SF(output_file, Ndays)
+
+
+    # Start the figure
+    fig = plt.figure(figsize=(10,3))
+    plt.clf()
+    gs = gridspec.GridSpec(1,3)
+
+    # ################################################3
+    # du
+    ax1 = plt.subplot(gs[0])
+
+    ax1.semilogx(rrr1, du1, 'k', linewidth=1)
+    ax1.semilogx(rr1*1e-3, dull_mn, 'r', linewidth=1, 
+                label=r'Full grid $<\delta u_L>$')
+    ax1.set_xlabel(r'$r$ [km]')
+    ax1.set_ylabel(r'$<\delta u_L>$ [m/s]')
+    ax1.text(0.1, 0.1, f'{Ndays} days', transform=ax1.transAxes, fontsize=12.)
+
+    # ################################################3
+    # du2
+    ax2 = plt.subplot(gs[1])
+    ax2.loglog(rr1*1e-3, du2_mn_duL, 'r', linewidth=1, 
+                label=r'Full grid $<\delta u_L^2>$')
+    ax2.loglog(rrr1, du2, '-k', linewidth=1.5, 
+                label=r'Region $<\delta u_L^2>$')
+    lsz = 10.
+    ax2.legend(fontsize=lsz, loc='lower right')
+    ax2.set_xlabel(r'$r$ [km]')
+    ax2.set_ylabel(r'$<\delta u^2> \, {\rm [m/s]^2}$')
+
+    # ################################################3
+    # du3
+    ax3 = plt.subplot(gs[2])
+    ax3.semilogx(rrr1, du3, '-k', linewidth=1.5, 
+                label=r'$<\delta u_L^3>$')
+    ax3.semilogx(rrr1, du3_corr, 'x', color='b', 
+                label=r'Corrected $<\delta u_L^3>$')
+    ax3.semilogx(rr1*1e-3, du3_mn_duL, '-r', linewidth=1, 
+                label=r'Full grid $<\delta u_L^3>$')
+    ax3.set_xlabel(r'$r$ [km]')
+    ax3.set_ylabel(r'$<\delta u_L^3(r)> \, \rm [m^{3} \, s^{-3}]$')
+
+    if title is not None:
+        ax2.set_title(title, fontsize=15.)
+
+    for ax in [ax1, ax2, ax3]:
+        cugn_plotting.set_fontsize(ax, 11)
+
+    ax.minorticks_on()
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+def fig_qg_duL_vs_time(x0:int,y0:int, outroot:str='fig_qg_duL_vs_time', 
+                       title:str=None, dx:int=100,
+                       show_du3:bool=False):
+    """
+    Generate and save a plot of the time-averaged longitudinal velocity difference 
+    ($\\delta u_L$) as a function of distance ($r$) for a quasi-geostrophic (QG) 
+    simulation.
+
+    Plot it for different time intervals (1 day, 60 days, 180 days, 1 year,
+
+    Parameters:
+    -----------
+    x0 : int
+        The starting x-coordinate (in km) for the region of interest.
+    y0 : int
+        The starting y-coordinate (in km) for the region of interest.
+    outroot : str, optional
+        The root name for the output file. Default is 'fig_qg_duL_vs_time'.
+    title : str, optional
+        The title of the plot. If not provided, a default title is generated 
+        based on the x0 and y0 values.
+    show_du3 : bool, optional
+        If True, the plot will show the third-order structure function
+
+    Notes:
+    ------
+    - The function loads a dataset from a NetCDF file located at 
+        '../Analysis/Output/SF_region_x{x0}_y{y0}_5years.nc'.
+    - The plot shows $\\delta u_L(r, t)$ averaged over different time intervals 
+        (1 day, 60 days, 180 days, 1 year, 2 years, and 5 years).
+    - The x-axis represents the distance $r$ in kilometers, and the y-axis 
+        represents $\\delta u_L(r, t)$ in meters per second.
+    - The plot is saved as a PNG file with a name formatted as 
+        '{outroot}_x{x0}_y{y0}.png'.
+
+    Outputs:
+    --------
+    - A PNG file containing the generated plot.
+    - A message is printed to the console indicating the location of the saved file.
+    """
+    if show_du3:
+        outfile = outfile.replace('duL', 'duL3')
+
+    # Load file
+    if x0 == 0:
+        outfile = f'{outroot}_x{x0}_y{y0}.png'
+        _, SFds = qg_utils.load_qg()#use_SFduL=True)
+    else:
+        outfile = f'{outroot}_x{x0}_y{y0}_dx{dx}.png'
+        output_file = qg_io.qg_output_file(x0, y0, dx=dx)
+        #if dx == 200:
+        #    output_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_200km_5years.nc' 
+        #elif dx == 300:
+        #    output_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_300km_5years.nc' 
+        #else:
+        #    output_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_5years.nc' 
+        print(f'Loading {output_file}')
+        SFds = xarray.load_dataset(output_file)
+
+    # Start the figure
+    fig = plt.figure(figsize=(10,10))
+    plt.clf()
+    ax = plt.gca()
+
+    ndays = [1, 60, 180, 365, 2*365, 5*365]
+    for nday in ndays:
+        if show_du3:
+            yvals = SFds.du3.isel(time=np.arange(nday)).T.mean('time')
+        else:
+            yvals = SFds.ulls.isel(time=np.arange(nday)).T.mean('time') 
+        ax.plot(SFds.dr.mean('time')*1e-3, yvals,
+                '-', linewidth=1.5,
+                label=f'ndays={nday}')
+    ax.set_xlabel('$r$ [km]')
+    if show_du3:
+        ax.set_ylabel('$<\\delta u_L^3(r, t)>$ [m s$^{-1}]^3$')
+    else:
+        ax.set_ylabel('$<\\delta u_L(r, t)>$ [m s$^{-1}$]')
+
+    if x0 == 0:
+        title='QG: Full grid'
+    else:
+        title=f'QG: x={x0}-{x0+dx}km, y={y0}-{y0+dx}km'
+    ax.set_title(title, fontsize=23.)
+
+    cugn_plotting.set_fontsize(ax, 20)
+
+    ax.axhline(0., color='gray', linestyle='--')
+    ax.legend(fontsize=20.)
+    ax.minorticks_on()
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+
+def fig_frac_duL3_vs_time(
+    x0:int,y0:int, outroot:str='fig_frac_duL3_vs_time', 
+    title:str=None, factor:float=2.):
+    """
+    Generate and save a plot of the fraction of time-averaged 
+    3rd order structure function is larger than its correction term
+    ($\\delta u_L^3$) 
+
+    Plot it for different time intervals (1 day, 60 days, 180 days, 1 year,
+
+    Parameters:
+    -----------
+    x0 : int
+        The starting x-coordinate (in km) for the region of interest.
+    y0 : int
+        The starting y-coordinate (in km) for the region of interest.
+    outroot : str, optional
+        The root name for the output file. Default is 'fig_qg_duL_vs_time'.
+    title : str, optional
+        The title of the plot. If not provided, a default title is generated 
+        based on the x0 and y0 values.
+    show_du3 : bool, optional
+        If True, the plot will show the third-order structure function
+
+    Outputs:
+    --------
+    - A PNG file containing the generated plot.
+    """
+    outfile = f'{outroot}_x{x0}_y{y0}.png'
+    output_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_5years.nc' 
+
+    # Load
+    SFds = xarray.load_dataset(output_file)
+
+    # Start the figure
+    fig = plt.figure(figsize=(10,10))
+    plt.clf()
+    ax = plt.gca()
+
+    frac_total = []
+    frac_70 = []
+    rvals = SFds.dr.mean('time')*1e-3
+    r_70 = rvals < 70.
+    ndays = [1, 10, 60, 180, 365, 2*365, 3*365, 5*365]
+    for nday in ndays:
+        du1 = SFds.ulls.isel(time=np.arange(nday)).T.mean('time')
+        du2 = SFds.du2.isel(time=np.arange(nday)).T.mean('time')
+        du3 = SFds.du3.isel(time=np.arange(nday)).T.mean('time')
+        du3_correction = 3*du1*du2 - 2*du1**3
+
+        # Frac du3 > du3_corr
+        ok_du3 = np.abs(du3) > factor*np.abs(du3_correction)
+        fract = np.sum(ok_du3)/len(du3)
+        frac_total.append(fract)
+
+        # 70km
+        frac70 = np.sum(ok_du3[r_70])/np.sum(r_70)
+        frac_70.append(frac70)
+
+    # 
+    ax.plot(ndays, frac_total, 'o', linewidth=1.5,
+                label='All rbins')
+    ax.plot(ndays, frac_70, 'rs', linewidth=1.5,
+                label='r<70km')
+    ax.set_xlabel('Ndays')
+    ax.set_ylim(0., 1.05)
+    ax.set_xscale('log')
+    ax.set_ylabel(r'Fraction $|<\delta uL^3>|  >  '+f'{factor}'+r'|3 <\delta uL> <\delta uL^2> - 2 <\delta uL>^3|$')
+
+    title=f'QG: x={x0}-{x0+100}km, y={y0}-{y0+100}km'
+    ax.set_title(title, fontsize=23.)
+
+    cugn_plotting.set_fontsize(ax, 20)
+
+    #ax.axhline(0., color='gray', linestyle='--')
+    ax.legend(fontsize=20., loc='upper left')
+    ax.minorticks_on()
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+
+def fig_duL3corr_vs_time(
+    x0:int,y0:int, outroot:str='fig_duL3corr_vs_time', 
+    title:str=None, factor:float=2.):
+    """
+    Generate and save a plot of the fraction of time-averaged 
+    3rd order structure function is larger than its correction term
+    ($\\delta u_L^3$) 
+
+    Plot it for different time intervals (1 day, 60 days, 180 days, 1 year,
+
+    Parameters:
+    -----------
+    x0 : int
+        The starting x-coordinate (in km) for the region of interest.
+    y0 : int
+        The starting y-coordinate (in km) for the region of interest.
+    outroot : str, optional
+        The root name for the output file. Default is 'fig_qg_duL_vs_time'.
+    title : str, optional
+        The title of the plot. If not provided, a default title is generated 
+        based on the x0 and y0 values.
+    show_du3 : bool, optional
+        If True, the plot will show the third-order structure function
+
+    Outputs:
+    --------
+    - A PNG file containing the generated plot.
+    """
+    outfile = f'{outroot}_x{x0}_y{y0}.png'
+    output_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_5years.nc' 
+
+    # Load
+    SFds = xarray.load_dataset(output_file)
+
+    # r for evaluation
+    rvals = SFds.dr.mean('time').values*1e-3
+    idx_r = np.arange(25)[::6]
+    sv_dict = {}
+    for ir in idx_r:
+        sv_dict[ir] = []
+
+
+    ndays = [1, 10, 30, 90, 180, 365, 2*365, 3*365, 5*365]
+    for nday in ndays:
+        du1 = SFds.ulls.isel(time=np.arange(nday)).T.mean('time')
+        du2 = SFds.du2.isel(time=np.arange(nday)).T.mean('time')
+        du3 = SFds.du3.isel(time=np.arange(nday)).T.mean('time')
+        du3_correction = 3*du1*du2 - 2*du1**3
+
+        # Save
+        for ir in idx_r:
+            sv_dict[ir].append(du3_correction[ir])
+
+    # Plot 
+    # Start the figure
+    fig = plt.figure(figsize=(10,10))
+    plt.clf()
+    ax = plt.gca()
+
+    for ir in idx_r:
+        ax.plot(ndays, sv_dict[ir], linewidth=1.5,
+                label=r'$r=$'+f'{rvals[ir]:.1f}'+r' km')
+    ax.set_xlabel('Ndays')
+    #ax.set_ylim(0., 1.05)
+    ax.set_xscale('log')
+    ax.set_ylabel(r'$3 <\delta uL> <\delta uL^2> - 2 <\delta uL>^3$')
+
+    title=f'QG du3 correction: x={x0}-{x0+100}km, y={y0}-{y0+100}km'
+    ax.set_title(title, fontsize=23.)
+
+    cugn_plotting.set_fontsize(ax, 20)
+
+    #ax.axhline(0., color='gray', linestyle='--')
+    ax.legend(fontsize=20., loc='upper left')
+    ax.minorticks_on()
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+def fig_qg_duL_by_year(x0:int,y0:int, outroot:str='fig_qg_duL_yearly',
+                   title:str=None, dx:int=100):
+    outfile = f'{outroot}_x{x0}_y{y0}.png'
+    #output_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_5years.nc' 
+    output_file = qg_io.qg_output_file(x0, y0, dx=dx)
+
+    # Load
+    print(f'Loading {output_file}')
+    SFds = xarray.load_dataset(output_file)
+
+    # Start the figure
+    fig = plt.figure(figsize=(10,10))
+    plt.clf()
+    ax = plt.gca()
+
+    #ndays = [1, 60, 180, 365, 2*365, 5*365]
+    #for nday in ndays:
+    #    ax.plot(SFds.dr.mean('time')*1e-3, 
+    #            SFds.ulls.isel(time=np.arange(nday)).T.mean('time'), 
+    #            '-', linewidth=1.5,
+    #            label=f'ndays={nday}')
+    for ss in range(5):
+        ax.plot(SFds.dr.mean('time')*1e-3, 
+                SFds.ulls.isel(time=np.arange(ss*365, (ss+1)*365)).T.mean('time'), 
+                '-', linewidth=1.5,
+                label=f'year={ss+1}')
+    ax.set_xlabel('$r$ [km]')
+    ax.set_ylabel('$\\delta u_L(r, t)$ [m s$^{-1}$]')
+
+    title=f'QG: x={x0}-{x0+100}km, y={x0}-{x0+dx}km'
+    if title is not None:
+        ax.set_title(title, fontsize=23.)
+
+    cugn_plotting.set_fontsize(ax, 20)
+
+    ax.axhline(0., color='gray', linestyle='--')
+    ax.legend(fontsize=20.)
+    ax.minorticks_on()
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+def fig_compare_duL_qg_data(dataset, outroot:str='fig_duL_QG_vs',
+                   title:str=None):
+    # Load
+    outfile = f'{outroot}_{dataset}.png'
+
+    # Data
+    rdict = data_utils.load_SF(dataset)
+    Sn_dict = rdict['Sn_dict']
+    gPairs = rdict['gPairs']
+    Skeys = rdict['Skeys']
+    goodN = rdict['goodN']
+
+    # Start the figure
+    fig = plt.figure(figsize=(10,7))
+    plt.clf()
+    ax = plt.gca()
+
+    # Dataset
+    Skey = Skeys[0]
+    ax.errorbar(Sn_dict['r'][goodN], 
+                Sn_dict[Skey][goodN], 
+                yerr=Sn_dict['err_'+Skey][goodN],
+                color='k', 
+                fmt='o', capsize=5,
+                label=dataset)
+    ax.axhline(0., color='gray', linestyle='--')
+
+    # Grab QG files
+    output_files = glob.glob('../Analysis/Output/SF_region_*')
+    output_files.sort()
+
+    for output_file in output_files:
+        SFds = xarray.load_dataset(output_file)
+        ax.plot(SFds.dr.mean('time')*1e-3, SFds.ulls.T.mean('time'), '-', linewidth=1.5)
+
+    ax.set_xlabel('$r$ [km]')
+    ax.set_ylabel('$\\delta u_L(r, t)$ [m s$^{-1}$]')
+    ax.set_xscale('log')
+
+    cugn_plotting.set_fontsize(ax, 20)
+
+    ax.minorticks_on()
+    ax.legend(fontsize=20.)
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+
+def fig_examine_qg(outfile:str='fig_examine_qg.png'):
+    """
+    Compare <duL> with sqrt<du^2>
+    """
+    # Load the data
+    qg, mSF_15 = qg_utils.load_qg()
+
+    # Calculate the first order structure function
+    rr1, du1, du1LL, dull_mn, dull_25, dull_50, du2_mn, du3_mn, du3_corr = \
+        qg_utils.calc_dus(qg, mSF_15)
+
+    rms = np.sqrt(du2_mn)
+
+
+    # Start the figure
+    fig = plt.figure(figsize=(10,6))
+    plt.clf()
+    gs = gridspec.GridSpec(1,1)
+
+    ax = plt.subplot(gs[0])
+
+
+    #ax.set_xlim(1., 100.)
+    #ax.minorticks_on()
+
+    # Plot the QG RMS from <delta u^2>
+    ax.semilogx(rr1*1e-3, du2_mn*1e3, 'b', linewidth=1, 
+                label=r'$\sqrt{<\delta u^2>}$')
+
+    # Plot a random set of 1 day averages
+    c1 = 'red'
+    #embed(header='fig_examine_qg: 617')
+    randi = np.random.choice(np.arange(0, du1LL.data.shape[0]), size=100, replace=False)
+
+    ax.semilogx(rr1*1e-3, du1LL.data.T[:,randi]*1e3, '-', color=c1,
+            linewidth=0.5, alpha=0.1)
+    ax.semilogx(0, 0, '-', color=c1, linewidth=0.5, alpha=0.8, 
+                label='Daily $\\overline{\\delta u1_{L}}(r, t)$')
+
+
+    # Plot the 2-month averages
+    c50 = 'green'
+    ax.semilogx(rr1*1e-3, dull_50.T*1e3, '-', color=c50,
+                linewidth=0.5, alpha=0.3)
+    ax.semilogx(0, 0, '-', color=c50, linewidth=0.5, alpha=0.8, 
+                label='50 days $\\overline{\\delta u1_L}(r, t)$')
+
+    ax.legend(fontsize=15, loc='upper left')
+
+    ax.set_xlabel(r'$r$ [km]')
+    ax.set_ylabel(r'Comparison of $\delta u$ and RMS')
+
+    cugn_plotting.set_fontsize(ax, 15)
+
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+        
+def fig_orig_qg_SF(outfile:str='fig_qg_SF.png'):
+    """
+    This is the original code
+    QG Structure Function, duL and total
+    """
+    # Load the data
+    qg, mSF_15 = qg_utils.load_qg()
+    _, mSF_15_duL = qg_utils.load_qg(use_SFduL=True)
+
+    # Calculate the first order structure function
+    SF_dict = qg_utils.calc_dus(qg, mSF_15)
+    SF_dict_duL = qg_utils.calc_dus(qg, mSF_15_duL)
+
+    # Unpack a bit
+    rr1 = SF_dict['rr1']
+    du1 = SF_dict['du1']
+    du1LL = SF_dict['du1LL']
+    du1_mn = SF_dict['du1_mn']
+    dull_mn = SF_dict['dull_mn']
+    dutt_mn = SF_dict['dutt_mn']
+    du2_mn = SF_dict['du2_mn']
+    du3_mn = SF_dict['du3_mn']
+
+    du2_mn_duL = SF_dict_duL['du2_mn']
+    du3_mn_duL = SF_dict_duL['du3_mn']
+
+
+    # Start the figure
+    fig = plt.figure(figsize=(10,4))
+    plt.clf()
+    gs = gridspec.GridSpec(1,3)
+
+    # ################################################3
+    # du
+    ax0 = plt.subplot(gs[0])
+
+    ax0.semilogx(rr1*1e-3, du1_mn*1e3, 'k', linewidth=1, 
+                label=r'$<\delta u>$')
+    ax0.semilogx(rr1*1e-3, dull_mn*1e3, 'b', linewidth=1, 
+                label=r'$<\delta u_L>$')
+    ax0.semilogx(rr1*1e-3, dutt_mn*1e3, 'r', linewidth=1, 
+                label=r'$<\delta u_T>$')
+
+    lsz = 13.
+    ax0.legend(fontsize=lsz, loc='lower left')
+    ax0.set_xlabel(r'$r$ [km]')
+    ax0.set_ylabel(r'$<\delta u> \, 10^{-3}$ [m/s]')
+
+    # ################################################3
+    # du2
+    ax2 = plt.subplot(gs[1])
+
+    ax2.loglog(rr1*1e-3, du2_mn, 'k', linewidth=1, 
+                label=r'$<\delta u_L^2 + \delta u_T^2>$')
+    ax2.loglog(rr1*1e-3, du2_mn_duL, 'b', linewidth=1, 
+                label=r'$<\delta u_L^2>$')
+    ax2.legend(fontsize=lsz, loc='lower right')
+    ax2.set_xlabel(r'$r$ [km]')
+    ax2.set_ylabel(r'$<\delta u^2> \, {\rm [m/s]^2}$')
+
+    # ################################################3
+    # du3
+    ax3 = plt.subplot(gs[2])
+
+    ax3.semilogx(rr1*1e-3, du3_mn, 'k', linewidth=1, 
+                label=r'$<\delta u_L(\delta u_L^2 + \delta u_T^2)>$')
+    ax3.semilogx(rr1*1e-3, du3_mn_duL, 'b', linewidth=1, 
+                label=r'$<\delta u_L^3>$')
+    ax3.legend(fontsize=lsz, loc='lower left')
+    ax3.set_xlabel(r'$r$ [km]')
+    ax3.set_ylabel(r'$<\delta u^3> \, {\rm [m/s]^3}$')
+
+    for ax in [ax0, ax2, ax3]:
+        cugn_plotting.set_fontsize(ax, 15)
+
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+       
+def fig_orig_vs_new_qg_SF(outfile:str='fig_qg_SF_orig_vs_new.png'):
+    """
+    This is the original code
+    QG Structure Function, duL and total
+    """
+    # Load the data
+    qg, mSF_15_orig = qg_utils.load_qg(orig=True)
+    _, mSF_15_duL = qg_utils.load_qg(use_SFduL=True)
+    _, mSF_15_new = qg_utils.load_qg(use_SFduL=False)
+
+    # Calculate the first order structure function
+    SF_dict_orig = qg_utils.calc_dus(qg, mSF_15_orig)
+    SF_dict_new = qg_utils.calc_dus(qg, mSF_15_new)
+    SF_dict_duL = qg_utils.calc_dus(qg, mSF_15_duL)
+
+    # Unpack a bit
+    rr1 = SF_dict_duL['rr1']
+
+    # du1
+    du1_mn_orig = SF_dict_orig['du1_mn']
+    dull_mn = SF_dict_duL['dull_mn']
+    du1_mn = SF_dict_duL['du1_mn']
+
+    # du2
+    du2_mn_orig = SF_dict_orig['du2_mn']
+    du2_mn_new = SF_dict_new['du2_mn']
+    du2_mn_duL = SF_dict_duL['du2_mn']
+
+    # du3
+    du3_mn_orig = SF_dict_orig['du3_mn']
+    du3_mn_new = SF_dict_new['du3_mn']
+    du3_mn_duL = SF_dict_duL['du3_mn']
+
+
+    # Start the figure
+    fig = plt.figure(figsize=(10,3))
+    plt.clf()
+    gs = gridspec.GridSpec(1,3)
+
+    # ################################################3
+    # du
+    ax0 = plt.subplot(gs[0])
+
+    ols = ':'
+    ax0.semilogx(rr1*1e-3, du1_mn_orig*1e3, 'k', linewidth=1, ls=ols,
+                label=r'$Original <\delta u>$')
+    ax0.semilogx(rr1*1e-3, du1_mn*1e3, 'k', linewidth=1, 
+                label=r'$New <\delta u>$')
+    ax0.semilogx(rr1*1e-3, dull_mn*1e3, 'b', linewidth=1, 
+                label=r'$<\delta u_L>$')
+    #ax0.semilogx(rr1*1e-3, dutt_mn*1e3, 'r', linewidth=1, 
+    #            label=r'$<\delta u_T>$')
+
+    lsz = 7.
+    ax0.legend(fontsize=lsz, loc='lower left')
+    ax0.set_xlabel(r'$r$ [km]')
+    ax0.set_ylabel(r'$<\delta u> \, 10^{-3}$ [m/s]')
+
+    # ################################################3
+    # du2
+    ax2 = plt.subplot(gs[1])
+
+    ax2.loglog(rr1*1e-3, du2_mn_orig, 'k', linewidth=1, ls=ols,
+                label=r'Original $<\delta u_L^2 + \delta u_T^2>$')
+    ax2.loglog(rr1*1e-3, du2_mn_new, 'k', linewidth=1, 
+                label=r'New $<\delta u_L^2 + \delta u_T^2>$')
+    ax2.loglog(rr1*1e-3, du2_mn_duL, 'b', linewidth=1, 
+                label=r'New $<\delta u_L^2>$')
+    ax2.legend(fontsize=lsz, loc='lower right')
+    ax2.set_xlabel(r'$r$ [km]')
+    ax2.set_ylabel(r'$<\delta u^2> \, {\rm [m/s]^2}$')
+
+
+    # ################################################3
+    # du3
+    ax3 = plt.subplot(gs[2])
+
+    ax3.semilogx(rr1*1e-3, du3_mn_orig, 'k', linewidth=1, ls=ols,
+                label=r'Orig $<\delta u_L(\delta u_L^2 + \delta u_T^2)>$')
+    ax3.semilogx(rr1*1e-3, du3_mn_new, 'k', linewidth=1, 
+                label=r'New $<\delta u_L(\delta u_L^2 + \delta u_T^2)>$')
+    ax3.semilogx(rr1*1e-3, du3_mn_duL, 'b', linewidth=1, 
+                label=r'New $<\delta u_L^3>$')
+    ax3.legend(fontsize=lsz, loc='upper left')
+    ax3.set_xlabel(r'$r$ [km]')
+    ax3.set_ylabel(r'$<\delta u^3> \, {\rm [m/s]^3}$')
+
+    for ax in [ax0, ax2, ax3]:
+        cugn_plotting.set_fontsize(ax, 13)
+
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+
+def fig_qg_subregion_vs_full(x0:int=400, y0:int=400, dx:int=100,
+                          outfile:str='fig_qg_100km_vs_full.png',
+                          Ndays:int=1825, llocs=(None,None,None)):
+    """
+    Compare QG Ndays structure functions: 100km region vs full box.
+    Plots S1 (duL), S2 (du^2), and S3 (du^3) side by side.
+    """
+    # Use parse_SF() for both full box and 100km region calculations
+    if dx == 100:
+        region_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_5years.nc'
+    elif dx == 200:
+        region_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_200km_5years.nc'
+    elif dx == 300:
+        region_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_300km_5years.nc'
+    elif dx == 500:
+        region_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_500km_5years.nc'
+    else:
+        raise ValueError(f'Invalid dx: {dx}')
+
+    rr1_full, rrr1_region, du1_region, du2_region, du3_region, \
+        du3_corr_region, dull_mn_full, du2_mn_full, du3_mn_full = \
+        qg_uL_SF.parse_SF(region_file, Ndays)
+
+    # Cut on r
+    if dx == 100:
+        rcut = rrr1_region <= 100.
+    elif dx == 200:
+        rcut = rrr1_region <= 200.
+    elif dx == 300:
+        rcut = rrr1_region <= 300.
+    elif dx == 500:
+        rcut = rrr1_region <= 500.
+    else:
+        raise ValueError(f'Invalid dx for cut: {dx}')
+
+    rrr1_region = rrr1_region[rcut]
+    du1_region = du1_region[rcut]
+    du2_region = du2_region[rcut]
+    du3_region = du3_region[rcut]
+    du3_corr_region = du3_corr_region[rcut]
+
+    # Start the figure (3-panel layout like fig_full_qg_SF)
+    fig = plt.figure(figsize=(10,3))
+    plt.clf()
+    gs = gridspec.GridSpec(1,3)
+
+    lsz = 9.
+    cfull = 'gray'
+
+    # ################################################
+    # du (first-order, longitudinal)
+    ax0 = plt.subplot(gs[0])
+    ax0.semilogx(rr1_full*1e-3, dull_mn_full*1e3, cfull, linewidth=1,
+                label='Full box')
+    ax0.semilogx(rrr1_region, du1_region*1e3, 'ko', markersize=3,
+                label=f'{dx}km region')
+    ax0.legend(fontsize=lsz, loc=llocs[0])
+    ax0.set_xlabel(r'$r$ [km]')
+    ax0.set_ylabel(r'$<\delta u> \, 10^{-3}$ [m/s]')
+
+    # ################################################
+    # du2 (second-order)
+    ax2 = plt.subplot(gs[1])
+    ax2.loglog(rr1_full*1e-3, du2_mn_full, cfull, linewidth=1,
+                label=r'Full box') 
+    ax2.loglog(rrr1_region, du2_region, 'ro', markersize=3,
+                label=f'{dx}km region')
+    ax2.legend(fontsize=lsz, loc=llocs[1])
+    ax2.set_xlabel(r'$r$ [km]')
+    ax2.set_ylabel(r'$<\delta u^2> \, {\rm [m/s]^2}$')
+
+    # ################################################
+    # du3 (third-order, scaled by 1e-3)
+    ax3 = plt.subplot(gs[2])
+    ax3.semilogx(rr1_full*1e-3, du3_mn_full*1e3, cfull, linewidth=1,
+                label='Full box') 
+    ax3.semilogx(rrr1_region, du3_region*1e3, 'bo', markersize=3,
+                label=f'{dx}km region',
+                markerfacecolor='none') 
+    # Corrected du3 for 100km region (open red circles)
+    ax3.semilogx(rrr1_region, du3_corr_region*1e3, 'bo', markersize=3,
+                label=r'Corrected')
+    ax3.legend(fontsize=lsz, loc=llocs[2])
+    ax3.set_xlabel(r'$r$ [km]')
+    ax3.set_ylabel(r'$<\delta u^3> \, 10^{-3} \, {\rm [m/s]^3}$')
+
+    for ax in [ax0, ax2, ax3]:
+        cugn_plotting.set_fontsize(ax, 13)
+
+    plt.tight_layout()
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+
+def fig_qg_test_reduce_xy(x0:int=400, y0:int=500, dx:int=100,
+                          outfile:str='fig_qg_test_reduce_xy.png',
+                          Ndays:int=1825, llocs=(None,None,None)):
+    """
+    Compare QG Ndays structure functions: 100km region vs full box.
+    Plots S1 (duL), S2 (du^2), and S3 (du^3) side by side.
+    """
+    # Use parse_SF() for both full box and 100km region calculations
+    if dx == 100:
+        region_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_5years.nc'
+        orig_region_file = f'../Analysis/Output/SF_region_x{int(x0)}_y{int(y0)}_5years_orig.nc'
+    else:
+        raise ValueError(f'Invalid dx: {dx}')
+
+    # Load new
+    rr1_full, rrr1_region, du1_region, du2_region, du3_region, \
+        du3_corr_region, dull_mn_full, du2_mn_full, du3_mn_full = \
+        qg_uL_SF.parse_SF(region_file, Ndays)
+    # Load original
+    rr1_full_orig, rrr1_region_orig, du1_region_orig, du2_region_orig, du3_region_orig, \
+        du3_corr_region_orig, dull_mn_full_orig, du2_mn_full_orig, du3_mn_full_orig = \
+        qg_uL_SF.parse_SF(orig_region_file, Ndays)
+
+    # Cut on r
+    if dx == 100:
+        rcut = rrr1_region <= 100.
+    elif dx == 200:
+        rcut = rrr1_region <= 200.
+    elif dx == 300:
+        rcut = rrr1_region <= 300.
+    else:
+        raise ValueError(f'Invalid dx for cut: {dx}')
+
+    # Cut
+    rrr1_region = rrr1_region[rcut]
+    du1_region = du1_region[rcut]
+    du2_region = du2_region[rcut]
+    du3_region = du3_region[rcut]
+    du3_corr_region = du3_corr_region[rcut]
+
+    rrr1_region_orig = rrr1_region_orig[rcut]
+    du1_region_orig = du1_region_orig[rcut]
+    du2_region_orig = du2_region_orig[rcut]
+    du3_region_orig = du3_region_orig[rcut]
+    du3_corr_region_orig = du3_corr_region_orig[rcut]
+
+    # Start the figure (3-panel layout like fig_full_qg_SF)
+    fig = plt.figure(figsize=(10,3))
+    plt.clf()
+    gs = gridspec.GridSpec(1,3)
+
+    lsz = 9.
+    cfull = 'gray'
+
+    # ################################################
+    # du (first-order, longitudinal)
+    ax0 = plt.subplot(gs[0])
+    ax0.semilogx(rrr1_region, du1_region_orig*1e3, 'rs', markersize=3,
+                label=f'Orig {dx}km region')
+    ax0.semilogx(rrr1_region, du1_region*1e3, 'ko', markersize=3,
+                label=f'{dx}km region')
+    ax0.legend(fontsize=lsz, loc=llocs[0])
+    ax0.set_xlabel(r'$r$ [km]')
+    ax0.set_ylabel(r'$<\delta u> \, 10^{-3}$ [m/s]')
+
+    # ################################################
+    # du2 (second-order)
+    ax2 = plt.subplot(gs[1])
+    ax2.loglog(rrr1_region, du2_region_orig, 'rs', markersize=3,
+                label=f'Orig {dx}km region')
+    ax2.loglog(rrr1_region, du2_region, 'ko', markersize=3,
+                label=f'{dx}km region')
+    ax2.legend(fontsize=lsz, loc=llocs[1])
+    ax2.set_xlabel(r'$r$ [km]')
+    ax2.set_ylabel(r'$<\delta u^2> \, {\rm [m/s]^2}$')
+
+    # ################################################
+    # du3 (third-order, scaled by 1e-3)
+    ax3 = plt.subplot(gs[2])
+    ax3.semilogx(rrr1_region, du3_region_orig*1e3, 'rs', markersize=3,
+                label=f'Orig {dx}km region',
+                markerfacecolor='none') 
+    ax3.semilogx(rrr1_region, du3_region*1e3, 'bo', markersize=3,
+                label=f'{dx}km region',
+                markerfacecolor='none') 
+    # Corrected du3 for 100km region (open red circles)
+    ax3.semilogx(rrr1_region, du3_corr_region*1e3, 'bo', markersize=3,
+                label=r'Corrected')
+    ax3.legend(fontsize=lsz, loc=llocs[2])
+    ax3.set_xlabel(r'$r$ [km]')
+    ax3.set_ylabel(r'$<\delta u^3> \, 10^{-3} \, {\rm [m/s]^3}$')
+
+    for ax in [ax0, ax2, ax3]:
+        cugn_plotting.set_fontsize(ax, 13)
+
+    plt.tight_layout()
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+def fig_compare_dus(dataset:str, outroot:str='fig_comp_dus',
+                  variables = 'duLduLduL',
+                  iz:int=5): 
+    """
+    Compare dus
+    """
+    outfile = f'{outroot}_z{(iz+1)*10}_{dataset}.png'
+
+    # Data
+    rdict = data_utils.load_SF(dataset, variables=variables, iz=iz)
+    Sn_dict = rdict['Sn_dict']
+    gPairs = rdict['gPairs']
+    Skeys = rdict['Skeys']
+    goodN = rdict['goodN']
+
+    u_rms = np.sqrt(Sn_dict[Skeys[1]][goodN])
+
+    # Start the figure
+    fig = plt.figure(figsize=(10,6))
+    plt.clf()
+    gs = gridspec.GridSpec(1,1)
+
+    ax = plt.subplot(gs[0])
+
+    # S1
+    Skey = Skeys[0]
+    ax.errorbar(Sn_dict['r'][goodN], 
+                Sn_dict[Skey][goodN], 
+                yerr=Sn_dict['err_'+Skey][goodN],
+                color='k', label=Sn_lbls[Skey],
+                fmt='o', capsize=5)  # fmt defines marker style, capsize sets error bar cap length
+
+    ax.plot(Sn_dict['r'][goodN], u_rms, color='b', 
+                label=r'$\sqrt{<\delta u^2>}$')
+
+    ax.axhline(0., color='gray', linestyle='--')
+
+    ax.legend(fontsize=15, loc='lower right')
+    ax.set_xscale('log')
+    ax.grid()
+
+    ax.set_xlabel(r'$r$ [km]')
+    ax.set_ylabel(r'Comparison of $\delta u$ and RMS [m/s]')
+
+    cugn_plotting.set_fontsize(ax, 15)
+
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+def fig_arcterx_qg_f2f(outfile:str='fig_arcterx_qg_f2f.png', Ndays:int=None):
+    if Ndays is None:
+        Ndays = 90
+
+    # Load up
+    qg, mSF_15_duL = qg_utils.load_qg(use_SFduL=True)
+    SF_dict_duL = qg_utils.calc_dus(qg, mSF_15_duL, Ndays=Ndays)
+    du2_mn_duL = SF_dict_duL['du2_mn']
+    du3_mn_duL = SF_dict_duL['du3_mn']
+    dull_mn = SF_dict_duL['dull_mn']
+    rr1 = SF_dict_duL['rr1']
+
+    # Grab QG files
+    #output_files = glob.glob('../Analysis/Output/SF_region_*5years.nc')
+    if Ndays == 60:
+        output_files = glob.glob('../Analysis/Output/SF_region_*60days.nc')
+    else:
+        output_files = glob.glob('../Analysis/Output/SF_region_*5years.nc')
+    output_files.sort()
+
+    # Start the figure
+    fig = plt.figure(figsize=(7,10))
+    plt.clf()
+    gs = gridspec.GridSpec(2,1)
+
+    ax1 = plt.subplot(gs[0])
+    ax1.semilogx(rr1*1e-3, dull_mn, 'k', ls='--', linewidth=1, 
+                label=r'Full grid $<\delta u_L>$')
+
+    ax3 = plt.subplot(gs[1])
+    ax3.semilogx(rr1*1e-3, du3_mn_duL, '--k', linewidth=1, 
+                label=r'Full grid $<\delta u_L^3>$')
+
+    # Loop on files
+    for ss, output_file in enumerate(output_files):
+
+        SFds = xarray.load_dataset(output_file)
+        # Cut on time
+        i1 = -1*Ndays
+        times = np.arange(i1, i1 + Ndays)
+        SFds = SFds.isel(time=times)
+
+        # Correct the du3
+        du1 = SFds.ulls.T.mean('time')
+        du2 = SFds.du2.T.mean('time')
+        du3 = SFds.du3.T.mean('time')
+        du3_corr = du3 - 3*du1*du2 + 2*du1**3
     
+        rrr1 = SFds.dr.mean('time')*1e-3 
+
+        # Plot the du1
+        lbl = f'QG: {Ndays} days; 100kmx100km region' if ss == 0 else None
+        ax1.semilogx(rrr1, du1, linewidth=1, label=lbl)
+
+        # Plot the du3
+        ax3.semilogx(rrr1, du3, linewidth=1, label=lbl)
+
+    # Suppress numbers on ax1 x-axis
+    ax1.xaxis.set_major_formatter(plt.NullFormatter())
+
+    # Labels
+    #ax1.set_xlabel(r'$r$ [km]')
+    ax1.set_ylabel(r'$<\delta u_L>$ [m/s]')
+    ax3.set_xlabel(r'$r$ [km]')
+    ax3.set_ylabel(r'$<\delta u_L^3(r)> \, \rm [m^{3} \, s^{-3}]$')
+    ax3.minorticks_on()
+
+    for ax in [ax1, ax3]:
+        cugn_plotting.set_fontsize(ax, 18)
+        ax.legend(fontsize=14., loc='lower left')
+
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+def fig_Npairs_vs_Dt(outfile='fig_Npairs_vs_Dt.png'):
+
+    # Start the figure
+    fig = plt.figure(figsize=(10,10))
+    plt.clf()
+    gs = gridspec.GridSpec(1,1)
+    ax = plt.subplot(gs[0])
+
+    datasets = ['Calypso2019', 'Calypso2022', 'ARCTERX-2023',
+                'ARCTERX-2025']
+    Dts = [1, 2, 3, 6, 10]
+    
+    alphas = []
+    for ss, dataset in enumerate(datasets):
+        Npairs = []
+
+
+        # Load dataset
+        profilers = glider_io.load_dataset(dataset)
+    
+        # Generate pairs
+        for Dt in Dts:
+            gPairs = profilerpairs.ProfilerPairs(profilers, 
+                                          max_time=Dt,
+                                          debug=False,
+                                          randomize=True)
+            # Npairs
+            Npairs.append(gPairs.npairs)
+
+        # Plot
+        ax.plot(Dts, Npairs, 'o-', label=dataset)
+
+        # Measure the power law index
+        p = np.polyfit(np.log10(Dts), np.log10(Npairs), 1)
+        alphas.append(p[0])
+        #embed(header=f'fig_Npairs_vs_Dt: 823 {dataset}, alpha={p[0]:.2f}')
+    
+
+    ax.set_xlabel(r'$\Delta t$ [hours]')
+    ax.set_ylabel(r'Number of pairs')
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    ax.legend(fontsize=15.)
+    ax.minorticks_on()
+    cugn_plotting.set_fontsize(ax, 15)
+
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+    for ss, dataset in enumerate(datasets):
+        print(f"{dataset}: Npairs ~ Dt^{alphas[0]:.2f}")
+
+def fig_qg_structure(SF_file:str, outfile:str):
+
+    # Load up
+    Sn_LL = p_io.loadjson(SF_file)
+    # Conert lists to np.ndarray
+    for key in Sn_LL.keys():
+        if isinstance(Sn_LL[key], list):
+            Sn_LL[key] = np.array(Sn_LL[key])
+
+    # Start the figure
+    fig_structure(None, Sn_dict=Sn_LL, outfile=outfile, iz=0,
+        show_correct=False)
+
+def fig_compare_drifters_gliders_eulerian(
+    qg_xt:dict, outroot:str='fig_compare_qg_',
+    minN:int=100, xmax:float=None):
+    
+    # Filenames
+    glider_traj, glider_sf = qg_observe.file_names(qg_xt, 'glider')
+    drifter_traj, drifter_sf = qg_observe.file_names(qg_xt, 'drifter')
+    root = qg_observe.qg_root(qg_xt)
+    anly_path = '../Analysis'
+    eulerian_file = os.path.join(anly_path, 
+                                 'Output', f'qg_eulerian_SF_{root}.nc')
+
+    outfile = f'{outroot}_{root}.png'
+
+    # Load up drifters
+    print(f'Loading drifters: {drifter_sf}')
+    Sn_LL_d = p_io.loadjson(os.path.join(anly_path, drifter_sf))
+
+    # Gliders
+    print(f'Loading gliders: {glider_sf}')
+    Sn_LL_g = p_io.loadjson(os.path.join(anly_path, glider_sf))
+
+    # Convert lists to np.ndarray
+    for Sn_LL in [Sn_LL_d, Sn_LL_g]:
+        for key in Sn_LL.keys():
+            if isinstance(Sn_LL[key], list):
+                Sn_LL[key] = np.array(Sn_LL[key])
+
+    # Good
+    goodN_d = np.array(Sn_LL_d['config']['N']) > minN
+    goodN_g = np.array(Sn_LL_g['config']['N']) > minN
+    
+    # Eulerian
+    Ndays = qg_xt['nd']
+    rr1, rrr1, du1, du2, du3, du3_corr, dull_mn, du2_mn_duL, du3_mn_duL = \
+        qg_uL_SF.parse_SF(eulerian_file, Ndays)
+    print(f'Loaded Eulerian: {eulerian_file}')
+    variables = 'duLduLduL'
+    Skeys = ['S1_duL', 'S2_duL**2', 'S3_'+variables]
+    
+    # Figure
+    fig = plt.figure(figsize=(19,6))
+    plt.clf()
+    gs = gridspec.GridSpec(1,3)
+
+
+    for n in range(3):
+        ax = plt.subplot(gs[n])
+        Skey = Skeys[n] 
+
+        # Drifters and gliders
+        for lbl, goodN, Sn_dict, clr in zip(['Drifters', 'Gliders'], [goodN_d, goodN_g], [Sn_LL_d, Sn_LL_g], ['r', 'b']):
+            if n == 1:
+                ilbl = lbl
+            else:
+                ilbl = None
+            ax.errorbar(Sn_dict['r'][goodN], 
+                    Sn_dict[Skey][goodN], 
+                    yerr=Sn_dict['err_'+Skey][goodN],
+                    color=clr, label=ilbl,
+                    fmt='x', capsize=5)  # fmt defines marker style, capsize sets error bar cap length
+
+        # Eulerian
+        if n == 0:
+            ax.plot(rrr1, du1, 'ko')
+        elif n == 1:
+            ax.plot(rrr1, du2, 'ko', label='Eulerian') 
+        elif n == 2:
+            ax.plot(rrr1, du3, 'ko')
+
+        '''
+        # Corrected
+        if n > 0 and show_correct:
+            corr_key = Skey[0:2]+'corr'+Skey[2:]
+            ax.plot(Sn_dict['r'][goodN], 
+                    Sn_dict[corr_key][goodN],  
+                    'x',
+                    color=clr)
+        elif 'med_S1' in Sn_dict.keys():
+            ax.plot(Sn_dict['r'][goodN], Sn_dict['med_S1'][goodN],  
+                    'x', color=clr)
+        '''
+
+
+        ax.set_xscale('log')
+    #
+        ax.set_xlabel('Separation (km)')
+        ax.set_ylabel(Sn_lbls[Skey])
+
+        '''
+        # Label time separation
+        if n == 2:
+            same_glider = 'True' if avoid_same_glider else 'False'
+            if stretch:
+                text = f'{dataset}'
+                ytxt = 0.9
+                tsz = 18.
+            else:
+                text = f'{dataset}\n depth = {(iz+1)*10} m, t<{int(Sn_dict['config']['max_time'])} hr\nAvoid same glider? {same_glider}\n {variables}' 
+                ytxt = 0.8
+                tsz = 16.
+            ax.text(0.1, ytxt, text,
+                transform=ax.transAxes, fontsize=tsz, ha='left')
+        '''
+
+        # 0 line
+        ax.axhline(0., color='gray', linestyle='--')
+
+        plotting.set_fontsize(ax, 19) 
+        ax.grid()
+        #if use_xlim:
+        #    ax.set_xlim(use_xlim)
+        #if n == 2 and use_ylim is not None:
+        #    ax.set_ylim(use_ylim)
+
+        # Legend
+        if n == 1:
+            ax.legend(fontsize=16)#, loc='lower right')
+        
+        if xmax is not None:
+            ax.set_xlim(None, xmax)
+        
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+
+def fig_test_stationary_gliders(
+    outfile:str='fig_test_stationary_gliders.png',
+    minN:int=100):
+    
+    # Filenames
+    glider_sf = '../Analysis/QG/data/stationary_gliders_ts5001_nd100_sf_LL.json'
+    anly_path = '../Analysis'
+    eulerian_file = os.path.join(anly_path, 
+                                 'Output', 'qg_eulerian_SF_ts5001_nd100_x450_y450_dx100.nc')
+
+    # Gliders
+    Sn_LL_g = p_io.loadjson(glider_sf)
+
+    # Convert lists to np.ndarray
+    for Sn_LL in [Sn_LL_g]:
+        for key in Sn_LL.keys():
+            if isinstance(Sn_LL[key], list):
+                Sn_LL[key] = np.array(Sn_LL[key])
+
+    # Good
+    goodN_g = np.array(Sn_LL_g['config']['N']) > minN
+    
+    # Eulerian
+    Ndays = 100
+    rr1, rrr1, du1, du2, du3, du3_corr, dull_mn, du2_mn_duL, du3_mn_duL = \
+        qg_uL_SF.parse_SF(eulerian_file, Ndays)
+    variables = 'duLduLduL'
+    Skeys = ['S1_duL', 'S2_duL**2', 'S3_'+variables]
+    
+    # Figure
+    fig = plt.figure(figsize=(19,6))
+    plt.clf()
+    gs = gridspec.GridSpec(1,3)
+
+
+    for n in range(3):
+        ax = plt.subplot(gs[n])
+        Skey = Skeys[n] 
+
+        # Drifters and gliders
+        for lbl, goodN, Sn_dict, clr in zip(
+            ['Drifters', 'Gliders'], [goodN_g, goodN_g], [Sn_LL_g, Sn_LL_g], ['r', 'b']):
+            if lbl == 'Drifters':
+                continue
+            if n == 1:
+                ilbl = lbl
+            else:
+                ilbl = None
+            ax.errorbar(Sn_dict['r'][goodN], 
+                    Sn_dict[Skey][goodN], 
+                    yerr=Sn_dict['err_'+Skey][goodN],
+                    color=clr, label=ilbl,
+                    fmt='x', capsize=5)  # fmt defines marker style, capsize sets error bar cap length
+
+        # Eulerian
+        if n == 0:
+            ax.plot(rrr1, du1, 'ko')
+        elif n == 1:
+            ax.plot(rrr1, du2, 'ko', label='Eulerian') 
+        elif n == 2:
+            ax.plot(rrr1, du3, 'ko')
+
+        ax.set_xscale('log')
+    #
+        ax.set_xlabel('Separation (km)')
+        ax.set_ylabel(Sn_lbls[Skey])
+
+        # 0 line
+        ax.axhline(0., color='gray', linestyle='--')
+
+        plotting.set_fontsize(ax, 19) 
+        ax.grid()
+        #if use_xlim:
+        #    ax.set_xlim(use_xlim)
+        #if n == 2 and use_ylim is not None:
+        #    ax.set_ylim(use_ylim)
+
+        # Legend
+        if n == 1:
+            ax.legend(fontsize=16)#, loc='lower right')
+        
+    plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
+def fig_qg_all_duL3(dx:int=100, dt:int=100, 
+    outfile:str='fig_qg_all_duL3_100_100km.png',
+    xlim=(10, 100.),
+    ylim=(-0.5, 0.5)):
+
+    # Grab all the files for the given dx
+    nstep = 1825 // dt
+
+    if dx == 100:
+        files = glob.glob('../Analysis/Output/SF_*0_5years.nc')
+    elif dx == 200:
+        files = glob.glob('../Analysis/Output/SF_*200km_5years.nc')
+    else:
+        raise ValueError(f'Invalid dx: {dx}')
+
+    # Loop through on files    
+    all_du3 = []
+    all_du3c = []
+    print("Processing...")
+    for ss, region_file in enumerate(files):
+        for istep in range(nstep):
+            i1 = -1*((istep+1)*dt) 
+            rr1_full, rrr1_region, du1_region, du2_region, du3_region, \
+                du3_corr_region, dull_mn_full, du2_mn_full, du3_mn_full = \
+                qg_uL_SF.parse_SF(region_file, dt, i1=i1)
+            # Save
+            all_du3.append(du3_region)
+            all_du3c.append(du3_corr_region)
+    #embed(header='fig_qg_all_duL3 2091')
+
+    # Calculate the mean and std of the all_du3
+    all_du3 = np.array(all_du3)
+    mean_du3 = np.mean(all_du3, axis=0)
+    std_du3 = np.std(all_du3, axis=0)
+
+    # Corrected
+    all_du3c = np.array(all_du3c)
+    mean_du3c = np.mean(all_du3c, axis=0)
+    std_du3c = np.std(all_du3c, axis=0)
+
+
+    fig = plt.figure(figsize=(6,3))
+    plt.clf()
+    gs = gridspec.GridSpec(1,2)
+
+    # ################################################
+    # du3 (third-order, scaled by 1e-3)
+    ax3 = plt.subplot(gs[0])
+    # Place on top
+    ax3.plot(rr1_full*1e-3, du3_mn_full*1e3, 'k', linewidth=2,
+                label='Full box',zorder=10) 
+    for du3_region in all_du3:
+        # Use thin, semi-transparent lines 
+        ax3.plot(rrr1_region, du3_region*1e3, 'b-', linewidth=0.5, alpha=0.3,
+                label=f'{dx}km region')
+    #ax3.legend(fontsize=lsz, loc=llocs[2])
+    ax3.set_xlabel(r'$r$ [km]')
+    ax3.set_ylabel(r'$<\delta u^3> \, 10^{-3} \, {\rm [m/s]^3}$')
+
+    # ################################################
+    # du3 (third-order corrected)
+    ax3c = plt.subplot(gs[1])
+    # Place on top
+    ax3c.plot(rr1_full*1e-3, du3_mn_full*1e3, 'k', linewidth=2,
+                label='Full box',zorder=10) 
+    # Mean of the regions
+    ax3c.plot(rrr1_region, mean_du3c*1e3, 'r', linewidth=2,
+                label='Full box',zorder=5) 
+
+    for du3_region in all_du3c:
+        # Use thin, semi-transparent lines 
+        ax3c.plot(rrr1_region, du3_region*1e3, 'r-', linewidth=0.5, alpha=0.3,
+                label=f'{dx}km region')
+    #ax3.legend(fontsize=lsz, loc=llocs[2])
+    ax3c.set_xlabel(r'$r$ [km]')
+    ax3c.set_ylabel(r'$<\delta u^3_{\rm corr}> \, 10^{-3} \, {\rm [m/s]^3}$')
+
+    for ax in [ax3, ax3c]:
+        cugn_plotting.set_fontsize(ax, 9)
+        ax.set_xlim(xlim)
+        ax.set_ylim(ylim)
+        # Horizontal line at 0
+        ax.axhline(0., color='gray', linestyle='--')
+
+    plt.tight_layout()
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
+
 
 def main(flg):
     if flg== 'all':
@@ -557,8 +2160,9 @@ def main(flg):
 
     # Separations
     if flg == 1:
-        fig_separations('ARCTERX')
-        fig_separations('Calypso2019', max_time=10.)
+        #fig_separations('ARCTERX-2023', fsz=12, ncol=1)
+        #fig_separations('Calypso2019', max_time=10.)
+        fig_separations('Calypso2022', max_time=10.)
 
     # Delta times
     if flg == 2:
@@ -575,27 +2179,32 @@ def main(flg):
         #fig_structure('ARCTERX')
         #fig_structure('ARCTERX', avoid_same_glider=False)
         #fig_structure('Calypso2019')
-        #fig_structure('Calypso2022')
+        fig_structure('Calypso2022')
         #fig_structure('Calypso2022', variables='duLdSdS')
-        fig_structure('Calypso2022', variables='duLdTdT', iz=3)
+        #fig_structure('Calypso2022', variables='duLdTdT', iz=3)
 
     # Full run on a daatset
     if flg == 5:
-        #dataset = 'Calypso2019'
+        dataset = 'Calypso2019'
         #dataset = 'Calypso2022'
-        dataset = 'ARCTERX'
+        #dataset = 'ARCTERX'
+        #dataset = 'ARCTERX-2023'
         avoid_same_glider = True
-        '''
-        fig_separations(dataset)
-        fig_dtimes(dataset)
-        fig_dus(dataset)
-        '''
+        #fig_separations(dataset)
+        #fig_dtimes(dataset)
+        #fig_dus(dataset)
 
         #fig_structure(dataset, avoid_same_glider=avoid_same_glider)
+        fig_structure(dataset, avoid_same_glider=avoid_same_glider,
+            show_correct=False, outfile=f'fig_structure_{dataset}_no_correct.png',
+            no_labeling=True,
+            use_xlim=(None, 100.),
+            use_ylim=(-0.003, 0.003),
+            )
         #fig_structure(dataset, avoid_same_glider=avoid_same_glider,
         #              variables='duTduTduT')#, iz=5)
-        fig_structure(dataset, avoid_same_glider=avoid_same_glider,
-                      variables='duLTduLTduLT', show_correct=False)#, iz=5)
+        #fig_structure(dataset, avoid_same_glider=avoid_same_glider,
+        #              variables='duLTduLTduLT', show_correct=False)#, iz=5)
         #fig_structure(dataset, avoid_same_glider=avoid_same_glider, iz=10)
 
     # Sn with depth
@@ -618,6 +2227,169 @@ def main(flg):
     if flg == 8:
         fig_Sn_distribution('ARCTERX', 'fig_Sn_distrib_ARCTERX.png',
             'duLduLduL', 'S3', rval=70., iz=5)
+
+    # QG uL and uL^2
+    if flg == 9:
+        fig_examine_qg()
+
+    # Compare RMS with uL
+    if flg == 10:
+        fig_compare_dus('Calypso2022')
+
+    # Generate du_L figures for QG
+    if flg == 11:
+        #fig_region_dus()
+        fig_region_dus(tot_time='60days')
+
+    # Compare duL QG vs. dataset``
+    if flg == 12:
+        fig_compare_duL_qg_data('Calypso2022')
+    
+    # Examine how duL, duL^3 average down with time
+    if flg == 13:
+        ix, iy = 0, 0
+        ix, iy = 300, 300
+        #ix, iy = 200, 200
+        fig_qg_duL_vs_time(ix,iy)#, dx=200)
+        #ix, iy = 400, 600
+        #fig_qg_duL_by_year(ix,iy,dx=200)
+        fig_qg_duL_by_year(ix,iy)
+
+        # duL3
+        #fig_qg_duL_vs_time(ix,iy, show_du3=True)
+
+    # Compare duL vs. total QG SF in the original outputs
+    if flg == 14:
+        fig_orig_qg_SF()
+
+    # Generate du_L figures for QG
+    if flg == 15:
+        #fig_region_dul3('../Analysis/Output/SF_region_x300_y300_5years.nc',
+        #                'fig_region_dul3_x300_y300.png',
+        #                title='QG duL3: x=300-400km, y=300-400km')
+        #fig_region_dul3('../Analysis/Output/SF_region_x400_y400_5years.nc',
+        #                'fig_region_dul3_x400_y400.png',
+        #                title='QG duL3: x=400-500km, y=400-500km')
+
+        #fig_region_dus(outroot='fig_qg_region_du3', 
+        #               calc_du3=True)
+        #fig_region_dus(outroot='fig_qg_region_du3_300days', 
+        #               calc_du3=True, Ndays=300)
+        fig_region_dus(outroot='fig_qg_region_du3_100days', 
+                       calc_du3=True, Ndays=100, tot_time='100days')
+
+    # Figs for Pitch slide
+    if flg == 16:
+        if False:
+            avoid_same_glider = True
+            #fig_separations(dataset)
+            #fig_dtimes(dataset)
+            #fig_dus(dataset)
+
+            datasets = ['Calypso2019', 'Calypso2022', 'ARCTERX-2023']
+            #datasets = ['ARCTERX-2023']
+            for dataset in datasets:
+                if dataset == 'Calypso2019':
+                    use_ylim = (-0.003,0.003)
+                else:
+                    use_ylim=None
+                fig_structure(dataset, avoid_same_glider=avoid_same_glider,
+                        stretch=True, use_xlim=(1.,400.), use_ylim=use_ylim)
+
+        # QG
+        fig_arcterx_qg_f2f()#Ndays=60)
+
+    # Examine how duL, duL^3 average down with time
+    if flg == 17:
+        ix, iy = 300, 300
+        fig_frac_duL3_vs_time(ix,iy)
+
+    # Compare first bug fix
+    if flg == 18:
+        fig_orig_vs_new_qg_SF()
+
+    # Correction term vs. time
+    if flg == 19:
+        ix, iy = 300, 300
+        ix, iy = 400, 400
+        fig_duL3corr_vs_time(ix,iy)
+
+    # Npairs vs. Dt
+    if flg == 20:
+        fig_Npairs_vs_Dt()
+
+    # QG structure function from drifters/gliders
+    if flg == 21:
+        ### Drifters
+        #fig_qg_structure(
+        #    SF_file='../Analysis/QG/data/small_box_drifters_ts5001_nd100_sf.json',
+        #    outfile='fig_qg_structure_from_drifters.png'
+        #)
+        ### Gliders
+        fig_qg_structure(
+            SF_file='../Analysis/QG/data/glider_sf_LL_ts5001.json',
+            outfile='fig_qg_structure_from_gliders.png'
+        )
+
+    # Compare drifters/gliders + Eulerian
+    if flg == 22:
+        qg_xt = {
+            'ts': 5001,
+            #'ts': 6001,
+            'nd': 100,
+            'x': 450,
+            'y': 450,
+            'dx': 100,
+        }
+        fig_compare_drifters_gliders_eulerian(qg_xt=qg_xt,
+            xmax=100.)
+
+    # Test stationary gliders
+    if flg == 23:
+        fig_test_stationary_gliders()
+
+    # Full grid, 5 year SF
+    if flg == 24:
+        pass # Moved to paper figs
+        #fig_full_qg_SF()
+
+    # QG 100km region vs full box
+    if flg == 25:
+        # ALSO IN PAPER FIGS
+        pass
+
+        # 100km
+        #fig_qg_subregion_vs_full()
+        #fig_qg_subregion_vs_full(x0=500, y0=500, 
+        #                      outfile='fig_qg_100km_vs_full_x500_y500.png'  )
+        #fig_qg_subregion_vs_full(x0=300, y0=500, 
+        #                      outfile='fig_qg_100km_vs_full_x300_y500.png'  )
+
+        # 200km
+        #fig_qg_subregion_vs_full(x0=400, y0=400, dx=200, 
+        #                      outfile='fig_qg_200km_vs_full_x400_y400.png'  )
+        #fig_qg_subregion_vs_full(x0=200, y0=600, dx=200, 
+        #                      outfile='fig_qg_200km_vs_full_x200_y600.png'  )
+
+    # Test reduce_xy
+    if flg == 26:
+        fig_qg_test_reduce_xy()
+
+    # All duL3
+    if flg == 27:
+        # 100km
+        #fig_qg_all_duL3()
+
+        # 200km
+        #fig_qg_all_duL3(dx=200, outfile='fig_qg_all_duL3_100_200km.png',
+        #                ylim=(-0.2, 0.2), xlim=(10, 150.))
+        fig_qg_all_duL3(dx=200, outfile='fig_qg_all_duL3_300_200km.png',
+                        dt=300, ylim=(-0.1, 0.1), xlim=(10, 150.))
+
+    # Loglin separations
+    if flg == 50:
+        #fig_loglin_separations('Calypso2022', xmax=100.)
+        fig_loglin_separations('Calypso2019', xmax=150.)
 
 # Command line execution
 if __name__ == '__main__':

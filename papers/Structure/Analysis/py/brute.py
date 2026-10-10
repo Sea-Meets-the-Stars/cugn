@@ -13,13 +13,31 @@ from IPython import embed
 
 
 def test_case(dataset='Calypso2022', iz=5):
+    """Run the brute-force structure function analysis with default test parameters.
+
+    Args:
+        dataset: Dataset name to analyze.
+        iz: Depth index for velocity differences.
+    """
     run(dataset, iz, 'duLduLduL')
 
 
-def run(dataset:str, iz:int, 
+def run(dataset:str, iz:int,
         max_time=10., avoid_same_glider=True, nbins=20,
         clobber:bool=False):
+    """Compute structure functions for multiple variable combinations and save to JSON.
 
+    Loads glider data, generates pairs, and computes 1st-3rd order structure
+    functions for six variable combinations (duLT, duL, duLdS, duLdT, duLduT, duT).
+
+    Args:
+        dataset: Name of the glider dataset to load.
+        iz: Depth index for computing velocity differences.
+        max_time: Maximum time separation (days) for valid profile pairs.
+        avoid_same_glider: If True, exclude pairs from the same glider.
+        nbins: Number of logarithmic separation distance bins.
+        clobber: If True, overwrite existing output file.
+    """
     outfile = os.path.join('Outputs', cugn_io.gpair_filename(
         dataset, iz, not avoid_same_glider))
     if os.path.exists(outfile) and not clobber:
@@ -64,6 +82,14 @@ def run(dataset:str, iz:int,
 
 def measure_duration(dataset:str, nbins:int=20, max_time=10.,
                      avoid_same_glider:bool=True):
+    """Print the total duration (in days) of a glider dataset.
+
+    Args:
+        dataset: Name of the glider dataset to load.
+        nbins: Number of logarithmic separation distance bins.
+        max_time: Maximum time separation (days) for valid profile pairs.
+        avoid_same_glider: If True, exclude pairs from the same glider.
+    """
     rbins = 10**np.linspace(0., np.log10(400), nbins) # km
 
     # Load dataset

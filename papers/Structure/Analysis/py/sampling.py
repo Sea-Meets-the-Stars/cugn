@@ -13,6 +13,20 @@ from cugn import plotting
 from IPython import embed
 
 def circle_sep(used:int, xy_rand:np.ndarray, npoints:int):
+    """Compute pairwise separations from random points in a unit circle.
+
+    Draws two consecutive batches of npoints from xy_rand (starting at index
+    'used') and computes Euclidean distances between matched pairs.
+
+    Args:
+        used: Current index into xy_rand marking where to start drawing points.
+        xy_rand: Array of shape (N, 2) with random (x, y) points inside the unit circle.
+        npoints: Number of point pairs to draw.
+
+    Returns:
+        tuple: (used, separations) where used is the updated index and separations
+            is a 1D array of Euclidean distances between paired points.
+    """
     # Grab em
     rand1 = xy_rand[used:used+npoints]
     used += npoints
@@ -25,11 +39,27 @@ def circle_sep(used:int, xy_rand:np.ndarray, npoints:int):
     # Return
     return used, np.sqrt(sep2)
 
-def wedding_cake(ngliders:tuple=(4,4), 
+def wedding_cake(ngliders:tuple=(4,4),
                  outer:float=50., inner:float=20,
                  ndives=500, check:bool=True,
                  outfile:str=None):
+    """Simulate glider pair separations for a nested "wedding cake" sampling design.
 
+    Models two concentric circular survey regions (outer and inner) with
+    gliders distributed in each. Computes the distribution of all pairwise
+    separations (outer-outer, inner-inner, and cross-circle) using Monte Carlo
+    random sampling within each circle.
+
+    Args:
+        ngliders: Tuple of (n_outer, n_inner) giving the number of gliders
+            in the outer and inner circles.
+        outer: Radius of the outer circle in km.
+        inner: Radius of the inner circle in km.
+        ndives: Number of dive samples per glider to simulate.
+        check: Unused (reserved for debug plotting).
+        outfile: If provided, save a figure with linear and log-scale histograms
+            of separations to this path. If None, return without plotting.
+    """
     ntot = np.sum(ngliders)
 
     # Draw random points in the outer circle
