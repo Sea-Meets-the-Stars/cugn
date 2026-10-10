@@ -86,7 +86,7 @@ def frac_within_x_days(line:str, dt_days:int=5, dd_km=5.):
 def count_clusters(line:str):
 
     # Load
-    items = cugn_io.load_up(line, kludge_MLDN=True)#, skip_dist=True)
+    items = cugn_io.load_up(line, kludge_MLDN=False)#, skip_dist=True)
     grid_extrem = items[0]
     times = items[2]
 
@@ -298,11 +298,9 @@ def check_mld_and_N(line:str, mission_name:str, mission_profile:int=None,
 # Command line execution
 if __name__ == '__main__':
 
-    '''
     # Clustering
     for line in defs.lines:
         frac_within_x_days(line, dt_days=1, dd_km=7.)
-    '''
 
     # Count em
     nclusters = 0

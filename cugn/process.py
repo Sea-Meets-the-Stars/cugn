@@ -261,7 +261,7 @@ def build_ds_grid(items,
     if not debug:
         grid_tbl.to_parquet(gridtbl_outfile)
         if edges_outfile is not None:
-            np.savez(edges_outfile, SA_edges=SA_edges, 
+            np.savez(edges_outfile, SA_edges=SA_edges,
                 sigma_edges=sigma_edges,
                 counts=countsT)
         print(f"Wrote: \n {gridtbl_outfile} \n {edges_outfile}")

@@ -37,8 +37,8 @@ def line_files(line:str):
 
     # dict em
     lfiles = dict(datafile=datafile, 
-                  gridtbl_file_full=gridtbl_file_full, 
-                  gridtbl_file_control=gridtbl_file_control, 
+                  gridtbl_file_full=gridtbl_file_full,
+                  gridtbl_file_control=gridtbl_file_control,
                   edges_file=edges_file,
                   fullres_file=fullres_file)
     # Return

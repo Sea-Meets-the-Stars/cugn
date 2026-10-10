@@ -20,6 +20,7 @@ import matplotlib.gridspec as gridspec
 from matplotlib.ticker import MultipleLocator 
 from matplotlib.patches import Ellipse
 import matplotlib.dates as mdates
+import matplotlib.image as mpimg
 
 import cartopy.crs as ccrs
 import cartopy
@@ -105,7 +106,7 @@ def fig_cugn(outfile:str='fig_cugn.png', debug:bool=False,
         if ss > 0 and debug:
             continue
         # Load
-        items = cugn_io.load_up(line, use_full=True, kludge_MLDN=True)
+        items = cugn_io.load_up(line, use_full=True, kludge_MLDN=False)
         #grid_extrem = items[0]
         #ds = items[1]
         #times = items[2]
@@ -440,11 +441,13 @@ def fig_dist_doy(outfile:str, line:str, color:str,
     #ax = plt.gca()
 
     # Load
-    items = cugn_io.load_up(line, gextrem=gextrem, use_full=True, kludge_MLDN=kludge_MLDN)
+    items = cugn_io.load_up(line, gextrem=gextrem, use_full=True,
+                            kludge_MLDN=kludge_MLDN)
     grid_extrem = items[0]
     #ds = items[1]
     #times = items[2]
     #grid_tbl = items[3]
+    #embed(header='450 of figs')
 
     jg = sns.jointplot(data=grid_extrem, x='dist', 
                     y='doy', color=color,
@@ -530,6 +533,31 @@ def fig_dist_doy(outfile:str, line:str, color:str,
     # Stats
     not_winter = (grid_extrem.doy > 50) & (grid_extrem.doy < 300)
     print(f'Percent of profiles not in winter [50-300]: {100.*np.sum(not_winter)/len(grid_extrem):.1f}%')
+
+def fig_combine_dist_doy(img_files:list,
+                         outfile='fig_combine_dist_doy.png'):
+
+
+    # Read the PNG files
+    imgs = []
+    for img_file in img_files:
+        img = mpimg.imread(img_file)
+        imgs.append(img)
+
+    # Create a figure with 2x2 subplots
+    fig = plt.figure(figsize=(12,12))
+    gs = gridspec.GridSpec(2,2)
+
+    # Display images in each subplot
+    for ss in range(4):
+        ax = plt.subplot(gs[ss])
+        img = imgs[ss]
+        ax.imshow(img)
+        ax.axis('off')
+
+    plt.tight_layout()
+    plt.savefig(outfile, dpi=300)
+    print(f"Saved: {outfile}")
 
 def fig_dist_doy_low(outfile:str='fig_dist_doy_low.png', 
                  gextrem:str='low_noperc'):
@@ -918,12 +946,21 @@ def fig_extrema_cdfs(outfile:str='fig_N_cdfs.png', metric:str='N',
 
         ctrl = grid_utils.grab_control_values(grid_extrem, grid_tbl[cut_grid], metric, boost=5)
 
+        # Avoid NaN
+        ok_extrem = np.isfinite(grid_extrem[metric])
+        grid_extrem = grid_extrem[ok_extrem]
 
         ax = plt.subplot(gs[ss])
 
         sns.ecdfplot(x=grid_extrem[metric], ax=ax, label='Extrema', 
                      color=cugn_defs.line_colors[ss])
         sns.ecdfplot(x=ctrl, ax=ax, label='Control', color='k', ls='--')
+
+        # KS test
+        ks_eval = stats.ks_2samp(grid_extrem[metric], ctrl)
+        print(f'KS test: {ks_eval.statistic:.3f}, {ks_eval.pvalue}, {ks_eval.statistic_location}')
+        #if line == '90.0':
+        #    embed(header='960 of figs')
 
 
         # Finish
@@ -1602,7 +1639,7 @@ def main(flg):
 
     # Figure 3 -- Joint PDF: T, DO on Line 90
     if flg & (2**2):
-        fig_joint_line90(kludge_MLDN=True)
+        fig_joint_line90(kludge_MLDN=False)
 
     # 
     if flg & (2**3):
@@ -1616,26 +1653,32 @@ def main(flg):
 
     # Figure 5 -- DOY vs Offshore distance
     if flg & (2**5):
+        img_files = []
         for line, clr in zip(lines, line_colors):
             # Skip for now
-            #if line == '56':
+            #if line != '90.0':
             #    continue
             if line == '56.0':
                 show_legend = True
             else:
                 show_legend = False
             # High
-            fig_dist_doy(f'fig_dist_doy_{line}.png', 
+            img_file = f'fig_dist_doy_{line}.png' 
+            fig_dist_doy(img_file,
                          line, clr, show_legend=show_legend,
+                         gextrem='high',
                          clr_by_depth=True,
                          cluster_only=False,
-                         kludge_MLDN=True)
+                         kludge_MLDN=False)
+            img_files.append(img_file)
             # Low
             #fig_dist_doy(f'fig_dist_doy_low_{line}.png', 
             #             line, clr, 
             #             gextrem='low_noperc',
             #             show_legend=show_legend,
             #             clr_by_depth=True)
+        # Combine them
+        fig_combine_dist_doy(img_files)
 
     # Figure ? -- SO vs. N
     if flg & (2**6):
@@ -1652,7 +1695,7 @@ def main(flg):
             line, event, t_off)#, gextrem='hi_noperc')
         
 
-    # Figure 9 -- doy, distance for the low extrema
+    # Figure 10 -- doy, distance for the low extrema
     if flg & (2**8):
         fig_dist_doy_low()
 
@@ -1686,6 +1729,7 @@ def main(flg):
         fig_extrema_cdfs('fig_mld_cdfs.png', metric='MLD',
                          xyLine=(0.7, 0.4), leg_loc='lower right',
                          kludge_MLDN=kludge_MLDN)
+
 
     # Annual cycle
     if flg & (2**19):
@@ -1723,7 +1767,7 @@ def main(flg):
 
     # Cluster date vs location/size
     if flg & (2**37):
-        fig_cluster_date_vs_loc(kludge_MLDN=True)#debug=True)
+        fig_cluster_date_vs_loc(kludge_MLDN=False)#debug=True)
 
     if flg & (2**40):
         #line = '90'
@@ -1737,23 +1781,22 @@ if __name__ == '__main__':
     if len(sys.argv) == 1:
         flg = 0
         #flg += 2 ** 30  # Figure 1 -- CUGN 
-        #flg += 2 ** 0  # 1 -- Joint PDFs of all 4 lines
-        #flg += 2 ** 1  # 2 ??
-        #flg += 2 ** 2  # 4 Figure 4 DO vs. T on Line 90 
-        #flg += 2 ** 3  # Figure 5: N vs. SO
-        #flg += 2 ** 4  # Figure 6: SO CDFs
-        #flg += 2 ** 5  # Figure 7: DOY vs. offshore distance
+        #flg += 2 ** 0  # 1 -- Figure 2 Joint PDFs of all 4 lines
+        #flg += 2 ** 2  # 4 Figure 3 Joint PDF of DO vs. T on Line 90 
+        #flg += 2 ** 4  # Figure 4: SO CDFs
+        flg += 2 ** 5  # Figure 5: DOY vs. offshore distance
         #flg += 2 ** 37  # Figure 8: Clusters
-        #flg += 2 ** 18  # # Extreme CDFs
+        #flg += 2 ** 8  # 256 -- Figure 10: DOY vs. offshore distance for low
+        #flg += 2 ** 18  # # Extreme CDFs; Figures 11, 12, 13
         #flg += 2 ** 6  # 
         #flg += 2 ** 7  # 
+        #flg += 2 ** 3  # N vs. SO
 
-        #flg += 2 ** 8  # 256 -- Figure 9: DOY vs. offshore distance for low
         #flg += 2 ** 9  # SOa PDFs
 
         # Appenedix
         #flg += 2 ** 31  # Diurnal figs
-        flg += 2 ** 32  # SO below N threshold (and MOD)
+        #flg += 2 ** 32  # SO below N threshold (and MOD)
 
         #flg += 2 ** 11  
         #flg += 2 ** 12  # Low histograms
