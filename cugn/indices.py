@@ -676,6 +676,13 @@ def download_tide_gauge(station, product='monthly_mean', start='1991-01-01',
     fmt = '%Y%m%d'
 
     if product == 'monthly_mean':
+        path = os.path.join(SEALEVEL_DIR, f'{station}_monthly_mean_MSL.csv')
+        # Never shorten a record already on disk: if an earlier run fetched
+        # from before `start` (the tides report uses 1973-), keep that start.
+        if os.path.exists(path):
+            first = pd.read_csv(path, usecols=['time'], parse_dates=['time'])['time'].min()
+            if pd.notna(first) and first < start:
+                start = first.replace(day=1)
         frames = []
         # <=10-year chunks; robust if the API ever refuses long ranges.
         t0 = start
@@ -692,7 +699,6 @@ def download_tide_gauge(station, product='monthly_mean', start='1991-01-01',
         df = (df.drop_duplicates('time').sort_values('time')
               .reset_index(drop=True))
         df = df[['time'] + [c for c in df.columns if c != 'time']]
-        path = os.path.join(SEALEVEL_DIR, f'{station}_monthly_mean_MSL.csv')
         df.to_csv(path, index=False)
         return path
 
