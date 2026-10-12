@@ -55,41 +55,19 @@ Use Opus 5.5.  Log your work.
 
 ### Newsletter
 
-1. Read all the files in Context.  The first draft of the newsletter is complete.  I wish to improve the first figure, remove the 2nd figure and generate a new one to replace it.  Let's work on the first figure first.  Please make all of these changes:
+1. Read all the files in Context.  And also my answers in the Q&A section.  
+Then proceed to write a draft of the newsletter
+for October, based on the September edition.
+Use Fable if you can. Log your work.
 
-   - Remove the 2015-2016 curve
-   - Use red for the Now curve
-   - Rename the Now curve as 2026-2027 (Now)
-   - Rename last year as 2025-2026 (Last year)
-   - Use yellow for last year
-   - Use orange for the Blob year
-   - Shade all of the region above 0 deg C in a pale pink
-   - Shade all of the region below 0 deg C in a pale blue
-   - Make the 0 deg line a bold, and dashed black line
-   - Remove the Farenheit labeling on the right axis
+### Edits
 
-If you have any questions, ask them in the Q&A section.  Use Fable if you can.  Log your work.
-
-2. For the second figure, I would like to show the anomalies of 
-SST off the coast of California.  Similar to Figure 8 of the main 
-report, but zoomed in more on Monterey Bay.  And for a public
-audience.  Please generate one.  
-
-If you have any questions, ask them in the Q&A section.  Use Fable if you can.  Log your work.
-
-3. I have edited the text for the Newsletter by hand.  Please also:
-
-    - Add links to the CUGN websites provided in Context
-    - Add a comment or two on the negative consequences of the Blob on Monterey Bay and/or nearby ocean ecosystems
-    - If you can find a link on the CUGN website that describes upwelling, link to it.  If not, see if you can find something at MBARI
-    - More generally, add links wherever you think it is sensible so the public can learn more about the ocean and the environment.
-    - Perform the calculation of the heat energy required to heat the Monterey Bay by 1.0 °C
-    using the power plan at Moss Landing.  Create a Python script for this.  Then update the text accordingly
-
-If you have any questions, ask them in the Q&A section.  Use Fable if you can.  Log your work.
-
-4. Oops, I should have said to limit the energy calculation to the upper 200m.  Please do so and revise everything accordingly.  Use Fable if you can.  Log your work.
-
+1. On further reflection, I don't think we need to gray out the poorly sampled points.
+So, please do not do so in the Figure 1.  Update it.
+Read my answers in the Q&A section and make edits accordingly.
+Also, I made some edits by hand to the Markdown file.  Keep those.  
+Finally, please make sure the HTML file is in sync with the Markdown file.
+Use Fable if you can. Log your work.
 
 ## Q&A
 
@@ -99,6 +77,7 @@ If you have any questions, ask them in the Q&A section.  Use Fable if you can.  
    model cannot be switched from inside a session). Everything below is
    mechanical (downloads and the product rebuild), so I went ahead -- say if you
    would rather it were redone under Opus.
+>A. Fable is fine
 2. **The "latest" index value needs a coverage caveat.** The rebuilt index ends
    at **+2.04 degC** (window centred 13 Oct), up from the +1.32 the September
    report quoted. Two things feed that: (a) the three bins 13 Sep - 3 Oct are
@@ -112,22 +91,71 @@ If you have any questions, ask them in the Q&A section.  Use Fable if you can.  
    alongside the end value, or should `build_products.py` carry a coverage
    fraction per bin so the figure can grey out poorly sampled points?
    (`check_index_coverage.py` prints the table.)
+>A. Let's be conservative and grey out poorly sampled points.
 3. **Snapshots.** SprayData's `binnedCUGN66` is unchanged since 9 June (the
    delayed-mode record lags the missions), so the October dump is identical to
    September's apart from ERDDAP's header timestamps. I kept the 3 Sep snapshot
    and made `download_binned_line()` skip a dated copy when the data match the
    previous snapshot. OK, or do you want a dated file every month regardless?
+>A. That is fine; skip when the data match 
 4. **AIOcean.** The push re-uploads `binnedCUGN66.nc` (same data, new header)
    and adds the 3 Sep snapshot: ~850 MB of duplicate bytes on Drive. Worth
    teaching the push script to skip a dump whose data match the remote copy?
+>A. Yes, let's skip pushing the dump when the data match the remote copy.
 5. **OISST newsletter cache.** The full CCS archive is now on this laptop and
    current to 9 Oct; the small `newsletter_zoom/` cache that Fig. 2 of the
    newsletter uses refreshes itself when `make_newsletter_sst.py` runs, so I
    left it to the newsletter prompt. Fine?
+>A. Yes, that is fine
 6. **Tides.** CO-OPS verified high/low waters for Monterey stop at 31 Aug (the
    usual ~1-month lag), so September's flood-day count will have to wait or come
    from preliminary 6-minute data. Should `fetch_hilo()` fall back to preliminary
    data for the current month the way the hourly loader does?
+>A. Let's not worry about tides, thanks
+
+### Newsletter draft (2026-10-12)
+
+1. **A third figure.** The biggest October news is the sea-level pulse, and the
+   monthly tide-gauge numbers in the report cannot show it, so I added a daily
+   sea-level figure (Fig. 3, Monterey in red, San Francisco in grey, same
+   pink/blue styling as Fig. 1). Keep it, or stay at two figures?
+>A. I agree.  And I think we can remove the second figure and reference to it but do
+comment on the high surface temperature in Monterey Bay.
+2. **How "now" is quoted.** Following your answer on greying, the text quotes the
+   last well-sampled value (+1.9 degC, window centred 3 Sep) as "now" and
+   describes the grey tail (+2.0 and the inshore readings at +2.4 to +2.5) as
+   preliminary. The headline therefore says "about 1.9 degC ... with preliminary
+   readings since mid-September higher still". Comfortable with that, or would you
+   rather the headline lead with the provisional 2+?
+>A. I have changed my mind on the provisional numbers.  Let's present them as is, i.e.
+not as provisional.
+3. **The greying rule** is `cov_smooth < 0.30`: less than 30 % of the (0-200 km)
+   x (90-day) window behind a value held a profile. It is about the 20th
+   percentile of the record and always greys the last ~45 days of any build
+   (the centred window is half empty there). The threshold lives in
+   `make_report_figs.COV_THRESHOLD` and rides along in stats.json. OK, or tune?
+>A. We may use this in the future, so keep it.  But do not use it for now.
+4. **The 41 cm day.** Monterey's daily mean on 10 Oct was 41 cm (16 in) above
+   normal, from preliminary 6-minute data, and some of that is weather on the
+   day. The text quotes the 7-day mean (27 cm, 11 in) first and the 41 cm as the
+   peak "with weather adding to any single day". Keep the peak number in, or only
+   the weekly mean?
+>A. Yes, keep that peak number in.
+5. **NOAA CPC numbers** (8 Oct discussion: Nino-3.4 +2.1, 83 % strong-to-very
+   strong through Jan-Mar 2027, 83 % that OND reaches +2.5) are typed into a
+   `CPC` dict at the top of `make_newsletter.py`, dated, since CPC has no API.
+   Each month that dict needs re-typing from the new discussion -- fine, or
+   would you rather I scrape the discussion page?
+>A. This is fine
+6. **Dead link.** The Santa Cruz wharf dashboard (sccoos.github.io/el-nino-dashboard)
+   now returns 404, so the closing line links SCCOOS's El Nino page instead. If
+   you know where the wharf display moved, I will put it back.
+>A. Good catch, thanks.
+7. **September page.** `newsletter/README.md` is now the October page (that is
+   the design: README is the live page); the September Markdown, HTML and figures
+   are untouched under their dated names. The ucsc.edu post of the September
+   edition is live at ocean.ucsc.edu/1515-2/.
+>A. That is fine, but I release this to the public via the UCSC Ocean Sciences website.
 
 ## Logs
 
@@ -218,3 +246,121 @@ mission's QC, so a 447 MB monthly re-download usually fetches the same data;
 checking content rather than bytes is what stops the snapshots piling up. And
 a centred running mean makes the "latest" value of the index provisional for
 ~45 days -- any month's headline number will be revised by the next build.
+
+### 2026-10-12 (Newsletter: October draft written, three figures, coverage greying implemented)
+
+**Context read.** Both cugn-climatology context docs and the September report
+(digested by a subagent), the September newsletter and its prompt doc, your
+Q&A answers from the data update, and the web for what changed since 3 Sep.
+
+**What changed in the ocean since September** (data vintage 2026-10-10):
+
+- NOAA CPC, 8 Oct: El Nino Advisory; Nino-3.4 **+2.1** for September, Nino-1+2
+  +3.9; >83 % chance of strong-to-very-strong through Jan-Mar 2027; **83 %**
+  chance that Oct-Dec reaches +2.5 (a record since 1950). ONI JAS = +2.16.
+- The coastal Kelvin wave arrived. Daily-mean sea level at Monterey (new
+  `make_newsletter_sealevel.py`, hourly CO-OPS minus the same climatology and
+  trend as the monthly anomaly): Aug +8.8 cm, Sep +13.0 cm, last 7 days
+  **+26.9 cm (10.6 in)**, peak **+41.3 cm (16 in) on 10 Oct**; San Francisco
+  +23.5 / +32.9 cm. The last 40 Monterey days are preliminary data.
+- The surface warmth reached the shore as the upwelling season ended: OISST
+  Monterey box **+2.8 degC** for 3-9 Oct (was +0.45 in early Sep), just outside
+  the bay +2.0, along the line +2.0, map maximum +5.3 near Morro Bay; a
+  Category 2 "strong" marine heatwave in the bay since 3 Oct (+3.5 on 9 Oct);
+  162 MHW days of 527 since May 2025 (was 155 of 490).
+- Gliders: warmest 10-m reading of the year **+5.0 degC** at 70 km on 3 Oct;
+  last complete crossing 10 Aug-10 Sep (257 profiles) averaged +1.18 degC over
+  10-100 m and +0.45 over 100-500 m; isopycnals 26-44 m deeper than normal;
+  oxygen on sigma 25.5 **-35 umol/kg (17 %)**, from -30.
+- Blobtracker (30 Sep): NEP25A expanding and intensifying; "some of the warming
+  off southern California at the end of September may finally be the result of
+  more direct warming due to El Nino drivers".
+- Upwelling (CUTI/BEUTI to 27 Sep): still above normal over 90 days.
+
+**Coverage greying (your A2).** `build_products.temperature_index()` now writes
+`cov` (fraction of the 5-km cells in 0-200 km with a profile in each 10-day bin)
+and `cov_smooth` (that fraction averaged over the 9-bin window, empty bins as
+zero) into `line66_index.csv`. `make_report_figs.COV_THRESHOLD = 0.30` draws
+index values below it grey in report Fig. 1 and adds `last_good`,
+`last_good_time`, `last_cov`, `cov_threshold` to stats.json. Newsletter Fig. 1
+draws every curve grey underneath and colour on top only where well sampled,
+points "we are here" at the last well-sampled value and labels the grey tail
+"preliminary". Result: last good value **+1.89 degC at 3 Sep**; the end value
++2.04 (13 Oct) is grey. Products rebuilt with `--no-download` so the data vintage
+stayed 2026-10-10; figures: `figs/2026_10/` (11 PNGs + stats.json), which needed
+`pip install cmocean` into this laptop's ocean14.
+
+**The page.** `make_newsletter.py` rewritten for October: new headline (pulse
+arrived, bay nearly 3 degC above normal, better-than-even odds of a record El
+Nino, gliders +1.9 with preliminary readings higher); four "what the gliders see"
+bullets (warmth back at peak and deep; the heatwave flared as the upwelling lid
+came off, with the Blobtracker quote; the sea-level pulse with Fig. 3; the El
+Nino itself with the CPC numbers); Fig. 2 caption and headline now chosen from
+the data (`make_newsletter_sst.pick_headline`, colour scale 3 or 4 degC as
+needed); the June humpback deaths from domoic acid added to the ecosystem bullet
+with the UCSC News link; oxygen "a little more than last month"; new "watching
+next month" list. 21 links checked, all resolve (UCSC News answers 403 to
+scripts, verified by hand earlier in the session); the wharf dashboard is gone
+(Q&A 6). Outputs: `newsletter/README.md`, `El_Nino_public_Oct2026.md`,
+`El_Nino_public_Oct2026_wordpress.html`, three PNGs with JSON sidecars,
+`monterey_heat_Oct2026.json` (same numbers as September).
+
+**Also done from the data-update Q&A.** A4: `push_data_to_aiocean.sh` now hashes
+the dump's data (`erddap.table_hash`, SHA-256 of every variable, 1 s per file)
+and compares with `binnedCUGN66.datahash` on the remote; equal means the 450 MB
+upload is skipped (verified with a dry run after seeding the remote hash). The
+rebuilt products were pushed.
+
+**Learned.** The newsletter's generated-text design worked as intended this
+month: every number on the page comes from stats.json or a sidecar, and the two
+sentences that would have been wrong in October (Fig. 2's "near normal at the
+shore", the "cooler nowhere" clause) had already been made conditional. The one
+thing that cannot be automated is the CPC discussion, which is prose; it is
+typed into a dated dict so a stale copy is at least visible.
+
+### 2026-10-12b (Edits: no greying, SST map dropped, sea level is Figure 2, hand edit kept, HTML in sync)
+
+**Your answers applied.**
+
+- *No greying (Edits 1, Q&A 2-3).* Fig. 1 is drawn entirely in colour again and
+  the red curve runs to its last value, **+2.04 degC** (window centred 13 Oct),
+  with "we are here" on that point. The text quotes +2.0 as "now", with no
+  "provisional" language, and describes the inshore readings of late
+  September/early October as "about 2.5 degC above normal" as is. The coverage
+  machinery is kept but off: `make_report_figs.USE_COVERAGE = False` (the
+  threshold stays at 0.30, `cov`/`cov_smooth` still go into the index table and
+  `last_good` etc. into stats.json, now with a `use_coverage` flag);
+  `fig_past_events_public(cov_threshold=None)` is the default and
+  `make_newsletter.py` only passes a threshold when stats.json says the switch
+  is on. Report Fig. 1 regenerated without the grey overlay (full figure set
+  rerun so stats.json stays complete).
+- *SST map removed, surface temperature kept in the text (Q&A 1).* The map and
+  its caption are gone. Its numbers are still computed
+  (`make_newsletter_sst.sst_numbers()`, no drawing) into
+  `figs/sst_numbers_Oct2026.json` and quoted in the heatwave bullet: Monterey
+  Bay +2.8 degC for the week ending 9 Oct (+0.4 in early September), +2.0 just
+  outside the bay and along the glider line, "strong" heatwave since 3 Oct.
+- *Sea level is now Figure 2* (`figs/newsletter_fig2_sealevel_Oct2026.png` +
+  sidecar); the bullet and alt text refer to Figure 2. The superseded
+  `newsletter_fig2_sst_map_Oct2026.*` and `newsletter_fig3_sealevel_Oct2026.*`
+  were deleted.
+- *Your hand edit kept.* The only difference between the hand-edited
+  `El_Nino_public_Oct2026.md` and the generated page was the removal of the
+  Moss Landing heat-energy sentence, so that sentence (and the heat JSON
+  dependency) came out of the template; `monterey_heat.py` and the September
+  JSON are untouched. Because the template is the master copy, the edit now
+  survives rebuilds.
+- *HTML in sync.* The page was rebuilt end to end
+  (`make_newsletter.py --date 2026-10-10`), so `README.md`,
+  `El_Nino_public_Oct2026.md` (identical) and
+  `El_Nino_public_Oct2026_wordpress.html` all come from the same text; the HTML
+  references `newsletter_fig1_past_events_Oct2026.png` and
+  `newsletter_fig2_sealevel_Oct2026.png` and no longer mentions Moss Landing.
+- Q&A 4-7: peak 41 cm kept; CPC dict kept; SCCOOS link kept; noted that the
+  public release is via the UCSC Ocean Sciences site, so the WordPress file is
+  the one to paste.
+
+**Learned.** Checking the hand-edited file against a fresh render of the
+template (rather than against the previous output) is the reliable way to find
+every hand edit; here it was one sentence, and it would have been silently
+re-inserted by the next rebuild had it not been moved into the template.

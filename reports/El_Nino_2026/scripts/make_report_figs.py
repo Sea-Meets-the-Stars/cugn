@@ -31,6 +31,15 @@ REPORT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EVENT_COLORS = {'2009-10 El Niño': 'tab:blue', '2014-15 Blob': 'tab:orange',
                 '2015-16 El Niño': 'tab:red', '2025-26 MHW → 2026-27 El Niño': 'k'}
 MONTEREY_BOX = dict(lat=(36.3, 37.0), lon=(-122.6, -121.8))
+# An index value is "well sampled" when at least this fraction of the
+# (0-200 km) x (90-day) window behind it holds a profile (`cov_smooth` in
+# line66_index.csv).  0.30 is about the 20th percentile of the record; the
+# last ~45 days of any build fall below it because the centred window is
+# half empty, so the newest values are drawn grey and quoted as provisional.
+COV_THRESHOLD = 0.30
+# Switch for the greying itself (JXP, 12 Oct 2026: keep the machinery, do not
+# use it for now).  The coverage numbers still go into stats.json either way.
+USE_COVERAGE = False
 STATS = {}
 
 
@@ -105,6 +114,13 @@ def fig01_index(prod, figdir):
     plotting.plot_index_with_oni({'Line 66.7 index (10-100 m, 0-200 km, 3-mo mean)': s}, oni,
                                  ax=ax, scti=scti, xlim=(pd.Timestamp('2007-01-01'), pd.Timestamp('2027-07-01')),
                                  title='Line 66.7 Temperature Index vs. Oceanic Niño Index')
+    # grey out the poorly sampled values (glider parked inshore, end of record)
+    if USE_COVERAGE and 'cov_smooth' in idx:
+        poor = s.where(idx['cov_smooth'].to_numpy() < COV_THRESHOLD)
+        ax.plot(poor.index, poor.values, lw=2.6, color='0.75', zorder=5,
+                label=f'poorly sampled (<{COV_THRESHOLD:.0%} of the 0\u2013200 km \u00d7 90-day window)')
+        h, l = ax.get_legend_handles_labels()
+        ax.legend(h, l, loc='lower left', fontsize=9)
     # mark the real-time portion
     last_dm = pd.Timestamp(prod['summary']['delayed_mode']['last'])
     ax.axvline(last_dm, color='0.4', ls=':', lw=1)
@@ -115,6 +131,12 @@ def fig01_index(prod, figdir):
                           max=float(valid['index'].max()), max_time=str(valid.loc[valid['index'].idxmax(), 'time'])[:10],
                           raw_last=float(valid['raw'].iloc[-1]),
                           oni_last=float(oni['oni'].dropna().iloc[-1]), oni_last_time=str(oni['time'].iloc[-1])[:10])
+    if 'cov_smooth' in valid:   # last value that is well sampled (see COV_THRESHOLD)
+        good = valid[valid['cov_smooth'] >= COV_THRESHOLD]
+        STATS['index'].update(cov_threshold=COV_THRESHOLD, use_coverage=USE_COVERAGE,
+                              last_good=float(good['index'].iloc[-1]),
+                              last_good_time=str(good.time.iloc[-1])[:10],
+                              last_cov=float(valid['cov_smooth'].iloc[-1]))
     if scti is not None:
         sv = scti.dropna(subset=['scti'])
         STATS['index']['scti_last'] = float(sv['scti'].iloc[-1]); STATS['index']['scti_last_time'] = str(sv['time'].iloc[-1])[:10]
