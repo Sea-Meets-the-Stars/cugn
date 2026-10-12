@@ -1,0 +1,28 @@
+{
+  "end": "2026-10-10",
+  "ndays": 7,
+  "clim_years": [
+    1991,
+    2020
+  ],
+  "Monterey": {
+    "last_day": "2026-10-10",
+    "last_7d_mean_cm": 26.9,
+    "max_cm": 41.3,
+    "max_day": "2026-10-10",
+    "aug_mean_cm": 8.8,
+    "sep_mean_cm": 13.0,
+    "preliminary_days": 40,
+    "trend_mm_per_yr": 1.83
+  },
+  "San Francisco": {
+    "last_day": "2026-10-10",
+    "last_7d_mean_cm": 23.5,
+    "max_cm": 32.9,
+    "max_day": "2026-10-10",
+    "aug_mean_cm": 7.4,
+    "sep_mean_cm": 11.5,
+    "preliminary_days": 10,
+    "trend_mm_per_yr": 2.23
+  }
+}
