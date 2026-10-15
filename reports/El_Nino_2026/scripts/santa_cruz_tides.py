@@ -211,10 +211,13 @@ def flood_days(station, years=OBS_YEARS):
                          for x in rows]).sort_values('year').reset_index(drop=True)
 
 
-def fetch_hilo(station, years, kind='obs', download=True, verbose=True):
+def fetch_hilo(station, years, kind='obs', download=True, verbose=True, max_age_days=1.0):
     """ Observed or predicted high/low waters for a span of years, cached as CSV.
 
-    The API serves one calendar year per request for both products.
+    The API serves one calendar year per request for both products.  Past
+    years are cached for good; the *current* year's observations are
+    re-fetched when the cached file is older than `max_age_days`, so a monthly
+    rerun picks up the latest high waters (predictions never change).
 
     Parameters
     ----------
@@ -223,6 +226,8 @@ def fetch_hilo(station, years, kind='obs', download=True, verbose=True):
     kind : str, 'obs' (product `high_low`) or 'pred' (product `predictions`)
     download : bool, fetch missing years (False = use the cache only)
     verbose : bool
+    max_age_days : float, re-download the current year's observations when the
+        cache is older than this (None = never)
 
     Returns
     -------
@@ -235,7 +240,11 @@ def fetch_hilo(station, years, kind='obs', download=True, verbose=True):
     for yr in range(years[0], years[1] + 1):
         # One file per year: a dropped connection then costs one year, not the lot
         path = os.path.join(CACHE_DIR, f'{station}_{kind}_hilo_{yr}.csv')
-        if os.path.exists(path):
+        # The current year's observations grow every day: refresh a stale cache
+        stale = (kind == 'obs' and yr == pd.Timestamp.now().year and download
+                 and max_age_days is not None and os.path.exists(path)
+                 and (time.time() - os.path.getmtime(path)) / 86400. > max_age_days)
+        if os.path.exists(path) and not stale:
             frames.append(pd.read_csv(path, parse_dates=['time']))
             continue
         if not download:
