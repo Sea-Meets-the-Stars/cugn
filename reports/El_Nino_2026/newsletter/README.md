@@ -1,12 +1,13 @@
 # El Niño, Monterey Bay, and our nearby ocean
 
-### A monthly newsletter from UCSC Ocean Sciences — October 2026
+### A monthly newsletter from UCSC Ocean Sciences — October 2026 edition
 
 **The 2026–27 El Niño has arrived at our coast. In the first days of October a
-pulse of high sea level travelling up from the tropics reached Monterey Bay, the
-sea surface in the bay jumped to nearly 3 °C above normal, and NOAA now gives
+pulse of high sea level travelling up from the tropics reached Monterey Bay and
+lifted the water about 30 cm (12 in) above normal; the
+sea surface in the bay jumped to 3.4 °C above normal, and [NOAA now gives](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml)
 better-than-even odds that this becomes the strongest El Niño since records began.
-The underwater gliders off Monterey Bay show the upper ocean about 2.0 °C
+The underwater gliders off Monterey Bay show the upper ocean about 2.1 °C
 (3.7 °F) warmer than normal — above last spring's peak, and still climbing.**
 
 Since 2007, [Scripps Institution of Oceanography](https://scripps.ucsd.edu/) has
@@ -16,7 +17,7 @@ kept [robotic gliders](https://spraydata.ucsd.edu/about/spray-glider) flying a
 measuring temperature, saltiness and oxygen. At UC Santa Cruz we analyse that
 stream of data each month to track how the 2026–27 El Niño is reaching our coast.
 Here is where things stand, one month on from our [September
-edition](El_Nino_public_Sep2026.md).
+edition](https://ocean.ucsc.edu/1515-2/).
 
 ## What the gliders see
 
@@ -25,12 +26,12 @@ edition](El_Nino_public_Sep2026.md).
   normal](https://spraydata.ucsd.edu/products/cugn-climatology) without a break
   since July 2025. It peaked in April 2026 at 1.9 °C above normal, higher than
   the peak of the big 2015–16 El Niño (1.8 °C), eased a little over the
-  summer, and has climbed again since September to 2.0 °C. Close to shore the
+  summer, and has climbed again since September to 2.1 °C. Close to shore the
   glider's readings in late September and early October ran about 2.5 °C above
   normal. On the most recent full crossing of the line (10 August–10 September),
   the top 100 m averaged 1.2 °C above normal and the water from 100 m
   down to 500 m 0.4 °C — the warmth is pushing the ocean's density layers
-  26–44 m deeper than usual.
+  26–43 m deeper than usual.
 - **The marine heatwave has flared again, and this time El Niño is part of it.**
   Through the summer, [upwelling](https://oceanservice.noaa.gov/facts/upwelling.html)
   — the wind-driven welling-up of cold water that the gliders
@@ -39,10 +40,10 @@ edition](El_Nino_public_Sep2026.md).
   the upwelling season wound down in late September that lid came off. The glider
   logged its warmest reading of the year, 5.0 °C above normal at 10 m depth
   on 3 October, and satellites show the heat reaching the shore: in the week ending
-  9 October the sea surface in Monterey Bay itself averaged +2.8 °C above normal
-  (it was only +0.4 °C in early September), with +2.0 °C just outside the bay and
-  +2.0 °C along the whole 250-mile glider line, and since 3 October the bay has been in a "strong" marine heatwave, 3.5 °C above normal on 9 October. Monterey Bay has
-  now spent 162 of the 527 days since May 2025 in [marine-heatwave](https://marineheatwaves.org/)
+  13 October the sea surface in Monterey Bay itself averaged +3.4 °C above normal
+  (it was only +0.4 °C in early September), with +2.2 °C just outside the bay and
+  +2.3 °C along the whole 250-mile glider line, and since 3 October the bay has been in a "strong" marine heatwave, 3.8 °C above normal on 10 October. Monterey Bay has
+  now spent 166 of the 531 days since May 2025 in [marine-heatwave](https://marineheatwaves.org/)
   conditions. NOAA's [heatwave tracker](https://www.integratedecosystemassessment.noaa.gov/regions/california-current/california-current-marine-heatwave-tracker-blobtracker)
   says that some of the warming off California at the end of September is likely,
   for the first time, "the result of more direct warming due to El Niño drivers".
@@ -51,11 +52,11 @@ edition](El_Nino_public_Sep2026.md).
   reached Central California in the first week of October (Figure 2). [Sea level
   at Monterey](https://tidesandcurrents.noaa.gov/stationhome.html?id=9413450) ran
   about 9 cm above normal in August and 13 cm in September; over the past
-  week it has averaged 27 cm (11 in) above normal and reached 41 cm
-  (16 in) on 10 October, with San Francisco close behind. Those last
-  figures are preliminary, and weather adds to any single day, but the step up is
-  unmistakable — and oceanographers expect three or four more such pulses before
-  spring.
+  week it has averaged 30 cm (12 in) above normal, with a storm-driven spike
+  to 39 cm (16 in) on 11 October, and San Francisco close behind. Those last
+  figures are preliminary, and weather adds to or subtracts from any single day, but
+  the step up is unmistakable — and oceanographers expect three or four more such
+  pulses before spring.
 - **The El Niño itself keeps strengthening.** NOAA's [El Niño
   index](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ONI_v5.php)
   now stands at +2.2 °C, up from +1.4 °C a month ago, and the key tropical Pacific
@@ -64,7 +65,7 @@ edition](El_Nino_public_Sep2026.md).
   March 2027 at 83%, and the chance that October–December is the
   strongest since records began in 1950 at 83%.
 
-![Line chart of how far above normal the upper ocean off Monterey Bay was, month by month from July to June, during three warm periods. The red line for this year starts at about 1.4 °C above normal in July and climbs to about 2.0 °C by October, higher than either of the others at the same point in the year. Pink shading marks warmer than normal, blue cooler.](figs/newsletter_fig1_past_events_Oct2026.png)
+![Line chart of how far above normal the upper ocean off Monterey Bay was, month by month from July to June, during three warm periods. The red line for this year starts at about 1.4 °C above normal in July and climbs to about 2.1 °C by October, higher than either of the others at the same point in the year. Pink shading marks warmer than normal, blue cooler.](figs/newsletter_fig1_past_events_Oct2026.png)
 
 **Figure 1.** The excess warmth in the upper ocean off Monterey Bay during two previous warm
 periods (yellow, orange) and this year (red), lined up by month starting in July.

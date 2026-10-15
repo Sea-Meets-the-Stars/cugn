@@ -640,9 +640,18 @@ def update(start_year=FIRST_YEAR, end_year=None, verbose=True):
     today = _today_utc()
     if end_year is None:
         end_year = today.year
-    agg_last = aggregate_last_time()
-    if verbose:
-        print(f'[oisst] ERDDAP aggregate ends {agg_last:%Y-%m-%d}; today {today:%Y-%m-%d}',
+    try:
+        agg_last = aggregate_last_time()
+        if verbose:
+            print(f'[oisst] ERDDAP aggregate ends {agg_last:%Y-%m-%d}; today {today:%Y-%m-%d}',
+                  flush=True)
+    except Exception as err:
+        # The CoastWatch aggregate disappeared in October 2026 ("unknown
+        # datasetID").  Fall back to NCEI daily files only: a date before every
+        # year skips the ERDDAP part in download_year, and only files that are
+        # incomplete or hold preliminary days are rebuilt.
+        agg_last = pd.Timestamp('1900-01-01')
+        print(f'[oisst] ERDDAP aggregate unavailable ({err}); using NCEI daily files only',
               flush=True)
     paths = []
     for year in range(start_year, end_year + 1):

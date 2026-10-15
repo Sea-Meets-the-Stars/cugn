@@ -1,28 +1,28 @@
 {
-  "end": "2026-10-10",
+  "end": "2026-10-15",
   "ndays": 7,
   "clim_years": [
     1991,
     2020
   ],
   "Monterey": {
-    "last_day": "2026-10-10",
-    "last_7d_mean_cm": 26.9,
-    "max_cm": 41.3,
-    "max_day": "2026-10-10",
+    "last_day": "2026-10-14",
+    "last_7d_mean_cm": 30.4,
+    "max_cm": 39.4,
+    "max_day": "2026-10-11",
     "aug_mean_cm": 8.8,
     "sep_mean_cm": 13.0,
-    "preliminary_days": 40,
+    "preliminary_days": 44,
     "trend_mm_per_yr": 1.83
   },
   "San Francisco": {
-    "last_day": "2026-10-10",
-    "last_7d_mean_cm": 23.5,
-    "max_cm": 32.9,
-    "max_day": "2026-10-10",
+    "last_day": "2026-10-14",
+    "last_7d_mean_cm": 27.6,
+    "max_cm": 36.9,
+    "max_day": "2026-10-11",
     "aug_mean_cm": 7.4,
     "sep_mean_cm": 11.5,
-    "preliminary_days": 10,
+    "preliminary_days": 14,
     "trend_mm_per_yr": 2.23
   }
 }

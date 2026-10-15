@@ -53,6 +53,11 @@ If you need to run Python code, please use the `ocean14` conda environment.
 If you have any questions, ask them in the Q&A section.  
 Use Opus 5.5.  Log your work.
 
+2. It is now October 15th.  Please update the data, if possible.
+And also the figures and text for the Newsletter. 
+We will then freeze this version as is.
+Use Opus 5.5.  Log your work.
+
 ### Newsletter
 
 1. Read all the files in Context.  And also my answers in the Q&A section.  
@@ -68,6 +73,8 @@ Read my answers in the Q&A section and make edits accordingly.
 Also, I made some edits by hand to the Markdown file.  Keep those.  
 Finally, please make sure the HTML file is in sync with the Markdown file.
 Use Fable if you can. Log your work.
+
+2. Add the headline result to the opening summary -- the increase in sea level height in the bay.
 
 ## Q&A
 
@@ -364,3 +371,82 @@ typed into a dated dict so a stale copy is at least visible.
 template (rather than against the previous output) is the reliable way to find
 every hand edit; here it was one sentence, and it would have been silently
 re-inserted by the next rebuild had it not been moved into the template.
+
+### 2026-10-15 (Data update 2: everything refreshed to 15 Oct, figures and newsletter rebuilt, version to freeze)
+
+Ran on Fable 5.1 again (the prompt says Opus 5.5; the model cannot be switched
+from inside a session). No new hand edits were found: a fresh render of the
+template matched `El_Nino_public_Oct2026.md` line for line before anything was
+rebuilt.
+
+**Data (all 2026-10-15).**
+
+- Gliders: SprayData `binnedCUGN66` still ends 2026-06-09 (checked live; the
+  10 Oct dump is reused, no re-download). Real-time: sp025 unchanged (ended
+  30 Sep), **sp055 extended to 15 Oct**; 1,076 real-time profiles (was 1,035).
+  Products rebuilt (`build_products.py`, build_date 2026-10-15): index last
+  **+2.07 degC** at the 13 Oct bin (was +2.04), rank 6 of 697; DO index +2.26;
+  latest complete transect still 10 Aug-10 Sep.
+- Indices: ONI unchanged (JAS +2.16); SCTI now to 19 Aug (+2.00 10-day, +1.94
+  monthly); CUTI/BEUTI to 9 Oct; Monterey monthly to Aug (+8.9 cm), SF to Sep
+  (+11.0 cm); hourly sea level to 15 Oct 11:00 (Monterey daily mean 0.305 m
+  on 14 Oct).
+- OISST: **the CoastWatch ERDDAP aggregate `ncdcOisst21Agg_LonPM180` is gone**
+  (server up, "Currently unknown datasetID", 404), which killed
+  `python -m cugn.oisst` and would have left the newsletter with stale
+  satellite numbers. Both paths now fall back to NCEI daily files:
+  `cugn.oisst.update()` sets `agg_last` to 1900 so `download_year` skips the
+  ERDDAP part and fills from NCEI (it rewrote all 36 year files on the way,
+  reusing the finals on disk; archive now 1991-01-01..2026-10-13, 13,070 days,
+  14 preliminary), and `make_newsletter_sst.aggregate_last()` keeps its cached
+  answer (26 Sep) when the query fails so `fetch_tail` covers the rest from
+  NCEI (zoom archive to 13 Oct; NCEI had no file yet for 14 Oct). If the
+  aggregate reappears under a new id, `cugn.oisst.ERDDAP_BASE` is the one line
+  to change.
+
+**Figures and text.** Report figures rebuilt to `figs/2026_10/` with
+`--date 2026-10-15` (stats.json now: OISST 7-day map to 13 Oct, Monterey box
+**+3.36**, line +2.29; MHW Category 2 since 3 Oct, max +3.76 on 10 Oct,
+**166 of 531** heatwave days; oxygen on sigma 25.5 -34.9; isopycnals 26-43 m
+deep). Newsletter rebuilt with `--date 2026-10-15`: Fig. 1 to the 13 Oct bin
+(+2.07, "we are here" on it), Fig. 2 sea level to 14 Oct (7-day mean **+30.4
+cm**, spike **+39.4 cm on 11 Oct** -- the verified data replaced the
+preliminary 41.3 cm of 10 Oct, and the gauge fell back to ~20 cm by 14 Oct, so
+the text now calls it "a storm-driven spike" on top of the pulse), satellite
+numbers to 13 Oct (bay **+3.4**, "jumped to 3.4 degC" replaces "nearly 3").
+CPC dict unchanged (8 Oct discussion is still current). README, the dated
+Markdown and the WordPress HTML are all from the same render; 21 links, all
+resolve (UCSC News 403 to scripts as before). The two Monterey Bay Fig. 2
+captions and the alt texts were checked against the new numbers.
+
+**Push.** `push_data_to_aiocean.sh` run (dump skipped by the data hash; products,
+CCS files and the 36 rewritten OISST files uploaded): 449 MiB of glider
+products, 4.8 MiB of CCS files and 339 MiB of OISST; `rclone check` found
+0 differences in all three trees.
+
+**Learned.** External data services disappear without notice: the aggregate
+that the whole OISST pipeline was built around vanished between 12 and 15 Oct.
+Having the NCEI daily route already written (for the days past the aggregate)
+made the fix a fallback rather than a rewrite.
+
+### 2026-10-15b (Edits 2: sea-level rise added to the opening summary; three hand edits folded in)
+
+**The ask.** The opening bold paragraph now carries the headline sea-level
+number: "... reached Monterey Bay and lifted the water about **30 cm (12 in)**
+above normal; the sea surface in the bay jumped to 3.4 degC above normal ...".
+The figure is the 7-day mean to 14 Oct from the Fig. 2 sidecar
+(`sl_week`), so it moves with the data like the rest of the paragraph.
+
+**Hand edits found and kept.** A fresh render of the template against the
+Markdown on disk showed three edits made since the 15 Oct rebuild, all moved
+into the template so they survive future builds:
+
+- subtitle "October 2026 **edition**";
+- "[NOAA now gives](... enso_advisory/ensodisc.shtml)" linked in the headline;
+- the September-edition link now points at the public post
+  (https://ocean.ucsc.edu/1515-2/) rather than the repository Markdown.
+
+**Sync.** Rebuilt with `make_newsletter.py --date 2026-10-15 --no-figs`;
+`README.md` and `El_Nino_public_Oct2026.md` are identical and the WordPress
+HTML carries the new sentence, the "edition" subtitle and the ocean.ucsc.edu
+link. Figures untouched.

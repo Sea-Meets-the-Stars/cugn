@@ -306,11 +306,12 @@ def build_markdown(stats, o2, date, fig1_name, fig2_name, sst, sl, cpc, use_cove
 
     md = f"""# El Niño, Monterey Bay, and our nearby ocean
 
-### A monthly newsletter from UCSC Ocean Sciences — {date:%B %Y}
+### A monthly newsletter from UCSC Ocean Sciences — {date:%B %Y} edition
 
 **The 2026–27 El Niño has arrived at our coast. In the first days of October a
-pulse of high sea level travelling up from the tropics reached Monterey Bay, the
-sea surface in the bay jumped to nearly {sst_box:.0f} °C above normal, and NOAA now gives
+pulse of high sea level travelling up from the tropics reached Monterey Bay and
+lifted the water about {sl_week:.0f} cm ({cm2in(sl_week):.0f} in) above normal; the
+sea surface in the bay jumped to {sst_box:.1f} °C above normal, and [NOAA now gives](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml)
 better-than-even odds that this becomes the strongest El Niño since records began.
 The underwater gliders off Monterey Bay show the upper ocean about {now:.1f} °C
 ({c2f(now):.1f} °F) warmer than normal — above last spring's peak, and still climbing.**
@@ -322,7 +323,7 @@ kept [robotic gliders](https://spraydata.ucsd.edu/about/spray-glider) flying a
 measuring temperature, saltiness and oxygen. At UC Santa Cruz we analyse that
 stream of data each month to track how the 2026–27 El Niño is reaching our coast.
 Here is where things stand, one month on from our [September
-edition](El_Nino_public_Sep2026.md).
+edition](https://ocean.ucsc.edu/1515-2/).
 
 ## What the gliders see
 
@@ -357,11 +358,11 @@ edition](El_Nino_public_Sep2026.md).
   reached Central California in the first week of October (Figure 2). [Sea level
   at Monterey](https://tidesandcurrents.noaa.gov/stationhome.html?id=9413450) ran
   about {mry['aug_mean_cm']:.0f} cm above normal in August and {mry['sep_mean_cm']:.0f} cm in September; over the past
-  week it has averaged {sl_week:.0f} cm ({cm2in(sl_week):.0f} in) above normal and reached {sl_max:.0f} cm
-  ({cm2in(sl_max):.0f} in) on {sl_max_day:%-d %B}, with San Francisco close behind. Those last
-  figures are preliminary, and weather adds to any single day, but the step up is
-  unmistakable — and oceanographers expect three or four more such pulses before
-  spring.
+  week it has averaged {sl_week:.0f} cm ({cm2in(sl_week):.0f} in) above normal, with a storm-driven spike
+  to {sl_max:.0f} cm ({cm2in(sl_max):.0f} in) on {sl_max_day:%-d %B}, and San Francisco close behind. Those last
+  figures are preliminary, and weather adds to or subtracts from any single day, but
+  the step up is unmistakable — and oceanographers expect three or four more such
+  pulses before spring.
 - **The El Niño itself keeps strengthening.** NOAA's [El Niño
   index](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ONI_v5.php)
   now stands at +{oni:.1f} °C, up from +1.4 °C a month ago, and the key tropical Pacific

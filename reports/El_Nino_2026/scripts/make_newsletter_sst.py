@@ -201,7 +201,17 @@ def aggregate_last(max_age_hours=12.):
         age = (pd.Timestamp.utcnow().tz_localize(None) - pd.Timestamp(rec['queried'])) / pd.Timedelta('1h')
         if age < max_age_hours:
             return pd.Timestamp(rec['last'])
-    last = oisst.aggregate_last_time()
+    try:
+        last = oisst.aggregate_last_time()
+    except Exception as err:
+        # The aggregate vanished from CoastWatch in October 2026.  Keep using the
+        # last answer we got (the decade chunks on disk end there) and let
+        # fetch_tail fill the rest from NCEI daily files.
+        if os.path.exists(path):
+            print(f'[sst] ERDDAP aggregate unavailable ({err}); keeping the cached end '
+                  f'{rec["last"][:10]} and using NCEI for the rest', flush=True)
+            return pd.Timestamp(rec['last'])
+        raise
     os.makedirs(CACHE_DIR, exist_ok=True)
     with open(path, 'w') as fh:
         json.dump(dict(last=str(last), queried=str(pd.Timestamp.utcnow().tz_localize(None))), fh)
