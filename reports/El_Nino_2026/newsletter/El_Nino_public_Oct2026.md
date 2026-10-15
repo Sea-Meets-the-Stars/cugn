@@ -47,7 +47,7 @@ edition](https://ocean.ucsc.edu/1515-2/).
   conditions. NOAA's [heatwave tracker](https://www.integratedecosystemassessment.noaa.gov/regions/california-current/california-current-marine-heatwave-tracker-blobtracker)
   says that some of the warming off California at the end of September is likely,
   for the first time, "the result of more direct warming due to El Niño drivers".
-- **The sea-level pulse has arrived.** The coastal Kelvin wave we flagged last
+- **The sea-level pulse has arrived.** The coastal [Kelvin wave](https://www.linkedin.com/posts/greg-dusek-036143221_so-just-for-fun-i-made-an-80s-power-ballad-ugcPost-7512514893493854208-I6YF/?utm_source=share&utm_medium=member_desktop&rcm=ACoAAAW2RhQBVWvFvxa_gfk0xUipD0GGoe-Yv4c) we flagged last
   month — a pulse of raised sea level travelling up the coast from the tropics —
   reached Central California in the first week of October (Figure 2). [Sea level
   at Monterey](https://tidesandcurrents.noaa.gov/stationhome.html?id=9413450) ran
