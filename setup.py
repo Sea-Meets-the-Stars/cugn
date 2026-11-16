@@ -23,8 +23,9 @@ setup_keywords['requires'] = ['Python (>3.9.0)']
 setup_keywords['install_requires'] = [
     'IPython', 'seaborn', 
     'cftime', 'bokeh', 'xarray', 'h5netcdf',  'gsw',
-    'importlib-metadata', 'timm==0.3.2',
-    'pymatreader', 'gsw-xarray', 'dask',
+    'importlib-metadata', 'timm==0.3.2', 'netcdf4',
+    'h5py',
+    'pymatreader', 'gsw-xarray', 'dask', 'cmocean',
     'xhistogram']
 setup_keywords['zip_safe'] = False
 setup_keywords['use_2to3'] = False

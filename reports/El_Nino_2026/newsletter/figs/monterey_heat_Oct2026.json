@@ -1,0 +1,69 @@
+{
+  "dT_degC": 1.0,
+  "zmax_m": 200.0,
+  "headline": "bay_top_layer",
+  "layer_fraction_of_bay": 0.8024753877831312,
+  "rho_kg_m3": 1025.5691440199735,
+  "cp_J_kg_K": 3991.86795711963,
+  "moss_landing_MW": 1020.0,
+  "cases": {
+    "bay_top_layer": {
+      "what": "Monterey Bay proper, top 200 m",
+      "volume_m3": 34112733919.505493,
+      "area_m2": 530097055.5764981,
+      "mean_depth_m": 64.35186455130706,
+      "zmax_m": 200.0,
+      "energy_J": 1.3965537004957e+17,
+      "energy_GJ": 139655370.04957,
+      "energy_TWh": 38.793158347102775,
+      "moss_landing": {
+        "seconds": 136917029.46036273,
+        "days": 1584.6878409764206,
+        "years": 4.338638852775963
+      }
+    },
+    "bay_full_depth": {
+      "what": "Monterey Bay proper, sea floor to surface",
+      "volume_m3": 42509383388.99492,
+      "area_m2": 530097055.5764981,
+      "mean_depth_m": 80.1916987498913,
+      "energy_J": 1.740307206621916e+17,
+      "energy_GJ": 174030720.66219163,
+      "energy_TWh": 48.34186685060878,
+      "moss_landing": {
+        "seconds": 170618353.59038395,
+        "days": 1974.749462851666,
+        "years": 5.406569371257128
+      }
+    },
+    "bay_top_100m": {
+      "what": "Monterey Bay proper, top 100 m",
+      "volume_m3": 27949346639.083168,
+      "area_m2": 530097055.5764981,
+      "mean_depth_m": 52.72496110865458,
+      "energy_J": 1.1442285325870616e+17,
+      "energy_GJ": 114422853.25870617,
+      "energy_TWh": 31.784125905196156,
+      "moss_landing": {
+        "seconds": 112179267.90069231,
+        "days": 1298.371156258013,
+        "years": 3.554746492150617
+      }
+    },
+    "fig2_box_top_layer": {
+      "what": "the Fig. 2 Monterey Bay box, top 200 m",
+      "volume_m3": 380849581686.7933,
+      "area_m2": 2565570866.0299206,
+      "mean_depth_m": 148.44633088468805,
+      "zmax_m": 200.0,
+      "energy_J": 1.5591740430185981e+18,
+      "energy_GJ": 1559174043.018598,
+      "energy_TWh": 433.1039008384995,
+      "moss_landing": {
+        "seconds": 1528602002.95941,
+        "days": 17692.152812030206,
+        "years": 48.43847450247832
+      }
+    }
+  }
+}
