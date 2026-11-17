@@ -12,7 +12,7 @@ See the PDFs in cugn/papers/Structure/Writing/previous/ for several of my previo
 
 ### Gutierrez-Villanueva manuscript
 
-Read the Gutierrez-Villanueva manuscript `Gutierrez-Villanueva2025.pdf` in Writing/.  They describe in detali the QG model that we are using.
+Read the Gutierrez-Villanueva manuscript `Gutierrez-Villanueva2025.pdf` in Writing/.  They describe in detail the QG model that we are using.
 
 ### Code
 
@@ -21,7 +21,7 @@ See all of the files in the cugn/papers/Structure/ and the calls to the main Rep
 ### Overleaf
 
 The git repo for this paper may be found here:
-/home/xavier/Projects/Overleaf/Energy_Cascade
+`Projects/Overleaf/Energy_Cascade`
 
 ### Outline
 
@@ -49,7 +49,40 @@ Our outline is in the cugn/papers/Structure/Writing/ folder.  It is named outlin
 
 8. Please add a figure to the paper which shows the tracks for the gliders and drifters in the QG model.  Include a caption and be sure to reference and discuss this in the text. Log your work.
 
+### QG
+
+1. We have performed additional analysis on the QG output and find that there are examples where the corrected duL3 structure function does not well-match the correct result.  There are even numerous cases with negative duL3 structure functions. This is described in the prompt doc `Oceanography/python/cugn/papers/Structure/Analysis/claude_prompts/claude_analysis.md`, under
+the `Q&A/QG` section.  Also see the code in `Analysis/py/qg_ensemble.py` and the outputs in `Analysis/Outputs/qg_ensemble_{100d,5yr,window_scan}.csv`.
+Therefore, while the example shown in the current draft and its Figure 8 is correct, the text is misleading in implying that a 100kmx100km sub-region and 100 days is sufficient to measure duL3.  
+Please: 
+
+    - Add a new figure to the paper which shows the duL3 structure functions  
+     for the 9 independent regions and 18 distinct timestamps.  The  
+     `fig_qg_ensemble_S3_100d.png` may be sufficient.
+    - Modify the text to reflect the new figure and the findings.
+    - Include text noting that we find the corrected duL3 when measured 
+      for 5 years is never negative
+
+   If you have any questions, ask them in the Q&A/QG section below.
+   Use Opus 5.5.  Log your work.  I will push the revised text to the Overleaf repo.
+
 ## Q&A
+
+### QG
+
+*Claude (2026-11-17), Writing/QG prompt 1.* I made the revision without
+blocking questions. Two optional follow-ups:
+
+1. Earlier in §4c the paper gives the full-domain flux as "$\eflux \approx
+   2\times10^{-10}$" (order of magnitude). The new text quotes
+   $1.7\times10^{-10}$ from the same 15–70 km fit, because the ensemble ratios
+   are relative to that number. Keep both, or change the earlier value to 1.7?
+>
+2. Discussion (§5) is still empty. The ensemble gives a quantitative
+   design rule: with complete sampling of a 100 km box, the fraction of negative
+   flux estimates is 18% at 100 d, 9% at 1 yr, and 0% at ≥2.5 yr. Should I draft
+   a Discussion paragraph on survey design from this when we get there?
+>
 
 ### Theory
 
@@ -727,3 +760,54 @@ commit), pulled --rebase over a remote "Update on Overleaf" (`6de8905`, which
 added a real title + Introduction — clean rebase, my additions survived), and
 pushed (`6de8905..34e1b1d main`). The `figs_qg_results.py` edit remains
 uncommitted in the cugn repo (no request to commit there).
+
+### 2026-11-17 (Writing/QG prompt 1 — added the QG ensemble figure; revised §4c)
+
+Read Analysis `claude_analysis.md` Q&A/QG, `Analysis/py/qg_ensemble.py`, and the
+`qg_ensemble_{100d,5yr,window_scan}.csv` outputs, then revised the QG testbed
+subsection (§4c, "A quasi-geostrophic testbed") of `energy_cascade.tex` in the
+local Overleaf folder. **Not pushed** (JXP will push).
+
+**Figure.** Added `fig_qg_ensemble(ndays=100)` to `Figures/py/figs_qg_results.py`
+(flag 4; reuses `qg_ensemble`). It is a paper version of
+`fig_qg_ensemble_S3_100d.png`:
+- panel (a) shows raw $S_3$ and panel (b) centered \Snc{3}, for the 162
+  realizations (9 regions × 18 non-overlapping 100-d windows), with the 16–84%
+  band and median, against the full-domain 5-yr curve, for 5 < r < 80 km;
+- titles are removed, the two panels share y-limits, and they carry (a)/(b) labels;
+- panel (b) also overlays the nine **5-yr** centered curves (dashed). This
+  supports the "never negative at 5 yr" statement visually.
+
+`fig_qg_ensemble.png` was copied to `Figures/` and to the Overleaf `Figures/`
+(md5s match).
+
+**Text** (new figure `fig:qg_ensemble`, placed between `fig:qg_timeevo` and
+`fig:qg_tracks` so floats follow reference order):
+- *Figure 8 paragraph:* extended it. The result is not peculiar to one box. In
+  all nine subregions, averaged over 5 yr, \Snc{3} is positive at every r < 80 km
+  and is **never negative**. Box-to-box fitted fluxes are 0.55–1.9× the
+  full-domain value (1.7e-10 from the same fit). The Figure 8 region (0.66) lies
+  within that range and is not a best case.
+- *Figure 9 paragraph:* rewrote it.
+  - The 30-day correct sign is now stated as specific to that box and epoch.
+  - Added the ensemble statistics: fitted flux negative in 31% raw vs 18%
+    (29/162) centered; σ(eps) = 2.4e-10 exceeds the truth; only 28% are within
+    50%; the negative fraction rises from ~1% at r < 15 km to 20–25% at 60–80 km.
+  - The full domain over the same windows never changes sign (1.6–1.9e-10), so
+    the negatives reflect a handful of eddies per box, not a reversal of the
+    cascade.
+  - Window scan: 30% negative at 30 d, 16% at 6 mo, 9% at 1 yr, 0% at ≥2.5 yr.
+  - Removed the claim that "survey duration is not the obstacle". The new
+    conclusion is that survey size and duration are themselves an obstacle.
+- *Sampling paragraph:* "The obstacle is the sparsity of real sampling" became
+  "Sparse sampling compounds the problem". The realization-A/B sentence now ties
+  back to the fully sampled ensemble.
+- *Figure 9 caption:* replaced "survey duration is not the limiting factor" with
+  "holds for this subregion and epoch but is not general".
+- *New caption* for `fig:qg_ensemble`.
+- The Figure 8 caption is unchanged; it already says "five years".
+
+**Compile.** Ran 3-pass `pdflatex` into the scratchpad (not the Overleaf folder).
+Exit OK. The figure is included (p. 21). There are no undefined references; the
+remaining warnings are citations only, because BibTeX was not run in the scratch
+build. Two optional questions are posted in Q&A/QG. Ran as Opus 5.5.

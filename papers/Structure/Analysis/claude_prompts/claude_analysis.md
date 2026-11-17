@@ -7,6 +7,7 @@ We are going to perform additional analysis for the project.  With Claude.
 This is your additional context:
 
 - This Repository, especially the code in this Analysis/ folder.
+- The prompt files in `Oceanography/python/cugn/papers/Structure/Writing/claude_prompts` that have guided the writing
 - The paper's Overleaf: `Projects/Overleaf/Energy_Cascade`
 
 ## Code
@@ -52,7 +53,159 @@ If you need to run Python code, please use the `ocean14` conda environment.
 
 10. Thanks for the Chl analysis.  Please add a figure or two to the report.  Log your work.  Use Fable if you can.  
 
+### QG
+
+1. The paper currently shows one example of the analysis of the QG output 
+for a 100kmx100km sub-region in Figure 8.  In this example, the corrected 
+duL3 structure function is shown to nearly match the full-box measurement.
+I have also considered the duL3 structure functions for 9 independent regions and 18 distinct timestamps.  A figure of these is provided in `Figures/fig_qg_all_duL3_100_100km.png` from the `fig_qg_all_duL3()` function from `Figures/py/figs_structure.py`.   It shows that there are examples where
+the corrected duL3 does not well-match the correct result.  There are even
+numerous cases with negative duL3 structure functions.
+I wish to perform additional analyses
+on these outputs and will then make modifications to the manuscript.
+Please do the following: 
+   - Verify that the figure is correct, i.e. there are frequent examples of 
+     100kmx100km regions that show a negative duL3 structure function 
+     even after corrections
+   - Measure statistics on the frequency of negative duL3 structure functions
+   - Re-examine the example shown in Figure 8.  How common is this?
+
+Because the results are not well behaved at separations close to the subregion size, restrict the analysis to r<80km.
+Generate a new module named `Analysis/py/qg_ensemble.py` for this analysis.
+Discuss what you find in the `Q&A/QG` section below.
+If you have any questions, ask them there.
+Use Opus 5.5.  Log your work.
+
+
+
 ## Q&A
+
+### QG
+
+*Claude (2026-11-17), QG prompt 1. Code: `Analysis/py/qg_ensemble.py`
+(run `python qg_ensemble.py` from `Analysis/py/`). Tables:
+`Analysis/Outputs/qg_ensemble_{100d,5yr,window_scan}.csv`, log
+`Analysis/Outputs/qg_ensemble.log`. Figures: `Analysis/Figures_new/fig_qg_ensemble_*.png`.
+All statistics use 5 < r < 80 km (bins 7.5–77.5 km). The fitted flux eps comes from
+S3c = +(3/2) eps r, fit through the origin over 15–70 km (the paper's range).
+Full-domain truth: eps = 1.72e-10 m^2 s^-3.*
+
+**Setup.** This is the same ensemble as `fig_qg_all_duL3()`: 9 regions
+(x0, y0 ∈ {300, 400, 500} km) × 18 non-overlapping 100-day windows, counted back
+from the end of the record, which gives 162 realizations. S3c = S3 − 3 S1 S2 + 2 S1³
+is computed from the window-mean moments, as in `parse_SF`. I confirmed that the
+region files store ⟨δu_L⟩, ⟨δu_L²⟩ and ⟨δu_L³⟩ (`SF2_3_ul`), so the centering
+formula is self-consistent. Pairs are built with `xarray.shift`, not `roll`, so no
+pairs wrap around the box edge. The regions are effectively independent: across
+windows, the mean pairwise correlation of eps_c between regions is −0.01.
+
+**1. Is the figure correct?** Yes. I rebuilt it independently
+(`fig_qg_ensemble_S3_100d.png`) and found nothing wrong in `fig_qg_all_duL3`. Two
+cosmetic notes:
+- The black reference curve is the raw full-domain S3. That is fine, because
+  S1_full ≈ 0.
+- The red mean curve carries the label "Full box", but the legend is not drawn, so
+  it does no harm.
+
+Negative centered S3 is real and common at the 100-day scale.
+
+**2. How often is it negative? (100-day windows, N = 162)**
+
+| statistic | raw S3 | centered S3c |
+|---|---|---|
+| fitted eps < 0 | 31% | **18%** |
+| mean of S3c over r < 80 km < 0 | – | 19% |
+| more than half of the r-bins negative | – | 11% |
+| at least one r-bin negative | – | 33% |
+| every r-bin negative | – | 0% |
+| eps_c within ±50% of the full domain | – | 28% |
+
+- The chance that S3c is negative grows with r: about 1% at r < 15 km, 7–8% at
+  20–30 km, 14–17% at 40–55 km, and 21–24% at 60–80 km (`fig_qg_ensemble_negfrac.png`,
+  left). Centering cuts the negative fraction roughly in half at every r, but it does
+  not remove it.
+- The distribution of eps_c has its median (1.54e-10) close to the truth, but its
+  scatter is σ = 2.4e-10. That makes the signal-to-noise of a single perfectly
+  sampled 100 km × 100 day survey only **0.72**.
+- **Window-length scan** (fraction of realizations with eps_c < 0):
+
+  | window | 30 d | 60 d | 100 d | 6 mo | 1 yr | 2.5 yr | 5 yr |
+  |---|---|---|---|---|---|---|---|
+  | eps_c < 0 | 30% | 26% | 18% | 16% | 9% | 0% | 0% |
+
+  Signal-to-noise reaches about 1 only at roughly 6 months and about 2 at 5 years.
+- **The full domain over the same 100-day window is never negative**: its eps ranges
+  from 1.56 to 1.93e-10. The negative cases therefore come from the limited spatial
+  sampling of the box, not from the whole domain's cascade reversing in time.
+- A variance decomposition of eps_c (100 d) agrees: about 9% of the variance is epoch
+  (shared by all regions at the same time), about 10% is a persistent region offset,
+  and about 81% is the region × window interaction, i.e. which eddies happen to be in
+  the box.
+- **Are individual negatives significant?** Mostly not. Only 2% of 100-day
+  realizations have eps_c < −2σ by a 10-day block bootstrap within the window, and
+  only 2.5% lie below −1σ of the ensemble scatter. Negative S3c is a large-scatter
+  effect around a positive mean, not a reversal of the cascade.
+- **Caveat on that bootstrap:** the within-window block bootstrap *underestimates*
+  the real survey-to-survey scatter by 1.8–4×. The median bootstrap σ is 1.3e-10,
+  against an ensemble σ of 2.4e-10 at 100 d; at 30 d the ratio is about 4×. This
+  bears directly on the bootstrap errors quoted for the glider data (see Q-c).
+
+**3. Figure 8 (x300, y400, 5-yr mean) in context** (`fig_qg_ensemble_fig8.png`).
+- After 5 years all 9 regions give a positive S3c at every r-bin, so the qualitative
+  claim in Figure 8 holds for every region.
+- The quantitative agreement varies. eps_c / eps_full ranges from 0.55 to 1.90, and
+  7 of the 9 regions fall within ±50%.
+- The Figure 8 region is **middling, not the best case**. Its ratio is 0.66, and by
+  normalized rms deviation from the full-domain curve it ranks 6th of 9 (nrms 0.35).
+  x500 y300 and x400 y400 match far better (nrms ≈ 0.06–0.07).
+- What makes x300 y400 a good illustration is its *raw* S3: the raw eps is ≈ 0
+  (ratio −0.006), and centering restores 0.66. The correction does the most visible
+  work in this region.
+- Cut into 100-day windows, the Figure 8 region itself gives eps_c < 0 in 3 of 18
+  windows (17%, none below −2σ). Only about 6 of the 18 lie within ±50% of the truth.
+- In short, Figure 8 is representative of **5-year** averages and not of a single
+  **100-day** survey.
+
+**4. Implication for Figure 9 / its text.** The paper says that "a 30-day window
+already yields the correct sign". That is true for the particular window
+`fig_qg_time_evolution` uses: the *first* 30 days of x300 y400, which give eps_c /
+eps_full = 0.67. Across the ensemble, however, **30% of 30-day windows give
+eps_c < 0**, so the statement does not hold in general.
+
+**5. Side observation.** Even after 5 years, the 9 regions differ by about ±50% in
+eps_c (σ = 8e-11, which shrinks far more slowly than 1/√T). The differences loosely
+track y: the y = 300 boxes average 1.55× the truth, the y = 400 and y = 500 boxes
+0.89× and 0.83×. The model is on a β-plane (β = 1.5e-11). The 5-year zonal-mean u is
+weak (|ū| ≲ 1 cm/s, no strong jets), but the 5-year time-mean u map still shows
+zonally elongated ±3 cm/s structures (`fig_qg_ensemble_jets.png`). Five years is
+therefore not quite enough for a fixed 100-km box to forget its local mean flow.
+
+**Questions for you**
+
+a. Should I draft manuscript changes? I would:
+   - add a version of the ensemble result to §QG, e.g. "for a perfectly sampled
+     100 km × 100 d box, S3c has the correct sign in ~82% of realizations, but the
+     survey-to-survey scatter exceeds the signal (S/N ≈ 0.7)";
+   - qualify the Figure 9 "30 days suffices" sentence.
+
+   Should it go into `energy_cascade.tex` directly or into `new_analysis.tex` first?
+>
+b. Is `fig_qg_ensemble_negfrac.png` (or a combination with the spaghetti plot) a
+   candidate paper figure, possibly replacing Figure 9?
+>
+c. The in-window bootstrap underestimates the true realization scatter by about 2×
+   at 100 d. Should I quantify what this means for the bootstrap error bars on the
+   observed S3c (i.e., are the observational nulls even less constraining than
+   stated)?
+>
+d. The ensemble uses only 9 adjacent boxes in the 300–600 km block. Running
+   `qg_100km.run_one_region` on more boxes (e.g., all 100 tiles) would tighten these
+   numbers and test the region/y-dependence. Is that worth the compute? Each box is
+   one 5-year run of the existing pipeline.
+>
+e. Is the persistent time-mean structure (±3 cm/s, zonally elongated) a known feature
+   of this pyqg run (β-plane, `delta` = 0.25)?
+>
 
 ### BGC
 
@@ -566,3 +719,46 @@ changed/new files (`bgc_sf.py`, `figs_bgc.py`, `glider_io.py`,
 default call path (`extra_fields=None`) is byte-for-byte the original
 `from_binned_file` call, so no other caller of `glider_io.load_dataset` is
 affected. Ran as Fable 5.
+### 2026-11-17 (QG prompt 1 — ensemble statistics of the 100-km QG subregion duL3)
+
+**Goal.** Check `fig_qg_all_duL3_100_100km.png`, measure how often the centered
+duL3 is negative, and place the Figure 8 example in context. Restricted to r < 80 km.
+
+**Code.** New module `Analysis/py/qg_ensemble.py` (functions only, with docstrings
+and "Generated by JXP and Claude"). It contains:
+- loaders for the 9 per-day region SF files and the per-day full-domain file;
+- `window_moments` / `centered_s3`, and `fit_eflux` (through-origin fit of
+  S3 = 1.5 eps r over 15–70 km);
+- `make_windows`, which uses the same windowing as `fig_qg_all_duL3`;
+- `block_bootstrap_eps` (10-day blocks);
+- `build_ensemble` (the region × window table, with a full-domain comparison over
+  the time-matched window; the full-domain file is offset by +36 days relative to
+  the region files and is aligned by model day);
+- `summarize`, `negfrac_vs_r`, `scan_windows` (30 d to 5 yr),
+  `variance_decomposition` (epoch / region / interaction), `fig8_context` and
+  `zonal_mean_u`;
+- five figures written to `Figures_new/`: `fig_qg_ensemble_{S3_100d,negfrac,eps,fig8,jets}.png`.
+
+The module ran end-to-end in `ocean14`. Outputs are in
+`Analysis/Outputs/qg_ensemble_{100d,5yr,window_scan}.csv` and `qg_ensemble.log`.
+No existing code was modified.
+
+**Findings** (full discussion in Q&A/QG):
+- The figure is correct.
+- With 100-day windows (N = 162), the centered eps is negative in 18% of
+  realizations (raw: 31%). The fraction of negative S3c rises from about 1% at
+  r < 15 km to about 23% at 75 km.
+- The full domain over the same windows is never negative. The negatives therefore
+  reflect limited spatial sampling, not a reversal of the cascade, and only about 2%
+  are significant at 2σ.
+- The survey-to-survey scatter (σ = 2.4e-10) exceeds the signal (1.7e-10), giving
+  S/N ≈ 0.7 at 100 d, ≈ 1 at 6 months and ≈ 2 at 5 years.
+- The in-window bootstrap underestimates that scatter by 1.8–4×.
+- Figure 8 (x300 y400, 5 yr) is a middling case: eps ratio 0.66, ranked 6th of 9.
+  All 9 regions are positive at 5 years.
+- The Figure 9 claim that "30 days suffices" does not hold across the ensemble: 30%
+  of 30-day windows are negative.
+- Region offsets persist even at 5 years and loosely track y. There are no strong
+  zonal jets, but there are ±3 cm/s time-mean structures.
+
+Five questions are posted in Q&A/QG. Ran as Opus 5.5.

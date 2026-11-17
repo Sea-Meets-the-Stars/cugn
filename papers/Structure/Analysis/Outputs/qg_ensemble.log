@@ -1,0 +1,105 @@
+
+=== 100-d windows, 9 regions, r in (5, 80) km ===
+  N                            162
+  eps_full_5yr                 1.724e-10
+  median_eps_c                 1.543e-10
+  std_eps_c                    2.385e-10
+  median_eps_c_err             1.309e-10
+  snr_ensemble                 0.7231
+  f_eps_c_lt_m1sig_ens         0.02469
+  f_eps_raw_neg                0.3086
+  f_eps_c_neg                  0.179
+  f_eps_c_sig_neg              0.01852
+  f_eps_c_sig_pos              0.2963
+  f_mean_S3c_neg               0.1914
+  f_majority_bins_neg          0.1111
+  f_all_bins_neg               0
+  f_any_bin_neg                0.3333
+  f_within_50pct_of_full       0.2778
+  f_nrms_lt_0p5                0.179
+  f_full_win_neg               0
+
+  r [km]   f(S3<0)  f(S3c<0)
+     7.5    0.111    0.012
+    12.5    0.056    0.006
+    17.5    0.160    0.043
+    22.5    0.185    0.068
+    27.5    0.204    0.062
+    32.5    0.222    0.080
+    37.5    0.290    0.136
+    42.5    0.259    0.136
+    47.5    0.284    0.160
+    52.5    0.296    0.167
+    57.5    0.302    0.191
+    62.5    0.315    0.210
+    67.5    0.321    0.222
+    72.5    0.327    0.210
+    77.5    0.346    0.235
+
+=== Variance decomposition of eps_c (100 d) ===
+  var_total                    5.652e-20
+  var_epoch                    5.295e-21
+  var_region                   5.388e-21
+  var_resid                    4.584e-20
+  mean_corr_regions            -0.008643
+  corr_regionmean_vs_full      0.4192
+
+=== Window scan ===
+ ndays   N  std_eps_c  median_eps_c_err  snr_ensemble  f_eps_raw_neg  f_eps_c_neg  f_eps_c_sig_neg  f_eps_c_sig_pos  f_all_bins_neg  f_within_50pct_of_full  f_full_win_neg
+    30 540      0.000             0.000         0.391          0.376        0.304            0.124            0.398           0.030                   0.244           0.000
+    60 270      0.000             0.000         0.583          0.333        0.259            0.019            0.322           0.011                   0.267           0.000
+   100 162      0.000             0.000         0.723          0.309        0.179            0.019            0.296           0.000                   0.278           0.000
+   182  90      0.000             0.000         0.992          0.244        0.156            0.000            0.433           0.000                   0.333           0.000
+   365  45      0.000             0.000         1.336          0.133        0.089            0.000            0.533           0.000                   0.400           0.000
+   912  18      0.000             0.000         1.873          0.056        0.000            0.000            0.778           0.000                   0.667           0.000
+  1825   9      0.000             0.000         2.109          0.111        0.000            0.000            1.000           0.000                   0.778           0.000
+
+=== 5-yr, per region (Fig. 8 = x300,y400) ===
+ x0  y0  eps_raw_ratio  eps_ratio  eps_c_err  nrms_5yr  rank_nrms  frac_neg_c
+300 300          1.919      1.898      0.000     1.145          9       0.000
+300 400         -0.006      0.662      0.000     0.350          6       0.000
+300 500          0.946      0.806      0.000     0.227          4       0.000
+400 300          1.656      1.824      0.000     0.933          8       0.000
+400 400          1.267      0.917      0.000     0.069          2       0.000
+400 500          1.047      0.553      0.000     0.604          7       0.000
+500 300          0.944      0.939      0.000     0.061          1       0.000
+500 400          0.873      1.096      0.000     0.156          3       0.000
+500 500          0.909      1.144      0.000     0.253          5       0.000
+
+=== Fig. 8 region, 100-d windows ===
+ iwin   t0   t1     eps_c  eps_c_err  eps_full_win  frac_neg_c  nrms_win
+    0 7062 7161  1.35e-11   9.81e-11      1.77e-10       0.267      1.09
+    1 6962 7061  1.07e-11   1.55e-10      1.93e-10         0.4      1.41
+    2 6862 6961  9.53e-11    1.3e-10      1.75e-10           0     0.465
+    3 6762 6861 -1.38e-10   1.47e-10       1.8e-10       0.867      1.75
+    4 6662 6761  1.03e-10   5.41e-11      1.59e-10           0     0.352
+    5 6562 6661  8.51e-11   3.57e-11      1.76e-10           0     0.561
+    6 6462 6561  5.39e-11   4.42e-11       1.7e-10           0     0.757
+    7 6362 6461  1.24e-10   6.76e-11      1.64e-10           0     0.293
+    8 6262 6361  3.64e-10    1.3e-10      1.75e-10           0      1.91
+    9 6162 6261  -3.1e-10   2.22e-10      1.64e-10       0.867      3.45
+   10 6062 6161  1.11e-10   8.83e-11      1.75e-10           0     0.384
+   11 5962 6061 -1.57e-10   2.38e-10      1.81e-10       0.533       2.3
+   12 5862 5961  3.27e-10   1.65e-10      1.72e-10           0      1.15
+   13 5762 5861  4.31e-10   1.54e-10      1.75e-10           0      1.49
+   14 5662 5761   2.7e-10   1.14e-10      1.67e-10           0     0.533
+   15 5562 5661  1.95e-11   6.25e-11      1.56e-10      0.0667     0.797
+   16 5462 5561  6.21e-11   3.25e-11      1.76e-10           0     0.582
+   17 5362 5461   3.2e-10   8.82e-11      1.66e-10           0     0.872
+  Fig-8 region: f(eps_c<0) = 0.167; f(eps_c<-2sig) = 0.000
+  Fig-9 x300,y400 first   30 d: eps_c/eps_full = 0.67, frac_neg = 0.00
+  Fig-9 x300,y400 first   90 d: eps_c/eps_full = 2.28, frac_neg = 0.00
+  Fig-9 x300,y400 first  180 d: eps_c/eps_full = 1.14, frac_neg = 0.00
+  Fig-9 x300,y400 first  365 d: eps_c/eps_full = 0.83, frac_neg = 0.00
+Saved: /Users/xavier/Oceanography/python/cugn/papers/Structure/Analysis/py/../Figures_new/fig_qg_ensemble_S3_100d.png
+Saved: /Users/xavier/Oceanography/python/cugn/papers/Structure/Analysis/py/../Figures_new/fig_qg_ensemble_negfrac.png
+Saved: /Users/xavier/Oceanography/python/cugn/papers/Structure/Analysis/py/../Figures_new/fig_qg_ensemble_eps.png
+Saved: /Users/xavier/Oceanography/python/cugn/papers/Structure/Analysis/py/../Figures_new/fig_qg_ensemble_fig8.png
+
+=== Zonal-mean u (5 yr), cm/s ===
+  domain: min -0.97, max 1.09, rms 0.49
+  time-mean |u| rms over (x,y): 1.11
+  y in [300,400): <u> =   0.50  eps_ratio(5yr) mean over x = 1.55
+  y in [400,500): <u> =  -0.36  eps_ratio(5yr) mean over x = 0.89
+  y in [500,600): <u> =   0.39  eps_ratio(5yr) mean over x = 0.83
+Saved: /Users/xavier/Oceanography/python/cugn/papers/Structure/Analysis/py/../Figures_new/fig_qg_ensemble_jets.png
