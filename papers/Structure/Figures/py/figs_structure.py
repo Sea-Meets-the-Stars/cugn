@@ -2377,8 +2377,8 @@ def main(flg):
 
     # All duL3
     if flg == 27:
-        # 100km
-        #fig_qg_all_duL3()
+        # 100km regions, 100 day windows (May talk figure)
+        fig_qg_all_duL3()
 
         # 200km
         #fig_qg_all_duL3(dx=200, outfile='fig_qg_all_duL3_100_200km.png',
