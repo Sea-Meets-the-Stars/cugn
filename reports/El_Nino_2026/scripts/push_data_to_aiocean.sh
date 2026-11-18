@@ -40,7 +40,8 @@ if [ -f "$LINE66/binnedCUGN66.nc" ]; then
 fi
 
 echo "== glider data -> $REMOTE/CUGN/Line_66"
-rclone copy "$LINE66" "$REMOTE/CUGN/Line_66" "${EXCLUDE[@]}" "${OPTS[@]}"
+# ${EXCLUDE[@]+...}: an empty array is "unbound" under set -u in macOS bash 3.2
+rclone copy "$LINE66" "$REMOTE/CUGN/Line_66" ${EXCLUDE[@]+"${EXCLUDE[@]}"} "${OPTS[@]}"
 
 echo "== CCS indices -> $REMOTE/El_Nino_2026/CCS"
 rclone copy "${OS_CCS%/}" "$REMOTE/El_Nino_2026/CCS" "${OPTS[@]}"
@@ -50,7 +51,7 @@ rclone copy "$OISST_DIR" "$REMOTE/El_Nino_2026/SST/OISST" \
     --include 'oisst_ccs_*.nc' "${OPTS[@]}"
 
 echo "== verify"
-rclone check "$LINE66" "$REMOTE/CUGN/Line_66" --one-way --size-only "${EXCLUDE[@]}"
+rclone check "$LINE66" "$REMOTE/CUGN/Line_66" --one-way --size-only ${EXCLUDE[@]+"${EXCLUDE[@]}"}
 rclone check "${OS_CCS%/}" "$REMOTE/El_Nino_2026/CCS" --one-way --size-only
 rclone check "$OISST_DIR" "$REMOTE/El_Nino_2026/SST/OISST" --one-way --size-only --include 'oisst_ccs_*.nc'
 echo "done"
