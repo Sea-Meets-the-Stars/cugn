@@ -31,7 +31,7 @@ Here is where things stand, one month on from our October edition.
   recent full crossing of the line (20 October–4 November), the top 100 m
   averaged 1.8 °C above normal, up from 1.2 °C on the previous crossing, and
   the water from 100 m down to 500 m 0.5 °C — the warmth is pushing the ocean's
-  density layers 27–44 m deeper than usual.
+  density layers tens of meters deeper than usual.
 - **The warmest sea surface in the satellite record.** The season of
   [upwelling](https://oceanservice.noaa.gov/facts/upwelling.html) — the wind-driven
   welling-up of cold water that the gliders
@@ -74,7 +74,8 @@ Here is where things stand, one month on from our October edition.
 
 ![Line chart of how far above normal the upper ocean off Monterey Bay was, month by month from July to June, during three warm periods. The red line for this year starts at about 1.4 °C above normal in July and climbs to about 2.3 °C by November, higher than either of the others at the same point in the year. Pink shading marks warmer than normal, blue cooler.](figs/newsletter_fig1_past_events_Nov2026.png)
 
-**Figure 1.** The excess warmth in the upper ocean off Monterey Bay during two previous warm
+**Figure 1.** The excess warmth in the upper ocean (top 100 m) off Monterey Bay 
+during two previous warm
 periods (yellow, orange) and this year (red), lined up by month starting in July.
 This year runs warmer than last year's heatwave (yellow) or the 2014–15
 "Blob" (orange) did at the same point in the year, and in late October it
