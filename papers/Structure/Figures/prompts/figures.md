@@ -1,6 +1,13 @@
 # Figures for the paper
 
-# Code
+## Context
+
+This is your additional context:
+
+- This Repository, especially the code in the papers/Structure/ folder.
+- The paper's Overleaf: `Projects/Overleaf/Energy_Cascade`
+
+## Code
 
 Follow these guidelines:
 - Use the same style and code flow as the other methods in figs_structure.py
@@ -10,7 +17,7 @@ Follow these guidelines:
 - Code in Python
 - Place imports at the top of modules
 
-# QG 5year in 100km region vs. full box
+## QG 5year in 100km region vs. full box
 
 Add a new method named fig_qg_100km_vs_full() to the fig_structure.py module that plots the structure function of the QG 5year in a 100km region vs. the structure function of the QG 5year in the full box.
 
@@ -51,3 +58,5 @@ For the 100km region, use the data in the file ../Analysis/Output/SF_region_x{in
 3. Re-read this file. Make the 2nd set of modifications on the 100km region vs. full figure.
 4. Re-read this file. Make the 3rd set of modifications on the 100km region vs. full figure.
 5. Re-read this file. Make the 4th set of modifications on the 100km region vs. full figure.
+
+6. Please generate a markdown file named `figures_from_code.md` that lists the figures in the paper (see the Overleaf file) and their corresponding code files.  Put it in `Oceanography/python/cugn/papers/Structure/Figures`

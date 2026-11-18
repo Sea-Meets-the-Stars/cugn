@@ -98,10 +98,10 @@ def fig_qg_time_evolution(x0=300, y0=400,
     ax1.set_xlim(4, 100)
     ax1.set_ylim(-18, 3)
     ax3.set_xlim(4, 100)
-    ax3.legend(fontsize=8, loc='upper left', ncol=2)
+    ax3.legend(fontsize=11, loc='upper left', ncol=2)
 
     for ax in (ax1, ax3):
-        _set_fontsize(ax, 12)
+        _set_fontsize(ax, 14)
         ax.grid(which='major', lw=0.8, alpha=0.6)
         ax.grid(which='minor', lw=0.5, alpha=0.25)
 
@@ -271,8 +271,8 @@ def fig_qg_ensemble(ndays=100, outfile='fig_qg_ensemble.png'):
 
     fig = plt.figure(figsize=(10, 4))
     gs = gridspec.GridSpec(1, 2)
-    panels = [('S3', 'tab:blue', r'raw $S_3$'),
-              ('S3c', 'tab:red', r'$\langle \delta u_L^3 \rangle_{\rm c}$')]
+    panels = [('S3', 'tab:blue', r'Raw $S_3$'),
+             ('S3c', 'tab:red', r'Corrected $\langle \delta u_L^3 \rangle_{\rm c}$')]
     for ii, (key, clr, lbl) in enumerate(panels):
         ax = plt.subplot(gs[ii])
         # Individual realizations (thin)
@@ -295,10 +295,10 @@ def fig_qg_ensemble(ndays=100, outfile='fig_qg_ensemble.png'):
         ax.set_xlim(r.min(), r.max())
         ax.set_xlabel(r'$r$ [km]')
         ax.set_ylabel(lbl + r'  $10^{-3}$ [m$^3$ s$^{-3}$]')
-        ax.text(0.97, 0.04, '(a)' if ii == 0 else '(b)',
-                transform=ax.transAxes, ha='right', fontsize=12)
-        ax.legend(fontsize=8, loc='upper left')
-        _set_fontsize(ax, 12)
+        ax.text(0.05, 0.04, '(a)' if ii == 0 else '(b)',
+                transform=ax.transAxes, ha='left', fontsize=12)
+        ax.legend(fontsize=10, loc='upper left')
+        _set_fontsize(ax, 14)
     # Common y-limits so the panels are directly comparable
     ylim = (min(a.get_ylim()[0] for a in fig.axes),
             max(a.get_ylim()[1] for a in fig.axes))

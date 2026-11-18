@@ -49,7 +49,13 @@ def set_xmax(counts, rbins, minxmax:float=100):
 
 def plot_single_order(order:int, ax, rdict,
                       use_xlim:tuple=None, use_ylim:tuple=None,
-                      corrected:bool=False):
+                      corrected:bool=False, add_Slbl:bool=True):
+
+    if add_Slbl:
+        Slbl = r' $S_{'+str(order)+'}$'
+    else:
+        Slbl = ''
+
 
     color = 'krb'[order-1]
     ## Unpack
@@ -71,7 +77,7 @@ def plot_single_order(order:int, ax, rdict,
 
     if corrected:
         ax.plot(Sn_dict['r'][goodN], 
-                Sn_dict[Skey][goodN], 'x', color=color, label='Raw')
+                Sn_dict[Skey][goodN], 'x', color=color, label='Raw'+Slbl)
         ax.legend(fontsize=17, loc='upper left')
 
     if struct_defs.btype == 'log':
@@ -213,7 +219,8 @@ def fig_separations(dataset:str, outroot='fig_separations',
 
     # Add dataset
     lsz = 16.
-    ax_r.text(0.1, 0.9, dataset, transform=ax_r.transAxes, fontsize=lsz)
+    ax_r.text(0.95, 0.95, dataset, transform=ax_r.transAxes, fontsize=lsz,
+              ha='right', va='top')
     # Label time separation
     #ax_r.text(0.1, 0.8, f't < {struct_defs.max_time} hours', transform=ax_r.transAxes, fontsize=15)
     if struct_defs.btype == 'log':
@@ -228,9 +235,9 @@ def fig_separations(dataset:str, outroot='fig_separations',
 
     # Add horizontal line at minN, labeled
     ax_r.axhline(struct_defs.minN, color='gray', linestyle='--')
-    ax_r.text(0.03, struct_defs.minN, rf'$N_{{\rm min}}={struct_defs.minN}$',
+    ax_r.text(0.95, struct_defs.minN, rf'$N_{{\rm min}}={struct_defs.minN}$',
               transform=ax_r.get_yaxis_transform(),
-              ha='left', va='bottom', color='gray', fontsize=13)
+              ha='right', va='bottom', color='gray', fontsize=13)
 
     plt.tight_layout()#pad=0.0, h_pad=0.0, w_pad=0.3)
     plt.savefig(outfile, dpi=300)
