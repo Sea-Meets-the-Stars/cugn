@@ -159,8 +159,28 @@ def fetch_tail(days, path, verbose=True):
         return path
     parts = []
     tmp = path + '.raw'
+    # Days already in the regional archive (`python -m cugn.oisst`, same NCEI
+    # files) are taken from disk, so an NCEI outage (503s on 18 Nov 2026) does
+    # not stop the newsletter; only the days it lacks are downloaded.
+    try:
+        local = oisst.load(start_year=days[0].year, end_year=days[-1].year)
+        local_days = pd.DatetimeIndex(local.time.values).normalize()
+    except FileNotFoundError:
+        local, local_days = None, pd.DatetimeIndex([])
     for day in days:
-        ds_day = oisst.download_ncei_day(day, tmp)
+        if day in local_days:
+            ds_day = local.isel(time=[int(np.where(local_days == day)[0][-1])]).load()
+            parts.append(oisst._snap_to_grid(ds_day, ZOOM_LAT, ZOOM_LON))
+            if verbose:
+                print(f'[sst] archive {day:%Y-%m-%d}'
+                      f'{" (preliminary)" if bool(ds_day.preliminary.values[0]) else ""}', flush=True)
+            continue
+        try:
+            ds_day = oisst.download_ncei_day(day, tmp)
+        except RuntimeError as exc:             # server down: treat the day as not available
+            if verbose:
+                print(f'[sst] NCEI download failed for {day:%Y-%m-%d}: {str(exc)[-60:]}', flush=True)
+            ds_day = None
         if ds_day is None:                      # not published yet
             if verbose:
                 print(f'[sst] NCEI has no file for {day:%Y-%m-%d}', flush=True)
