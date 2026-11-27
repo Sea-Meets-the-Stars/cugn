@@ -75,7 +75,99 @@ Use Fable if you can. Log your work.
 
 2. Add the headline result to the opening summary -- the increase in sea level height in the bay.
 
+### SST figure
+
+1. We are going to create a new SST figure for November 2026, similar to the one
+we created for September 2026.  In contrast to that figure,
+    - Do not include the glider line
+    - Zoom in more closely to Monterey Bay
+    - If you can provide higher spatial resolution data, do so.
+
+     Before creating the figure, please check the data sources and make sure
+     you have the latest data.
+     Then ask me a series of questions in the Q&A/SST section below.
+     Use Opus 5.5. Log your work.
+
+2. Thanks for the exploratory work.  I have answered your questions in the Q&A/SST section below.  Read those responses and create a first draft of the figure.
+Call it `reports/El_Nino_2026/figures/SST_Nov2026.png`.
+Use dpi=300.
+Hopefully the NOAA website will be reliable enough. 
+Use Opus 5.5. Log your work.
+
 ## Q&A
+
+### SST
+
+#### Data check (2026-11-26)
+
+Details in the log below; the short version: OISST is current (local archive
+to **25 Nov**, preliminary for the last 14 days), and three finer gap-filled
+products are on NOAA's ERDDAP servers, all current to **24-25 Nov**:
+
+| product | grid | record starts | cells over the bay* | anomaly baseline |
+|---|---|---|---|---|
+| NOAA OISST v2.1 (Sept. map) | 0.25 deg (~25 km) | 1981 | 4 x 4 | 1991-2020 (ours) |
+| NOAA CoralTemp v3.1 | 0.05 deg (~5 km) | 1985 | 14 x 13 | we can build 1991-2020 |
+| NOAA Geo-polar Blended | 0.05 deg (~5 km) | 2002 (day+night 2019) | 14 x 13 | none shipped |
+| JPL MUR v4.1 | 0.01 deg (~1 km) | 2002 | 71 x 56 | 2003-2014 (shipped) |
+
+\* box 36.4-37.1 N, 122.3-121.75 W. On 24 Nov the MUR anomaly product reads
+**+5.2 degC** over that box; OISST gives about +5.9 vs 1991-2020.
+
+1. **Which product?** My recommendation is **CoralTemp (5 km)**: it is about five
+   times finer than OISST, and its record starts in 1985, so I can compute the same
+   1991-2020 normal the rest of the newsletter uses. The map and the text then
+   agree. **MUR (1 km)** looks sharper, but its record only starts in 2002, so
+   its anomaly is relative to 2003-2014 and the map would read about 0.5-1 degC
+   lower than the numbers in the text. Also, under cloud its 1 km grid is
+   interpolated from coarser data, so the extra detail near the coast is partly
+   cosmetic. Options: (a) CoralTemp, 1991-2020; (b) MUR with its shipped
+   2003-2014 anomaly; (c) MUR with our own 2003-2020 normal; (d) other.
+>A.  Yes, let us try CoralTemp.
+
+2. **Anomaly or actual temperature?** The September map showed the anomaly.
+   This month the bay is about 19-20 degC (66-68 degF), which readers can relate
+   to (swimmers, surfers). Options: (a) anomaly only, as in September; (b) actual
+   temperature only; (c) two panels side by side, the actual temperature and
+   its difference from normal.
+>A. Let's do 2 panels, i.e. (c)
+
+3. **How far to zoom?** My proposal is the bay and its approaches: **36.2-37.2 N,
+   122.7-121.7 W**, from Ano Nuevo to Point Sur, about 110 x 90 km. A tighter
+   choice is the bay alone: 36.5-37.05 N, 122.25-121.75 W. Which one, or another
+   box? (Keep the dashed "Monterey Bay" box and its number on the map, or drop
+   it at this zoom?)
+>A. Go with your proposal, i.e. the bay and its approaches.
+
+4. **Time window.** In September I used the 7-day mean ending on the last
+   satellite day. Options: (a) the same, ending on the last available day when I
+   draw it; (b) a single day (sharper, but noisier); (c) November month-to-date.
+>A. Let's try (a)
+
+5. **Labels.** I would label Santa Cruz, Capitola, Moss Landing, Monterey,
+   Pacific Grove and Ano Nuevo/Point Sur at the edges. I could also mark the
+   NOAA buoy 46042 (quoted in the text) and MBARI's M1 mooring (in the news
+   item). Which of these, and anything else (e.g. the Monterey Canyon outline)?
+>A. Label Santa Cruz, Moss Landing, Monterey, and Ano Nuevo/Point Sur.
+
+6. **Colour scale.** Anomalies on the map reach about +7 degC, so the
+   September scale (+/-3 or 4) would saturate. Options: (a) a symmetric
+   blue-red scale stretched to +/-7, which leaves most of the blue unused; (b) a
+   warm-only scale from 0 to +7; (c) the September +/-4 scale, saturating
+   (shows "everything is very warm" but hides structure). Should I add degF on
+   the colour bar?
+>A. Let's try (b)
+
+7. **Where does it go?** Options: (a) a new Figure 3 in the November newsletter
+   (with a sentence in the sea-surface bullet pointing to it); (b) replace the
+   sea-level Figure 2; (c) a standalone figure for now. Also, any headline you
+   want on it?
+>A. Stand-alone figure for now.
+
+I will draw the coastline from the full-resolution GSHHS shoreline rather
+than Natural Earth, which is too coarse at this zoom (about 1 km).
+
+>A. Ok
 
 ### Data update (2026-11-18)
 
@@ -399,3 +491,98 @@ gauge's verified monthly mean for sea level, and a buoy beside the preliminary
 satellite product for temperature. And the forecast number moved the "wrong"
 way (83% -> 60%) while every local measure set a record, so the page separates
 what NOAA forecasts from what we measured.
+
+### 2026-11-26 (SST figure 1: data sources checked, archive updated, questions asked)
+
+Ran on Opus 5.5. No figure drawn yet; questions are in Q&A/SST.
+
+**OISST.** NCEI had answered 503 on 18 Nov; it serves again (preliminary daily
+files through 25 Nov). `python -m cugn.oisst`: the CoastWatch aggregate now
+ends 10 Nov, NCEI filled 11-25 Nov (26 Nov not yet published); archive
+1991-01-01..**2026-11-25**, 13,113 days, 14 preliminary. The CoastWatch
+**preliminary** aggregate (`ncdcOisst21NrtAgg_LonPM180`) also runs to 25 Nov,
+which could replace the one-file-per-day NCEI tail if NCEI goes down again.
+
+**Finer products.** New `scripts/check_sst_sources.py` (output
+`figs/sst_sources_check_2026-11-26.json`) asks ERDDAP for each candidate's time
+coverage, grid and variables, and pulls the latest day over the bay:
+
+| product (dataset id) | grid | coverage | bay cells | latest bay mean |
+|---|---|---|---|---|
+| OISST final (`ncdcOisst21Agg_LonPM180`) | 0.25 | 1981-09 .. 11-10 | 4x4 | 19.9 degC (10 Nov) |
+| OISST prelim (`ncdcOisst21NrtAgg_LonPM180`) | 0.25 | 2020-05 .. 11-25 | 4x4 | 18.8 |
+| CoralTemp (`noaacrwsstDaily`, coastwatch.noaa.gov) | 0.05 | 1985-01 .. 11-24 | 14x13 | 19.0 |
+| Geo-polar night (`nesdisBLENDEDsstDaily`) | 0.05 | 2002-09 .. 11-24 | 14x13 | 19.0 (292.16 K) |
+| Geo-polar day+night (`nesdisBLENDEDsstDNDaily`) | 0.05 | 2019-07 .. 11-25 | 14x13 | 18.9 |
+| MUR (`jplMURSST41`) | 0.01 | 2002-06 .. 11-24 | 71x56 | 18.8 |
+| MUR anomaly (`jplMURSST41anom1day`, vs 2003-2014) | 0.01 | 2002-06 .. 11-24 | 71x56 | **+5.2** |
+| ACSPO L3S-LEO 7-day NRT (not gap-filled) | 0.02 | .. 11-21 | 35x29 | 19.2 |
+
+The CoralTemp row is from the first run; on the rerun coastwatch.noaa.gov
+answered 502 (proxy error), so that server is intermittent. The first run hung
+for 20+ min on one ERDDAP request (output hidden behind `| tail`), so the
+request timeouts were shortened (90 s info, 180 s data, 20 s NCEI) and the
+rerun logged unbuffered. ERDDAP took a few minutes per request today.
+
+**Recommendation** (Q&A/SST 1): CoralTemp at 5 km with our own 1991-2020 normal,
+so the map agrees with the OISST numbers in the text; MUR if visual detail
+matters more than a common baseline.
+
+### 2026-11-26b (SST figure 2: first draft, `figures/SST_Nov2026.png`)
+
+Ran on Opus 5.5. Followed your Q&A/SST answers: CoralTemp, two panels, the bay
+and its approaches, 7-day mean, Santa Cruz / Moss Landing / Monterey / Ano Nuevo
+/ Point Sur, warm-only anomaly scale, stand-alone.
+
+**Output.** `figures/SST_Nov2026.png` (dpi 300, 4800 x 2760 px) and
+`figures/SST_Nov2026.json` (numbers on the figure). New script
+`scripts/make_sst_nov2026.py`; rerun with
+`python reports/El_Nino_2026/scripts/make_sst_nov2026.py [--end YYYY-MM-DD]`
+(default: CoralTemp's last day).
+
+**What it shows** (7-day mean, 19-25 Nov 2026, 1991-2020 normal):
+
+- Monterey Bay box (36.3-37.0 N, 122.6-121.8 W): **18.95 degC, +5.4 degC**
+  above normal. OISST for the same week and box gives **+5.55**, so the two
+  products agree within 0.2 degC and the figure is consistent with the
+  newsletter text.
+- Map range: 16.3-19.6 degC; anomaly **+2.2** (offshore, southwest corner) to
+  **+6.0** (inner bay and the Big Sur coast). Warmest water: the inner bay and
+  south toward Point Sur; cooler water offshore to the southwest.
+- Headline on the figure: "Monterey Bay is 5 degC (10 degF) warmer than normal"
+  (from the box mean, so it moves with the data).
+
+**Data: the NOAA server did not cooperate.** coastwatch.noaa.gov's
+`noaacrwsstDaily` answered metadata requests but returned **502 for every data
+request**, even a single day, through 26 Nov. coastwatch.pfeg.noaa.gov's
+`NOAA_DHW` redirects to the **PacIOOS ERDDAP** (`dhw_5km`), whose `CRW_SST` is
+the same CoralTemp v3.1 field. That server worked (about 50 s per year, data
+to 25 Nov); one request (1996) failed with a 500 and succeeded on retry. The 30
+baseline years plus the last 30 days are cached in
+`$OS_SPRAY/../SST/CoralTemp/` (one ~1.8 MB file per year), so a rerun only
+fetches the recent month.
+
+**Method.** The normal is `cugn.oisst.gridded_climatology` on the CoralTemp grid
+(11-day window pooled over 1991-2020, 31-day smoothing), and the anomaly is
+`cugn.oisst.latest_anomaly_map`: the same recipe as the OISST numbers in the
+newsletter. The script checks that the window is 7 consecutive days.
+
+**Choices I made that you did not specify (easy to change):**
+
+- *Colour maps.* Temperature: cmocean "thermal", 16-20 degC (rounded from the
+  data), with degF along the top of the colour bar. Anomaly: "YlOrRd", 0 to
+  +7 degC as you chose. I tried cmocean "amp" first, but its dark end made the
+  whole bay one shade (most of it is +5 to +6); YlOrRd shows the structure.
+- *Map edge.* The east edge is -121.55, not -121.7 (land only), so the Moss
+  Landing and Monterey labels fit inside the map.
+- *No dashed box* and no buoy/mooring marks, per your label list; the
+  "Monterey Bay" box number is in the headline and the JSON instead.
+- *Shoreline.* The full-resolution GSHHS download failed (NOAA NGDC returned an
+  HTTP error), so the coastline is Natural Earth 10 m. The script uses GSHHS
+  automatically when it can be downloaded. Cells that CoralTemp masks as land
+  are drawn in the land colour, so the shore shows the 5 km grid's staircase
+  edge rather than white notches.
+
+**Layout fixes during drafting.** `bbox_inches='tight'` cropped into the maps
+with the cartopy gridliners, so the figure uses fixed margins instead; the degF
+scale uses `secondary_xaxis` (a `twiny` on the colour bar garbled it).
