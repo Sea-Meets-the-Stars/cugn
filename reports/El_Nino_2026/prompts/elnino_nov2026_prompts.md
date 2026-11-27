@@ -94,6 +94,10 @@ Use dpi=300.
 Hopefully the NOAA website will be reliable enough. 
 Use Opus 5.5. Log your work.
 
+3.  That is a fine draft.  Can we change the color bar for the SST anomalies 
+to show more structure? e.g. range from 3 to 7 degC?
+Use Opus 5.5. Log your work.
+
 ## Q&A
 
 ### SST
@@ -586,3 +590,21 @@ newsletter. The script checks that the window is 7 consecutive days.
 **Layout fixes during drafting.** `bbox_inches='tight'` cropped into the maps
 with the cartopy gridliners, so the figure uses fixed margins instead; the degF
 scale uses `secondary_xaxis` (a `twiny` on the colour bar garbled it).
+
+### 2026-11-27 (SST figure 3: anomaly colour bar 3-7 degC)
+
+Ran on Opus 5.5. In `scripts/make_sst_nov2026.py` the anomaly panel now runs
+from **+3 to +7 degC** (new constant `ANOM_MIN = 3.0`, still YlOrRd) instead of
+0 to +7, and its colour bar has arrows at both ends because the southwest
+corner dips below +3 (map minimum +2.2). Redrew `figures/SST_Nov2026.png`
+(dpi 300) and `SST_Nov2026.json` (`anom_colour_range` now [3, 7]). The data
+did not change: CoralTemp still ends 25 Nov, so it is the same 19-25 Nov
+window, with the bay at +5.36 degC (OISST +5.55).
+
+**What the new scale shows.** The offshore-to-coast gradient now reads in
+steps: about +3 in the southwest corner, +4 to +5 along a band running
+northwest from Point Sur, +5 to +5.5 across most of the bay, and +5.5 to +6
+nearest the shore south of Monterey toward Point Sur. The inner bay near
+Moss Landing is slightly cooler (+5) than the middle of the bay. The map peaks
+at +5.96, so the darkest reds (+6 to +7) go unused; a 3-6 or 3-6.5 range would
+spread the bay's colours a little further.

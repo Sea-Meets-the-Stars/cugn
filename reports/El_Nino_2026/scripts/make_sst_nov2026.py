@@ -70,6 +70,7 @@ FETCH_LAT, FETCH_LON = (36.1, 37.3), (-122.8, -121.6)
 MONTEREY_BOX = dict(lat=(36.3, 37.0), lon=(-122.6, -121.8))
 CLIM_YEARS = (1991, 2020)
 NDAYS = 7
+ANOM_MIN = 3.0                     # bottom of the anomaly scale (prompt SST 3: 3-7 degC shows more structure)
 ANOM_MAX = 7.0                     # top of the warm-only anomaly scale (Q&A/SST 6)
 # (label, lon, lat, text side, vertical alignment) -- JXP's list, Q&A/SST 5
 PLACES = [('Santa Cruz', -122.030, 36.974, 'left', 'bottom'),
@@ -285,7 +286,7 @@ def fig_sst_pair(sst, anom, path):
     vals = sst.sel(lat=slice(*MAP_LAT), lon=slice(*MAP_LON)).values
     tmin, tmax = np.floor(np.nanmin(vals)), np.ceil(np.nanmax(vals))
     panels = [(axes[0], sst, cmocean.cm.thermal, tmin, tmax, 'Sea-surface temperature this week'),
-              (axes[1], anom, 'YlOrRd', 0., ANOM_MAX, 'How much warmer than normal')]
+              (axes[1], anom, 'YlOrRd', ANOM_MIN, ANOM_MAX, 'How much warmer than normal')]
     shore = None
     for ax, field, cmap, vmin, vmax, title in panels:
         ax.set_extent([MAP_LON[0], MAP_LON[1], MAP_LAT[0], MAP_LAT[1]], crs=proj)
@@ -308,7 +309,7 @@ def fig_sst_pair(sst, anom, path):
         gl.xlabel_style = gl.ylabel_style = {'size': 10.5, 'color': '0.3'}
         ax.set_title(title, fontsize=15, fontweight='bold', pad=8)
         cb = fig.colorbar(mesh, ax=ax, orientation='horizontal', pad=0.09, shrink=0.88,
-                          extend='both' if field is sst else 'max')
+                          extend='both')   # anomaly: offshore cells dip below ANOM_MIN
         if field is sst:
             cb.set_label('°C', fontsize=13)
             # Fahrenheit along the top of the same bar, for readers who think in °F
@@ -330,7 +331,7 @@ def fig_sst_pair(sst, anom, path):
                 box=MONTEREY_BOX, box_mean_sst=round(box_mean(sst), 2), box_mean_anom=round(box_mean(anom), 2),
                 map_max_anom=round(float(amap.max()), 2), map_min_anom=round(float(amap.min()), 2),
                 map_min_sst=round(float(np.nanmin(vals)), 2), map_max_sst=round(float(np.nanmax(vals)), 2),
-                sst_colour_range=[float(tmin), float(tmax)], anom_colour_range=[0., ANOM_MAX],
+                sst_colour_range=[float(tmin), float(tmax)], anom_colour_range=[ANOM_MIN, ANOM_MAX],
                 extent=dict(lat=MAP_LAT, lon=MAP_LON), shoreline=shore, product='CoralTemp v3.1 (CRW_SST, PacIOOS dhw_5km)')
 
 
